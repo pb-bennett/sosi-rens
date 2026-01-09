@@ -5,6 +5,7 @@ export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {
+    const version = process.env.VERCEL_GIT_COMMIT_SHA ? process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 12) : 'local';
     const formData = await request.formData();
     const file = formData.get('file');
 
@@ -22,14 +23,22 @@ export async function POST(request) {
     const decoded = decodeSosiBuffer(buffer);
     const analysis = analyzeSosiText(decoded.text);
 
-    return Response.json({
+    return Response.json(
+      {
       file: {
         name: file.name || null,
         sizeBytes: buffer.length,
       },
       encoding: decoded.encoding,
       analysis,
-    });
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+          'X-Sosi-Rens-Version': version,
+        },
+      }
+    );
   } catch (error) {
     return Response.json(
       {

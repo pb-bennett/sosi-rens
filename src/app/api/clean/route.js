@@ -5,6 +5,7 @@ export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {
+    const version = process.env.VERCEL_GIT_COMMIT_SHA ? process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 12) : 'local';
     const formData = await request.formData();
     const file = formData.get('file');
     const selectionJson = formData.get('selection');
@@ -43,6 +44,7 @@ export async function POST(request) {
       headers: {
         'Content-Type': 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${cleanedName}"`,
+        'X-Sosi-Rens-Version': version,
       },
     });
   } catch (error) {
