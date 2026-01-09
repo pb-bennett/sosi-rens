@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { analyzeSosiText } from "../lib/sosi/analyze.js";
+import { cleanSosiText } from "../lib/sosi/clean.js";
+import { decodeSosiArrayBuffer, encodeSosiTextToBytes } from "../lib/sosi/browserEncoding.js";
 
 const STORAGE_KEY = "sosi-rens:v0";
+const HOSTED_BODY_LIMIT_BYTES = 4_000_000;
 
 function sortEntriesDesc(obj) {
   return Object.entries(obj || {}).sort((a, b) => (b[1] || 0) - (a[1] || 0) || String(a[0]).localeCompare(String(b[0])));
@@ -43,6 +47,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("punkter"); // punkter | ledninger
 
   const [file, setFile] = useState(null);
+  const [fileArrayBuffer, setFileArrayBuffer] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [encodingInfo, setEncodingInfo] = useState(null);
   const [error, setError] = useState(null);
@@ -107,15 +112,52 @@ export default function Home() {
     };
   }, [exploreData]);
 
+  async function runAnalyzeClient(selectedFile) {
+    const arrayBuffer = await selectedFile.arrayBuffer();
+    setFileArrayBuffer(arrayBuffer);
+
+    const decoded = decodeSosiArrayBuffer(arrayBuffer);
+    const analysisObj = analyzeSosiText(decoded.text);
+
+    const payload = {
+      file: {
+        name: selectedFile.name || null,
+        sizeBytes: arrayBuffer.byteLength,
+      },
+      encoding: decoded.encoding,
+      analysis: analysisObj,
+    };
+
+    setAnalysis(payload);
+    setEncodingInfo(payload.encoding || null);
+    setStep("explore");
+  }
+
   async function runAnalyze(selectedFile) {
     setError(null);
     setBusy(true);
     try {
+      // Vercel serverless functions have a strict request body limit; avoid uploading large files.
+      if ((selectedFile?.size || 0) > HOSTED_BODY_LIMIT_BYTES) {
+        await runAnalyzeClient(selectedFile);
+        return;
+      }
+
       const fd = new FormData();
       fd.set("file", selectedFile);
       const res = await fetch("/api/analyze", { method: "POST", body: fd });
+
+      if (res.status === 413) {
+        await runAnalyzeClient(selectedFile);
+        return;
+      }
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Analyse feilet.");
+      }
+
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Analyse feilet.");
 
       setAnalysis(json);
       setEncodingInfo(json.encoding || null);
@@ -173,11 +215,35 @@ export default function Home() {
     });
   }
 
+  async function downloadCleanedClient() {
+    if (!file) return;
+    const arrayBuffer = fileArrayBuffer || (await file.arrayBuffer());
+    setFileArrayBuffer(arrayBuffer);
+
+    const decoded = decodeSosiArrayBuffer(arrayBuffer);
+    const cleanedText = cleanSosiText(decoded.text, {
+      objTypesByCategory: selection.objTypesByCategory,
+      fieldsByCategory: selection.fieldsByCategory,
+    }).text;
+
+    const outBytes = encodeSosiTextToBytes(cleanedText, decoded.encoding?.used || 'utf8');
+    const blob = new Blob([outBytes], { type: "application/octet-stream" });
+
+    const originalName = file.name || "fil.sos";
+    const cleanedName = originalName.replace(/(\.[^.]+)?$/, "-renset$1");
+    downloadBlob(blob, cleanedName);
+  }
+
   async function downloadCleaned() {
     if (!file) return;
     setError(null);
     setBusy(true);
     try {
+      if ((file?.size || 0) > HOSTED_BODY_LIMIT_BYTES) {
+        await downloadCleanedClient();
+        return;
+      }
+
       const fd = new FormData();
       fd.set("file", file);
       fd.set("selection", JSON.stringify({
@@ -186,10 +252,17 @@ export default function Home() {
       }));
 
       const res = await fetch("/api/clean", { method: "POST", body: fd });
-      if (!res.ok) {
-        const json = await res.json().catch(() => null);
-        throw new Error(json?.error || "Rensing feilet.");
+
+      if (res.status === 413) {
+        await downloadCleanedClient();
+        return;
       }
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Rensing feilet.");
+      }
+
       const blob = await res.blob();
       const header = res.headers.get("Content-Disposition") || "";
       const match = header.match(/filename="([^"]+)"/);
