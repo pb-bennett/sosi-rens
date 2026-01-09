@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# large local reference files (not deployed)
+/REF_FILES/
+
 # production
 /build
 

@@ -1,0 +1,254 @@
+## SOSI Example File Analysis (Gemini VA export)
+
+- File: C:\GitHub\sosi-rens\REF_FILES\EXAMPLE_SOSI\20260108_VA_eksport-kommunalt(ingen filter).sos
+- Size: 23.35 MB
+- Encoding: detected=latin1 used=latin1
+- Lines: 1,282,968
+- Parsed features (by section scan): 66,691
+- sosijs parse: ok (66689 features)
+
+### Feature Sections
+- .PUNKT: 36942
+- .TEKST: 15888
+- .KURVE: 13859
+- .HODE: 1
+- .SLUTT: 1
+
+### Object Types (OBJTYPE)
+- VAPåskrift: 14609
+- VADriftsdata: 10475
+- Kum: 8126
+- Påkoplingspunkt: 5640
+- Overvannsledning: 5370
+- Spillvannsledning: 3808
+- Stengeventil: 2924
+- Vannledning: 2864
+- Grenpunkt: 2498
+- Sluk: 2255
+- Brannventil: 1313
+- Fritekstkart: 1279
+- AvløpFelles: 1144
+- TrasepunktLedn: 824
+- VASymbol: 701
+- Utviser: 437
+- Trekkrør: 322
+- Utslipp: 314
+- AnnetUtstyrVA: 228
+- Lufteventil: 211
+- HjelpepunktVA: 199
+- Kran: 162
+- Sandfangskum: 138
+- Signalkabeltrase: 135
+- AnnetPunktVA: 114
+- Drensledning: 103
+- Overløp: 97
+- Pumpestasjon: 95
+- Inntak: 92
+- HjelpelinjeVA: 78
+- Gategutt: 34
+- Hydrant: 17
+- TankVA: 12
+- Ventilpunkt: 11
+- AnnenLedningVA: 10
+- Fordrøyningsbasseng: 9
+- JordkabelLSP: 9
+- LuftledningLSP: 9
+- Reduksjonsventil: 6
+- Spuntvegger: 5
+- Reduksjon: 3
+- Basseng: 2
+- Brønn: 1
+- KanalGrøft: 1
+- LednTraseseksjon: 1
+- Oljeutskiller: 1
+- Renseanlegg: 1
+- Septiktank: 1
+- Slamavskiller: 1
+
+### Themes (P_TEMA, from point objects)
+- KUM (Kum): 8126
+- SVA: 2918
+- GRN (Grenpunkt): 2498
+- ANB (Anboring): 2425
+- STK: 2329
+- SLU (Sluk): 1384
+- BVA: 1168
+- SLS (Sluk m/sandfang): 869
+- STO: 845
+- DIV (Div. ledningspkt): 824
+- FALLP: 701
+- UTS (Utløp): 314
+- UTA: 294
+- KRN (Kran): 162
+- SAN (Sandfangskum): 138
+- LVB: 136
+- UTB: 135
+- BVC: 132
+- OVL (Overløp): 97
+- MM: 82
+- PSP (Pumpestasjon(sp)): 66
+- LVA: 59
+- IG: 56
+- INB (Bekkeinntak): 56
+- HP_: 51
+- GRØKONSTR (Grøftekonstruksjon): 39
+- STV: 35
+- GUT (Gatequtt): 34
+- INR (Bekkeinntak m/rist): 32
+- EPO: 29
+- FORAKONSTR: 29
+- EVB: 28
+- FIK: 22
+- EVC: 17
+- HP2: 17
+- HYD (Hydrant): 17
+- STR (Stakerør): 17
+- LVC: 16
+- PAF (Pumpestasjon(af)): 15
+- BV: 13
+- TNK (Tank): 12
+- ELS: 11
+- KV: 11
+- SP: 11
+- VANNPOST (Vannpost): 11
+- BFD (Fordrøyningsbasseng): 9
+- LOK (Kumlokk): 9
+- PST (Pumpestasjon(v)): 9
+- SKJ: 9
+- SVK: 8
+- UTC: 8
+- MENGDREG: 7
+- VP: 7
+- ANK: 6
+- RV: 6
+- SV: 6
+- TØMSTBOBIL (Tømmestasjon for bobil): 6
+- UTF: 6
+- EVA: 5
+- MR: 5
+- NOR: 5
+- NRR: 5
+- POV (Pumpestasjon(ov)): 5
+- INT (Inntak): 4
+- ISO: 4
+- MEL: 4
+- NTV: 4
+- SVB (Svømmebasseng): 4
+- OVG: 3
+- RED (Reduksjonskum): 3
+- SVSTOPP: 3
+- BAS (Basseng): 2
+- EVO: 2
+- KMR (Kammer): 2
+- LV: 2
+- SAST: 2
+- SLG (Gatesluk): 2
+- SVG: 2
+- SVS: 2
+- UTK: 2
+- BRN (Brønn): 1
+- DRO (Driftsobjekt): 1
+- EPE: 1
+- EPG: 1
+- IM: 1
+- LLO: 1
+- LO: 1
+- LTV: 1
+- NTH: 1
+- OIL (Oljeutskiller): 1
+- OVLKANT: 1
+- PLUG: 1
+- RSP (Renseanlegg(sp)): 1
+- SCM: 1
+- SEP (Septiktank): 1
+- SLA (Slamavskiller): 1
+- SPA: 1
+- VM: 1
+
+### Themes (L_TEMA, from ledning/curve objects)
+- OV (Overvannsledning): 5344
+- SP (Spillvannsledning): 3443
+- VL (Vannledning): 2864
+- AF (Avløp felles ledning): 981
+- SPP (Spillvann pumpeledning): 240
+- HU: 210
+- AFO (Avløp felles overløpsledning): 163
+- HK: 134
+- SPO (Spillvann overløpsledning): 125
+- DR (Drensledning): 103
+- HM: 102
+- HL: 22
+- SK: 15
+- SPUNT: 14
+- EJ: 9
+- LETRE (Trekkerør (framføringsvei)): 9
+- OVP (Overvann pumpeledning): 9
+- ER: 8
+- HV: 8
+- OVF (Overvann fordrøyning): 8
+- OVO (Overvann overløpsledning): 8
+- SPLU (Spillvann lufteledning): 7
+- LESPUNT (Spuntlinje): 5
+- I2: 3
+- LEVARVL: 3
+- LV: 3
+- LVSP: 3
+- VR: 3
+- LEVARGAMSP: 2
+- LEVARSP: 2
+- HT: 1
+- LEBO (Borehull (framføringsvei)): 1
+- LEELKABRØR: 1
+- LEKAXX500: 1
+- LESIGNKAB (Signalkabel): 1
+- LETREMKAB (Trekkerør med kabel (framføringsvei)): 1
+- LVVL: 1
+- OVT (Overvann tunnel): 1
+- VV: 1
+
+### Most Common Fields (presence count)
+- DATAUTTAKSDATO: 50801
+- NØ: 45853
+- GUID: 39625
+- EGS_PUNKT: 36942
+- KVALITET: 34496
+- SID: 33763
+- REGDATO: 33118
+- EIER: 30252
+- STATUS: 28498
+- P_TEMA: 26467
+- ANLEGGSÅR: 23318
+- ENDREDATO: 21587
+- NØH: 20836
+- ENDRESIGN: 17681
+- STRENG: 15888
+- REGSIGN: 15578
+- SROT: 15125
+- DRIFTSANSV: 14921
+- BRUKER_FUNKSJON: 14628
+- FUNKSJON: 14628
+- MÅLEMETODE_TOPPZ: 14628
+- NØYAKTIGHET_TOPPZ: 14628
+- TOPPLOKKH: 14628
+- INFORMASJON: 14609
+- HBUNN: 14336
+- LSID: 14041
+- EGS_LEDNING: 13859
+- L_TEMA: 13859
+- LENGDE: 13859
+- TEMAGRUPPE: 13326
+- NETTYPE: 13243
+- INNVUTV_DIM: 13210
+- DIMENSJON: 13088
+- MATERIAL: 13068
+- FORM: 13045
+- KVAL_XY: 11865
+- FNODE: 11489
+- FSID: 11489
+- KVAL_Z: 11401
+- FSID_KUNLESTEDATA: 11151
+
+### Mapping Notes
+- `P_TEMA` code labels are sourced from `src/data/fields.json` fieldKey `Tema_punkt` (acceptableValues).
+- `L_TEMA` code labels are sourced from `src/data/fields.json` fieldKey `Tema_led` (acceptableValues).
+- Full machine-readable output is written to `analysis/sosi-report.json`.
