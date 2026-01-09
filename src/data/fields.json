@@ -1,0 +1,2344 @@
+[
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc27"
+    },
+    "fieldKey": "Høydereferanse",
+    "label": "Høydereferanse",
+    "description": "Alle innmålte objekt skal ha en tilhørende høydereferanse.",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "BUNN_INNVENDIG",
+        "label": "Bunn innvendig",
+        "description": "Høydereferansen er bunn innvendig. Eksempel: Dette er nyttig når en skal modellere fall på avløpsrør"
+      },
+      {
+        "value": "PÅ_BAKKEN",
+        "label": "På bakken",
+        "description": "Høydereferanse er på bakken. Eksisterende eller gjenfylt terreng. Merknad: Mange ledninger er målt på lukket grøft"
+      },
+      {
+        "value": "SENTER",
+        "label": "Senter",
+        "description": "Høydereferansen er senter innvendig. Eksempel: Dersom en ønsker å representere volumet på rør, kan dette gjøres med å angi Ledning Høydereferanse= senter og supplere dette med passende radius."
+      },
+      {
+        "value": "TOPP_INNVENDIG",
+        "label": "Topp innvendig",
+        "description": "Høydereferansen er topp innvendig komponent."
+      },
+      {
+        "value": "TOPP_UTVENDIG",
+        "label": "Topp utvendig",
+        "description": "Høydereferansen er til toppen av komponenten."
+      },
+      {
+        "value": "UKJENT",
+        "label": "Ukjent",
+        "description": "Brukes der det ikke er kjent hva som er benyttet som høydereferanse."
+      },
+      {
+        "value": "UNDERKANT_UTVENDIG",
+        "label": "Underkant utvendig",
+        "description": "Høydereferansen er bunn utvendig."
+      }
+    ],
+    "order": 5,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.965Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.965Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc28"
+    },
+    "fieldKey": "Målemetode",
+    "label": "Målemetode",
+    "description": "Målemetode – mest aktuelle koder. Se instruks full liste.",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "11",
+        "label": "Terrengmålt: Totalstasjon",
+        "description": "Målt i terrenget med totalstasjon"
+      },
+      {
+        "value": "92",
+        "label": "GNSS: Kodemåling, enkle målinger",
+        "description": "lnnmålt med satellittbaserte systemer for navigasjon og posisjonering med global dekning (f.eks GPS, GLONASS, GALILEO): Kodemåling, enkle målinger. Håndholdt GPS i mobiltelefon, nettbrett og lignende"
+      },
+      {
+        "value": "96",
+        "label": "GNSS: Fasemåling RTK",
+        "description": "lnnmålt med satellittbaserte systemer for navigasjon og posisjonering med global dekning (f.eks GPS, GLONASS, GALILEO).: Fasemåling RTK (realtids kinematisk måling) GNSS (GPS) med CPOS"
+      },
+      {
+        "value": "97",
+        "label": "GNSS: Fasemåling float-løsning",
+        "description": "Inn målt med satellittbaserte systemer for navigasjon og posisjonering med global dekning (f.eks GPS, GLONASS, GALILEO). Fasemåling float-løsning. Denne skal brukes dersom man måler med 96 og ikke får «RTK Fix»"
+      }
+    ],
+    "order": 6,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc29"
+    },
+    "fieldKey": "Nøyaktighet",
+    "label": "Nøyaktighet",
+    "description": "Usikkerhet ved innmåling, høyere tall betyr mer usikkert.",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 7,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc2a"
+    },
+    "fieldKey": "MålemetodeHøyde",
+    "label": "MålemetodeHøyde",
+    "description": "Mest aktuelle koder for målemetode høyde.",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "11",
+        "label": "Terrengmålt",
+        "description": "Målt i terrenget, uspesifisert metode/måleinstrument Totalstasjon"
+      },
+      {
+        "value": "15",
+        "label": "Nivellement",
+        "description": "Målt i terrenget, ortogonal metoden"
+      },
+      {
+        "value": "96",
+        "label": "RTK kinematisk måling",
+        "description": "Innmålt med satellittbaserte systemer for navigasjon og posisjonering med GNSS: Fasemåling global dekning (f.eks GPS, GLONASS, GALILEO). Fasemåling RTK (realtids) GNSS (GPS) med CPOS"
+      },
+      {
+        "value": "97",
+        "label": "Float-løsning",
+        "description": "Innmålt med satellittbaserte systemer for navigasjon og posisjonering med GNSS: Fasemåling global dekning (f.eks GPS, GLONASS, GALILEO). Fasemåling float-løsning Denne skal brukes dersom man måler med 96 og ikke får «RTK Fix»"
+      }
+    ],
+    "order": 8,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc39"
+    },
+    "fieldKey": "InnvendigUtvendig_punkt",
+    "label": "InnvendigUtvendig",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "ID",
+        "label": "Innvendig dim"
+      },
+      {
+        "value": "OD",
+        "label": "Utvendig dim"
+      }
+    ],
+    "order": 23,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc3a"
+    },
+    "fieldKey": "Tykkelse_punkt",
+    "label": "Tykkelse",
+    "description": "Tykkelse på kumvegg. Utvendig bredde på kum blir utledet av Bredde. Tykkelse gitt i +(2*Tykkelse) [mm]. Nødvendig for å kunne skape ytre volum jfr krav i Ledningsregistreringsforskriften",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 24,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc3d"
+    },
+    "fieldKey": "Byggemetode",
+    "label": "Byggemetode",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "B",
+        "label": "Prefabr. betong"
+      },
+      {
+        "value": "BU",
+        "label": "Prefabr. betong u/bunn"
+      },
+      {
+        "value": "E",
+        "label": "Prefabr. PEH/PEM"
+      },
+      {
+        "value": "E0",
+        "label": "Prefabr. PE100"
+      },
+      {
+        "value": "E1",
+        "label": "Prefabr. PE uspesifisert"
+      },
+      {
+        "value": "G",
+        "label": "Prefabr. GRP (GUP)"
+      },
+      {
+        "value": "K",
+        "label": "Prefabr. Kompositt"
+      },
+      {
+        "value": "M",
+        "label": "Murt"
+      },
+      {
+        "value": "MU",
+        "label": "Murt u/bunn"
+      },
+      {
+        "value": "P",
+        "label": "Prefabr. uspesifisert"
+      },
+      {
+        "value": "S",
+        "label": "Støpt"
+      },
+      {
+        "value": "SU",
+        "label": "Støpt u/bunn"
+      },
+      {
+        "value": "UK",
+        "label": "Ukjent"
+      },
+      {
+        "value": "V",
+        "label": "Prefabr. PVC"
+      },
+      {
+        "value": "W",
+        "label": "PP polvpropvlen"
+      }
+    ],
+    "order": 27,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc3e"
+    },
+    "fieldKey": "Adkomst",
+    "label": "Adkomst",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "DO",
+        "label": "Dør"
+      },
+      {
+        "value": "NG",
+        "label": "Nedgravd"
+      },
+      {
+        "value": "NT",
+        "label": "Nedstigningstårn"
+      },
+      {
+        "value": "ST",
+        "label": "Stige"
+      },
+      {
+        "value": "UTENST",
+        "label": "Uten stige"
+      }
+    ],
+    "order": 28,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc3f"
+    },
+    "fieldKey": "Kjegle",
+    "label": "Kjegle",
+    "objectTypes": ["punktobjekter"],
+    "required": "conditional",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "E",
+        "label": "Topplate eksentrisk"
+      },
+      {
+        "value": "R",
+        "label": "Rett kjegle"
+      },
+      {
+        "value": "S",
+        "label": "Skjev kjegle"
+      },
+      {
+        "value": "T",
+        "label": "Topplate sentrisk"
+      },
+      {
+        "value": "U",
+        "label": "Uten kjegle"
+      }
+    ],
+    "order": 29,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc43"
+    },
+    "fieldKey": "NOBB-VAVVS-nr-ramme",
+    "label": "NOBB-VAVVS-nr-ramme",
+    "description": "NOBB/NRF-nummeret til kumramma. Som oftest 7 siffer. Se https://nobb-vavvs.no/",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 33,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc47"
+    },
+    "fieldKey": "Dimensjon",
+    "label": "Dimensjon",
+    "description": "Dimensjon Nominell Ledningens dimensjon, målemetode {indre/ytre mål) varierer for gitt i [mm] forskjellige materialer. Plast oppgis med ytre mål",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 37,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc23"
+    },
+    "fieldKey": "Anleggsår",
+    "label": "Anleggsår",
+    "description": "Året objektet ble montert",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "YYYY",
+    "order": 1,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.964Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.964Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc2f"
+    },
+    "fieldKey": "Merknad",
+    "label": "Merknad",
+    "description": "Tilleggsinformasjon maks 255 tegn",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "optionalAlt",
+    "fieldFormat": "Tekst",
+    "order": 13,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc34"
+    },
+    "fieldKey": "Tema_punkt",
+    "label": "Tema",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "ANB",
+        "label": "Anboring"
+      },
+      {
+        "value": "BAS",
+        "label": "Basseng"
+      },
+      {
+        "value": "BERGROM",
+        "label": "BERGROM"
+      },
+      {
+        "value": "BFD",
+        "label": "Fordrøyningsbasseng"
+      },
+      {
+        "value": "BRN",
+        "label": "Brønn"
+      },
+      {
+        "value": "DIV",
+        "label": "Div. ledningspkt"
+      },
+      {
+        "value": "DRO",
+        "label": "Driftsobjekt"
+      },
+      {
+        "value": "FET",
+        "label": "Fettutskiller"
+      },
+      {
+        "value": "FNT",
+        "label": "Fontene"
+      },
+      {
+        "value": "FORAKONST",
+        "label": "Forankringskonstruksjon"
+      },
+      {
+        "value": "GRN",
+        "label": "Grenpunkt"
+      },
+      {
+        "value": "GRØKONSTR",
+        "label": "Grøftekonstruksjon"
+      },
+      {
+        "value": "GUT",
+        "label": "Gatequtt"
+      },
+      {
+        "value": "GVT",
+        "label": "Gråvannstank"
+      },
+      {
+        "value": "HFO",
+        "label": "Hydrofor"
+      },
+      {
+        "value": "HYD",
+        "label": "Hydrant"
+      },
+      {
+        "value": "INB",
+        "label": "Bekkeinntak"
+      },
+      {
+        "value": "INR",
+        "label": "Bekkeinntak m/rist"
+      },
+      {
+        "value": "INT",
+        "label": "Inntak"
+      },
+      {
+        "value": "KMR",
+        "label": "Kammer"
+      },
+      {
+        "value": "KNP",
+        "label": "Knutepunkt"
+      },
+      {
+        "value": "KOELSKAP",
+        "label": "El. skap"
+      },
+      {
+        "value": "KOGLYSMAS",
+        "label": "El. Gatelysmast"
+      },
+      {
+        "value": "KONSTROMRIS",
+        "label": "Konstruksjonsomriss"
+      },
+      {
+        "value": "KOTREKUM",
+        "label": "Trekkekum"
+      },
+      {
+        "value": "KRN",
+        "label": "Kran"
+      },
+      {
+        "value": "KUMi",
+        "label": "Infiltrasjonskum"
+      },
+      {
+        "value": "KUM",
+        "label": "Kum"
+      },
+      {
+        "value": "LOK",
+        "label": "Kumlokk"
+      },
+      {
+        "value": "MAS",
+        "label": "Maskinrom"
+      },
+      {
+        "value": "MKS",
+        "label": "Målekum spillvann"
+      },
+      {
+        "value": "MKV",
+        "label": "Målekum vann"
+      },
+      {
+        "value": "OIL",
+        "label": "Oljeutskiller"
+      },
+      {
+        "value": "OVL",
+        "label": "Overløp"
+      },
+      {
+        "value": "PAF",
+        "label": "Pumpestasjon(af)"
+      },
+      {
+        "value": "PMK",
+        "label": "Pumpekum"
+      },
+      {
+        "value": "PMKAF",
+        "label": "Pumpekum(af)"
+      },
+      {
+        "value": "PMKOV",
+        "label": "Pumpekum(ov)"
+      },
+      {
+        "value": "PMKSP",
+        "label": "Pumpekum(sp)"
+      },
+      {
+        "value": "PMKVL",
+        "label": "Pumpekum(vl)"
+      },
+      {
+        "value": "POV",
+        "label": "Pumpestasjon(ov)"
+      },
+      {
+        "value": "PSP",
+        "label": "Pumpestasjon(sp)"
+      },
+      {
+        "value": "PST",
+        "label": "Pumpestasjon(v)"
+      },
+      {
+        "value": "PSTVL",
+        "label": "Pumpestasjon, kun pumping"
+      },
+      {
+        "value": "PSU",
+        "label": "Pumpesump"
+      },
+      {
+        "value": "RED",
+        "label": "Reduksjonskum"
+      },
+      {
+        "value": "RES",
+        "label": "Reduksjonsstasjon"
+      },
+      {
+        "value": "ROV",
+        "label": "Renseanlegg(ov)"
+      },
+      {
+        "value": "RSP",
+        "label": "Renseanlegg(sp)"
+      },
+      {
+        "value": "RVA",
+        "label": "Renseanlegg(v)"
+      },
+      {
+        "value": "SAN",
+        "label": "Sandfangskum"
+      },
+      {
+        "value": "SANI",
+        "label": "Sandfangskum med infiltrasjon"
+      },
+      {
+        "value": "SEP",
+        "label": "Septiktank"
+      },
+      {
+        "value": "SLA",
+        "label": "Slamavskiller"
+      },
+      {
+        "value": "SLAMKIOSK",
+        "label": "Slamkiosk"
+      },
+      {
+        "value": "SLG",
+        "label": "Gatesluk"
+      },
+      {
+        "value": "SLI",
+        "label": "Sluk m/sandfang og infiltrasjon"
+      },
+      {
+        "value": "SLS",
+        "label": "Sluk m/sandfang"
+      },
+      {
+        "value": "SLU",
+        "label": "Sluk"
+      },
+      {
+        "value": "SPR",
+        "label": "Sprinkleranlegg"
+      },
+      {
+        "value": "STR",
+        "label": "Stakerør"
+      },
+      {
+        "value": "SUMP",
+        "label": "Sump"
+      },
+      {
+        "value": "SVB",
+        "label": "Svømmebasseng"
+      },
+      {
+        "value": "TNK",
+        "label": "Tank"
+      },
+      {
+        "value": "TOP",
+        "label": "Topp objekt",
+        "description": "For objekter uten lokk, hydrant, stakerør og bakkekran"
+      },
+      {
+        "value": "TØKSTVL",
+        "label": "Trykkøkningsstasjon(vl)"
+      },
+      {
+        "value": "TØMSTBOBIL",
+        "label": "Tømmestasjon for bobil"
+      },
+      {
+        "value": "UTS",
+        "label": "Utløp"
+      },
+      {
+        "value": "VANNPOST",
+        "label": "Vannpost"
+      },
+      {
+        "value": "VKI",
+        "label": "Vannkiosk"
+      },
+      {
+        "value": "VPK",
+        "label": "Ventilpunkt"
+      },
+      {
+        "value": "VST",
+        "label": "Ventilstasjon(v)"
+      }
+    ],
+    "order": 18,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc35"
+    },
+    "fieldKey": "Type",
+    "label": "Type",
+    "objectTypes": ["punktobjekter"],
+    "required": "conditional",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "DAN",
+        "label": "Annet driftsobjekt"
+      },
+      {
+        "value": "D811",
+        "label": "Bend 11gr"
+      },
+      {
+        "value": "D815",
+        "label": "Bend15gr"
+      },
+      {
+        "value": "D822",
+        "label": "Bend 22gr"
+      },
+      {
+        "value": "D830",
+        "label": "Bend 30gr"
+      },
+      {
+        "value": "DB45",
+        "label": "Bend 45gr"
+      },
+      {
+        "value": "DB90",
+        "label": "Bend 90gr"
+      },
+      {
+        "value": "DBJUST410",
+        "label": "Bend justerbart 0-90gr"
+      },
+      {
+        "value": "DBJUST420",
+        "label": "Bend justerbart 5-51gr"
+      },
+      {
+        "value": "DBJUST430",
+        "label": "Bend justerbart 44-91gr"
+      },
+      {
+        "value": "DDAM",
+        "label": "Dam"
+      },
+      {
+        "value": "DFOT",
+        "label": "Fotopunkt"
+      },
+      {
+        "value": "DOVG",
+        "label": "overgang på ledning"
+      },
+      {
+        "value": "DREPMUF",
+        "label": "Reparasjonsmuffe"
+      },
+      {
+        "value": "DST",
+        "label": "Strekkfast skjøt"
+      },
+      {
+        "value": "GRØSTENG",
+        "label": "Grøftestengsel"
+      },
+      {
+        "value": "GRØSTENG01",
+        "label": "Grøftestengsel, støpt betongvegg"
+      },
+      {
+        "value": "GRØSTENG06",
+        "label": "Grøftestengsel av grus"
+      },
+      {
+        "value": "GRØSTENG10",
+        "label": "Grøftestengsel av leire"
+      },
+      {
+        "value": "FORAKLOSS",
+        "label": "Forankringskloss"
+      },
+      {
+        "value": "FORAPLATE",
+        "label": "Forankringsplate"
+      },
+      {
+        "value": "FORASPUNT",
+        "label": "Forankring spuntvegg"
+      }
+    ],
+    "order": 19,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc36"
+    },
+    "fieldKey": "Kumform",
+    "label": "Kumform",
+    "objectTypes": ["punktobjekter"],
+    "required": "conditional",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "AN",
+        "label": "Annen form"
+      },
+      {
+        "value": "F",
+        "label": "Firkantet"
+      },
+      {
+        "value": "FK",
+        "label": "Kvadratisk"
+      },
+      {
+        "value": "FR",
+        "label": "Rektangulær"
+      },
+      {
+        "value": "N",
+        "label": "Kum eget nett"
+      },
+      {
+        "value": "R",
+        "label": "Rund"
+      },
+      {
+        "value": "X",
+        "label": "Spesielt volum {avløpsmodell)"
+      }
+    ],
+    "order": 20,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc40"
+    },
+    "fieldKey": "AnleggsID",
+    "label": "AnleggsID",
+    "description": "Objektets ID. Identifikasjon til objekt, enten en SID eller AnleggsID",
+    "objectTypes": ["punktobjekter"],
+    "required": "conditional",
+    "fieldFormat": "Tekst",
+    "order": 30,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc42"
+    },
+    "fieldKey": "NOBB-VAVVS-nr_punkt",
+    "label": "NOBB-VAVVS-nr",
+    "description": "Se https://nobb-vavvs.no/. NOBB/NRF-nummeret. Som for kummer er det nummeret til bunnseksjonen, oftest 7 siffer som er viktigst. For kumlokk er det lokkets nummer",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 32,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc4d"
+    },
+    "fieldKey": "Ringstivhet",
+    "label": "Ringstivhet",
+    "description": "obligatorisk felt for selvfallsledninger",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "SN2"
+      },
+      {
+        "value": "SN4"
+      },
+      {
+        "value": "SN5"
+      },
+      {
+        "value": "SN6"
+      },
+      {
+        "value": "SN8"
+      },
+      {
+        "value": "SN10"
+      },
+      {
+        "value": "SN16"
+      }
+    ],
+    "order": 43,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc24"
+    },
+    "fieldKey": "Datafangstdato",
+    "label": "Datafangstdato",
+    "description": "lnnmålt dato.Beskriver dato for inn måling av objekt",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "DD.MM.YYYY",
+    "order": 2,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.965Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.965Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc25"
+    },
+    "fieldKey": "Innmålt_av",
+    "label": "Innmålt_av",
+    "description": "Entreprenør /person. Navn på entreprenør samt initialer på innmåler (landmåler). Navn på inn måler dersom det er innmålt av ledningseier.",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Navn",
+    "order": 3,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.965Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.965Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc2c"
+    },
+    "fieldKey": "Stedfestingsforhold",
+    "label": "Stedfestingsforhold",
+    "description": "Angir hvordan stedfesting av objektet er utført.",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "DELV_LUKK_GRØ",
+        "label": "Delvis lukket grøft",
+        "description": "Grøften er delvis fylt igjen og stedfesting foregår på omfylte masser, hvor z-verdien til objektet er beregnet i forhold til objektets faktiske beliggenhet."
+      },
+      {
+        "value": "I_TUNNEL",
+        "label": "I tunnel",
+        "description": "Stedfesting foretatt inne i tunnel/borehull."
+      },
+      {
+        "value": "I_VANN",
+        "label": "I vann",
+        "description": "Stedfesting på/langs objektet i sjø/vassdrag."
+      },
+      {
+        "value": "IKKE_STEDF",
+        "label": "Ikke stedfestet",
+        "description": "Stedfesting av objektet er ikke utført, med unntak av start- og sluttnode (punkt). Eksempel: Borehull med liten diameter, utilgjengelig del av objekt."
+      },
+      {
+        "value": "LUKK_GRØ",
+        "label": "Lukket grøft",
+        "description": "Grøften er fylt igjen og stedfesting foregår på bakkenivå, hvor z-verdien til objektet er beregnet ved hjelp av oppgitt grøftedybde."
+      },
+      {
+        "value": "OVERFL_VANN",
+        "label": "Overflate vann",
+        "description": "Stedfesting på vannoverflaten, hvor z-verdien til objektet er beregnet i forhold til objektets beliggenhet på/under bunnen, evt. i vannsøylen."
+      },
+      {
+        "value": "POS_FRA_KUM",
+        "label": "Posisjon fra kum/stasjon",
+        "description": "Posisjon (koordinater) fra kummen/nettstasjonen som objektet er plassert i."
+      },
+      {
+        "value": "PÅVI",
+        "label": "Påvist",
+        "description": "Stedfesting på bakgrunn av påvist ledningsforløp, hvor z-verdien til objektet er beregnet i forhold til objektets antatte beliggenhet."
+      },
+      {
+        "value": "ÅPEN_GRØ",
+        "label": "Åpen grøft",
+        "description": "Grøften er åpen og stedfesting foregår direkte på synlig objekt."
+      },
+      {
+        "value": "ÅPEN_KUM",
+        "label": "Åpen kum/stasjon",
+        "description": "Stedfesting foregår direkte på synlig objekt i kum eller i nettstasjon."
+      }
+    ],
+    "order": 10,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc30"
+    },
+    "fieldKey": "Eier",
+    "label": "Eier",
+    "description": "",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "optionalAlt",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "F",
+        "label": "Fylke",
+        "description": ""
+      },
+      {
+        "value": "I",
+        "label": "Interkommunal",
+        "description": ""
+      },
+      {
+        "value": "K",
+        "label": "Kommunal",
+        "description": ""
+      },
+      {
+        "value": "K1",
+        "label": "Vei (kommunal)",
+        "description": ""
+      },
+      {
+        "value": "K2",
+        "label": "IT (kommunal)",
+        "description": ""
+      },
+      {
+        "value": "P",
+        "label": "Privat (bygningseier)",
+        "description": ""
+      },
+      {
+        "value": "P1",
+        "label": "Privat (kommunal eiendom)",
+        "description": ""
+      },
+      {
+        "value": "S",
+        "label": "Statlig",
+        "description": ""
+      },
+      {
+        "value": "S1",
+        "label": "Forsvaret (statlig)",
+        "description": ""
+      },
+      {
+        "value": "S2",
+        "label": "Lufthavn (statlig)",
+        "description": ""
+      },
+      {
+        "value": "S3",
+        "label": "Statens vegvesen",
+        "description": ""
+      },
+      {
+        "value": "AN",
+        "label": "Annet",
+        "description": ""
+      }
+    ],
+    "order": 14,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc31"
+    },
+    "fieldKey": "Vertikalnivå",
+    "label": "Vertikalnivå",
+    "description": "",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "optionalAlt",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "UNDER_GRUNN",
+        "label": "Under grunnen",
+        "description": "Tunnel, kulvert, ledning i grøft"
+      },
+      {
+        "value": "PÅ_GRUNN_VANNOVERF",
+        "label": "På grunnen / vannoverflate",
+        "description": ""
+      },
+      {
+        "value": "OVER_GRUNN",
+        "label": "Over grunnen (bru/luftspenn)",
+        "description": ""
+      },
+      {
+        "value": "PÅ_BUNN",
+        "label": "På bunnen (vann/sjø)",
+        "description": ""
+      },
+      {
+        "value": "!_VANNSØYLEN",
+        "label": "Objektet ligger i vannsøylen",
+        "description": ""
+      },
+      {
+        "value": "SLISSING",
+        "label": "Microtrase",
+        "description": "Der ledningene legges nedfrest i asfalt. Under bunnen (i sjø/vassdrag)."
+      },
+      {
+        "value": "UNDER_BUNN",
+        "label": "Anlegget er nedgravd/spylt ned i bunnen, eventuelt overdekket.",
+        "description": ""
+      }
+    ],
+    "order": 15,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc37"
+    },
+    "fieldKey": "Bredde (diameter)",
+    "label": "Bredde (diameter)",
+    "description": "Bredde på konstruksjonen, for en rund kum er dette dimensjonen.",
+    "objectTypes": ["punktobjekter"],
+    "required": "polygonExcluded",
+    "fieldFormat": "Heltall",
+    "order": 21,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc3b"
+    },
+    "fieldKey": "Utvendig_høyde",
+    "label": "Utvendig høyde",
+    "description": "Utvendig høyde fra topplokk og ned til bunn utvendig. Obligatorisk for alle installasjoner som ikke er sirkulære og prefabrikkerte. Utvendig høyde gitt i [mm]. Nødvendig for å kunne skape riktig ytre volum jfr krav i Ledningsregistreringsforskriften",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 25,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc41"
+    },
+    "fieldKey": "S_HYPERLINK_punkt",
+    "label": "S_HYPERLINK",
+    "description": "Generert. Beskriver sti til vedlegg laget i Gemini Terreng, ved eksport følger en vedleggsmappe med .gmi fil",
+    "objectTypes": ["punktobjekter"],
+    "required": "geminiOnly",
+    "fieldFormat": "Tekst",
+    "order": 31,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc44"
+    },
+    "fieldKey": "Tema_led",
+    "label": "Tema",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "AF",
+        "label": "Avløp felles ledning"
+      },
+      {
+        "value": "AFD",
+        "label": "Avløp felles dykkerledning"
+      },
+      {
+        "value": "AFK",
+        "label": "Avløp felles kanal"
+      },
+      {
+        "value": "AFLU",
+        "label": "Avløp felles lufteledning"
+      },
+      {
+        "value": "AFO",
+        "label": "Avløp felles overløpsledning"
+      },
+      {
+        "value": "AFP",
+        "label": "Avløp felles pumpeledning"
+      },
+      {
+        "value": "AFS",
+        "label": "Avløp felles sugeledning"
+      },
+      {
+        "value": "AFT",
+        "label": "Avløp felles tunnel"
+      },
+      {
+        "value": "DR",
+        "label": "Drensledning"
+      },
+      {
+        "value": "12",
+        "label": "Sigevannsledning"
+      },
+      {
+        "value": "12D",
+        "label": "Sigevann drensledning"
+      },
+      {
+        "value": "121",
+        "label": "Sigevann infiltrasjonsledning"
+      },
+      {
+        "value": "120",
+        "label": "Sigevann overløpsledning"
+      },
+      {
+        "value": "12P",
+        "label": "Sigevann pumpeledning"
+      },
+      {
+        "value": "I2S",
+        "label": "Sigevann sugeledning"
+      },
+      {
+        "value": "I3",
+        "label": "Prosessavløp fra industri"
+      },
+      {
+        "value": "LEBO",
+        "label": "Borehull (framføringsvei)"
+      },
+      {
+        "value": "LEBRO",
+        "label": "Ledningsbro (framføringsvei)"
+      },
+      {
+        "value": "LEBUNT",
+        "label": "Ledningsbunt (framføringsvei)"
+      },
+      {
+        "value": "LEGLYSKAB",
+        "label": "Gatelyskabel"
+      },
+      {
+        "value": "LEGRØ",
+        "label": "Grøft (framføringsvei)"
+      },
+      {
+        "value": "LEKA",
+        "label": "Kanal (framføringsvei)"
+      },
+      {
+        "value": "LEKU",
+        "label": "Kulvert (framføringsvei)"
+      },
+      {
+        "value": "LELYTKAB",
+        "label": "Lyttekabel"
+      },
+      {
+        "value": "LEOPIKANAL",
+        "label": "OPI-kanal (framføringsvei)"
+      },
+      {
+        "value": "LESIGNKAB",
+        "label": "Signalkabel"
+      },
+      {
+        "value": "LESLISS",
+        "label": "Slisse (framføringsvei)"
+      },
+      {
+        "value": "LESPUNT",
+        "label": "Spuntlinje"
+      },
+      {
+        "value": "LESTIKKB",
+        "label": "Stikkledninger i bunt"
+      },
+      {
+        "value": "LESTØTMUR",
+        "label": "Støttemur ved ledningsgrøft"
+      },
+      {
+        "value": "LETRA",
+        "label": "Trase (framføringsvei)"
+      },
+      {
+        "value": "LETRE",
+        "label": "Trekkerør (framføringsvei)"
+      },
+      {
+        "value": "LETREMKAB",
+        "label": "Trekkerør med kabel (framføringsvei)"
+      },
+      {
+        "value": "LETREUKAB",
+        "label": "Trekkerør uten kabel (framføringsvei)"
+      },
+      {
+        "value": "LETRYKLUFT",
+        "label": "Trykkluftledning"
+      },
+      {
+        "value": "LETU",
+        "label": "Tunnel (framføringsvei)"
+      },
+      {
+        "value": "LETUADK",
+        "label": "Adkomsttunnel (framføringsvei)"
+      },
+      {
+        "value": "LEVANNBVARM",
+        "label": "Vannboren varme"
+      },
+      {
+        "value": "LEVAR",
+        "label": "Varerør (framføringsvei)"
+      },
+      {
+        "value": "OV",
+        "label": "Overvannsledning"
+      },
+      {
+        "value": "OVF",
+        "label": "Overvann fordrøyning"
+      },
+      {
+        "value": "OVI",
+        "label": "Overvann infiltrasjonsledning"
+      },
+      {
+        "value": "OVK",
+        "label": "Overvann kanal"
+      },
+      {
+        "value": "OVKU",
+        "label": "Overvann kulvert"
+      },
+      {
+        "value": "OVO",
+        "label": "Overvann overløpsledning"
+      },
+      {
+        "value": "OVP",
+        "label": "Overvann pumpeledning"
+      },
+      {
+        "value": "OVR",
+        "label": "Overvann renne"
+      },
+      {
+        "value": "OVS",
+        "label": "Overvann stikkrenne"
+      },
+      {
+        "value": "OVT",
+        "label": "Overvann tunnel"
+      },
+      {
+        "value": "OVU",
+        "label": "Overvann overløp i tunnel"
+      },
+      {
+        "value": "SP",
+        "label": "Spillvannsledning"
+      },
+      {
+        "value": "SPD",
+        "label": "Spillvann dykkerledning"
+      },
+      {
+        "value": "SPGRÅ",
+        "label": "Spillvann gråvannsledning"
+      },
+      {
+        "value": "SPI",
+        "label": "Spillvann infiltrasjonsledning"
+      },
+      {
+        "value": "SPK",
+        "label": "Spillvann kanal"
+      },
+      {
+        "value": "SPLU",
+        "label": "Spillvann lufteledning"
+      },
+      {
+        "value": "SPO",
+        "label": "Spillvann overløpsledning"
+      },
+      {
+        "value": "SPP",
+        "label": "Spillvann pumpeledning"
+      },
+      {
+        "value": "SPS",
+        "label": "Spillvann sugeledning"
+      },
+      {
+        "value": "SPT",
+        "label": "Spillvann tunnel"
+      },
+      {
+        "value": "VL",
+        "label": "Vannledning"
+      },
+      {
+        "value": "VLI",
+        "label": "Vann inntaksledning"
+      },
+      {
+        "value": "VLK",
+        "label": "Vann kanal"
+      },
+      {
+        "value": "VLLU",
+        "label": "Vann lufteledning"
+      },
+      {
+        "value": "VLP",
+        "label": "Vann pumpeledning"
+      },
+      {
+        "value": "VLSPR",
+        "label": "Vann sprinklerledning"
+      },
+      {
+        "value": "VLT",
+        "label": "Vann tunnel"
+      },
+      {
+        "value": "VLU",
+        "label": "Utspyler / spyleledning"
+      },
+      {
+        "value": "XF",
+        "label": "Fjernvarmeledning"
+      },
+      {
+        "value": "XG",
+        "label": "Gassledning"
+      },
+      {
+        "value": "XGP",
+        "label": "Gass pumpeledning"
+      },
+      {
+        "value": "XGS",
+        "label": "Gass sugeledning"
+      },
+      {
+        "value": "XK",
+        "label": "Kuldeledning"
+      }
+    ],
+    "order": 34,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc45"
+    },
+    "fieldKey": "Nett_type",
+    "label": "Nett type",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "F",
+        "label": "Fordelingsnett",
+        "description": "Privat hovednett før fordeling til boenheter"
+      },
+      {
+        "value": "H",
+        "label": "Hovednett",
+        "description": "Kommunale ledninger, ofte med tilkoblinger til abonnenter"
+      },
+      {
+        "value": "O",
+        "label": "Overføringsnett",
+        "description": "Større kommunale og interkommunale ledninger. Hensikten deres er å forsyne områder, pumpestasjoner og høydebasseng. Dimensjon >160mm"
+      },
+      {
+        "value": "S",
+        "label": "Stikkledningsnett",
+        "description": "Privat ledningsnett til enkelte abonnenter"
+      },
+      {
+        "value": "S6",
+        "label": "Sprinklerledn.nett",
+        "description": "Privat ledning. Kommer ofte ut av kum og forsyner bygningers sprinkleranlegg. Ledningen inneholder gammelt, stillestående vann."
+      }
+    ],
+    "order": 35,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc48"
+    },
+    "fieldKey": "VertikalDimensjon",
+    "label": "VertikalDimensjon",
+    "description": "Vertikal Dimensjon Nominell gitt i [mm] ledningens vertikale dimensjon, brukes på ikke-sirkulære rør",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 38,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc4c"
+    },
+    "fieldKey": "SDR",
+    "label": "SDR",
+    "description": "obligatorisk felt for trykkledninger",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Desimal",
+    "acceptableValues": [
+      {
+        "value": 6.0
+      },
+      {
+        "value": 7.4
+      },
+      {
+        "value": 7.5
+      },
+      {
+        "value": 9.0
+      },
+      {
+        "value": 11.0
+      },
+      {
+        "value": 13.6
+      },
+      {
+        "value": 17.0
+      },
+      {
+        "value": 17.6
+      },
+      {
+        "value": 21.0
+      },
+      {
+        "value": 26.0
+      },
+      {
+        "value": 33.0
+      },
+      {
+        "value": 41.0
+      }
+    ],
+    "order": 42,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc4f"
+    },
+    "fieldKey": "S_HYPERLINK",
+    "label": "S_HYPERLINK",
+    "description": "Generert. Beskriver sti til vedlegg laget i Gemini Terreng, ved eksport følger en vedleggsmappe med .gmi fil",
+    "objectTypes": ["ledninger"],
+    "required": "geminiOnly",
+    "fieldFormat": "Tekst",
+    "order": 45,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc26"
+    },
+    "fieldKey": "Saksnummer",
+    "label": "Saksnummer",
+    "description": "Kommunens saksnummer for anlegget",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Tekst",
+    "order": 4,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.965Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.965Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc2b"
+    },
+    "fieldKey": "NøyaktighetHøyde",
+    "label": "NøyaktighetHøyde",
+    "description": "Usikkerhet ved innmåling, høyere tall betyr mer usikkert.",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 9,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc2d"
+    },
+    "fieldKey": "Stedfestingsårsak",
+    "label": "Stedfestingsårsak",
+    "description": "",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "FJERN",
+        "label": "Fjernet",
+        "description": "Eksisterende objekt som ble stedfestet før det fysisk ble fjernet."
+      },
+      {
+        "value": "FLYTT_DELV",
+        "label": "Flyttet delvis avdekket",
+        "description": "Eksisterende objekt som har blitt flyttet, men hvor objektets tverrsnitt har kun delvis blitt avdekket. Stedfestingen refererer til avdekket objekt."
+      },
+      {
+        "value": "FLYTT_HELT",
+        "label": "Flyttet helt",
+        "description": "Eksisterende objekt som har blitt flyttet, og hvor objektets tverrsnitt i sin helhet har blitt avdekket."
+      },
+      {
+        "value": "NYTT",
+        "label": "Nytt",
+        "description": "Nybygd stedfestet objekt."
+      },
+      {
+        "value": "PÅVI",
+        "label": "Påvist",
+        "description": "Eksisterende objekt med tidligere manglende eller dårlig stedfesting før ny stedfesting ble foretatt."
+      },
+      {
+        "value": "UENDR",
+        "label": "Uendret",
+        "description": "Eksisterende helt eller delvis avdekket objekt med tidligere manglende eller dårlig stedfesting før ny stedfesting ble foretatt."
+      }
+    ],
+    "order": 11,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc2e"
+    },
+    "fieldKey": "Synbarhet",
+    "label": "Synbarhet",
+    "description": "",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "0",
+        "label": "Fullt ut synlig/gjenfinnbar i terrenget",
+        "description": ""
+      },
+      {
+        "value": "1",
+        "label": "Dårlig gjenfinnbar i terreng",
+        "description": ""
+      },
+      {
+        "value": "2",
+        "label": "Middels synlig i flybilde/modell",
+        "description": ""
+      },
+      {
+        "value": "3",
+        "label": "Dårlig/ikke synlig i flybilde/modell",
+        "description": ""
+      }
+    ],
+    "order": 12,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc32"
+    },
+    "fieldKey": "MaksAvvikHorisontalt",
+    "label": "MaksAvvikHorisontalt",
+    "description": "MaksAvvikHorisontalt gitt i [cm]. j fr krav i Ledningsregistreringsforskriften, se LAGS vedlegg C",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 16,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc33"
+    },
+    "fieldKey": "MaksAvvikVertikalt",
+    "label": "MaksAvvikVertikalt",
+    "description": "jfr krav i Ledningsregistreringsforskriften, se LAGS vedlegg C",
+    "objectTypes": ["punktobjekter", "ledninger"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 17,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.966Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc38"
+    },
+    "fieldKey": "Lengde",
+    "label": "Lengde",
+    "description": "Lengde gitt i [mm]",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 22,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc3c"
+    },
+    "fieldKey": "Avst_BunnInnvUnderUtv",
+    "label": "Avst_BunnInnvUnderUtv",
+    "description": "Avstand bunn innvendig til underkant utvendig Avstand fra senter bunn kum (målepunkt kum) og ned til underkant utvendig kum. Obligatorisk for alle sirkulære, prefabrikkerte installasjoner som for eksempel kummer. Desimaltall avstand i [m]. Nødvendig for å kunne skape riktig utvendig volum jfr krav i Ledningsregistreringsforskriften",
+    "objectTypes": ["punktobjekter"],
+    "required": "always",
+    "fieldFormat": "Desimaltall",
+    "order": 26,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc46"
+    },
+    "fieldKey": "Material",
+    "label": "Material",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "AAS",
+        "label": "Asbest-sement"
+      },
+      {
+        "value": "AN",
+        "label": "Annet"
+      },
+      {
+        "value": "BET",
+        "label": "Betong"
+      },
+      {
+        "value": "FJE",
+        "label": "Fjell"
+      },
+      {
+        "value": "GRP",
+        "label": "Glasfiber Reinforced Polyester"
+      },
+      {
+        "value": "GSE",
+        "label": "Etenplast"
+      },
+      {
+        "value": "GUP",
+        "label": "Glassfib. arm. urne."
+      },
+      {
+        "value": "ICO",
+        "label": "Icodren"
+      },
+      {
+        "value": "KOMPOS",
+        "label": "Kompositt"
+      },
+      {
+        "value": "LER",
+        "label": "Leir"
+      },
+      {
+        "value": "MCU",
+        "label": "Kopper"
+      },
+      {
+        "value": "MGA",
+        "label": "Galvanisert stål"
+      },
+      {
+        "value": "MRS",
+        "label": "Rustfritt stål"
+      },
+      {
+        "value": "MSF",
+        "label": "Syrefast stål"
+      },
+      {
+        "value": "MST",
+        "label": "Stål"
+      },
+      {
+        "value": "PE",
+        "label": "Polyet, uspesifisert"
+      },
+      {
+        "value": "PE100",
+        "label": "Polyet. høy dens"
+      },
+      {
+        "value": "PE100-RC-PP0",
+        "label": "PE100 RC rør med mineralfylt PP kappe (SESU)"
+      },
+      {
+        "value": "PE32",
+        "label": "Polyet. lav dens"
+      },
+      {
+        "value": "PE50",
+        "label": "Polvet. høv dens"
+      },
+      {
+        "value": "PE80",
+        "label": "Polvet. høv dens"
+      },
+      {
+        "value": "PEH",
+        "label": "Polyet. høy dens."
+      },
+      {
+        "value": "PEH_PEM",
+        "label": "Polyet."
+      },
+      {
+        "value": "PEL",
+        "label": "Polyet. lav dens."
+      },
+      {
+        "value": "PEM",
+        "label": "Polyet. midd. dens."
+      },
+      {
+        "value": "PERC",
+        "label": "PE100 RC (Resistance to crack)"
+      },
+      {
+        "value": "PP",
+        "label": "Polypropylen"
+      },
+      {
+        "value": "PVC",
+        "label": "Polyvinylklorid"
+      },
+      {
+        "value": "PVC-0",
+        "label": "Polyvinylklorid molekylær orienteering"
+      },
+      {
+        "value": "PVC-U",
+        "label": "Polyvinylklorid uten mykner"
+      },
+      {
+        "value": "SJ",
+        "label": "Støpejern, uspesifisert"
+      },
+      {
+        "value": "SJG",
+        "label": "Støpejern, qrått"
+      },
+      {
+        "value": "SJK",
+        "label": "Støpejern, duktilt"
+      },
+      {
+        "value": "STA",
+        "label": "Annen strømpe/foring"
+      },
+      {
+        "value": "STF",
+        "label": "Filtstrømpe"
+      },
+      {
+        "value": "STG",
+        "label": "Glassfiber"
+      },
+      {
+        "value": "TEG",
+        "label": "Teglstein"
+      },
+      {
+        "value": "TNA",
+        "label": "Naturstein"
+      },
+      {
+        "value": "UK",
+        "label": "Ukjent"
+      }
+    ],
+    "order": 36,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.967Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc49"
+    },
+    "fieldKey": "InnvendigUtvendig_led",
+    "label": "InnvendigUtvendig",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "ID",
+        "label": "Innvendig dim",
+        "description": "Ledningens dimensjon er innvendig"
+      },
+      {
+        "value": "OD",
+        "label": "Utvendig dim",
+        "description": "Ledningens dimensjon er utvendig"
+      }
+    ],
+    "order": 39,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc4a"
+    },
+    "fieldKey": "Tykkelse_led",
+    "label": "Tykkelse",
+    "description": "Tykkelse angitt i [mm] Ledningens tykkelse angitt i [mm] angitt med ett desimaltall",
+    "objectTypes": ["ledninger"],
+    "required": "optional",
+    "fieldFormat": "Tall",
+    "order": 40,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc4b"
+    },
+    "fieldKey": "Rørform",
+    "label": "Rørform",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "A",
+        "label": "Annet"
+      },
+      {
+        "value": "E",
+        "label": "Eggformet"
+      },
+      {
+        "value": "F",
+        "label": "Firkant"
+      },
+      {
+        "value": "R",
+        "label": "Firkant m/renne"
+      },
+      {
+        "value": "S",
+        "label": "Sirkulær"
+      },
+      {
+        "value": "T",
+        "label": "Sirkulær med renne (v-rør)"
+      },
+      {
+        "value": "X",
+        "label": "Spesiell form (avløpsmodell)",
+        "description": "Kan betegnes slik ved inn måling av plasstøpte kumkonstruksjoner"
+      }
+    ],
+    "order": 41,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc4e"
+    },
+    "fieldKey": "Trykklasse",
+    "label": "Trykklasse",
+    "objectTypes": ["ledninger"],
+    "required": "optional",
+    "fieldFormat": "Kode",
+    "acceptableValues": [
+      {
+        "value": "PN1",
+        "label": "PN1 Nominelt trykk"
+      },
+      {
+        "value": "PN2",
+        "label": "PN2 Nominelt trykk"
+      },
+      {
+        "value": "PN2.5",
+        "label": "PN2.5 Nominelt trykk"
+      },
+      {
+        "value": "PN3.2",
+        "label": "PN3.2 Nominelt trykk"
+      },
+      {
+        "value": "PN4",
+        "label": "PN4 Nominelt trykk"
+      },
+      {
+        "value": "PN5",
+        "label": "PN5 Nominelt trykk"
+      },
+      {
+        "value": "PN6",
+        "label": "PN6 Nominelt trykk"
+      },
+      {
+        "value": "PN6.3",
+        "label": "PN6.3 Nominelt trykk"
+      },
+      {
+        "value": "PN8",
+        "label": "PN8 Nominelt trykk"
+      },
+      {
+        "value": "PN10",
+        "label": "PN10 Nominelt trykk"
+      },
+      {
+        "value": "PN12",
+        "label": "PN12 Nominelt trykk"
+      },
+      {
+        "value": "PN12.5",
+        "label": "PN12.5 Nominelt trykk"
+      },
+      {
+        "value": "PN16",
+        "label": "PN16 Nominelt trykk"
+      },
+      {
+        "value": "PN20",
+        "label": "PN20 Nominelt trykk"
+      },
+      {
+        "value": "PN25",
+        "label": "PN25 Nominelt trykk"
+      }
+    ],
+    "order": 44,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68a57ea45c5ccd1b5094fc50"
+    },
+    "fieldKey": "NOBB-VAVVS-nr_led",
+    "label": "NOBB-VAVVS-nr",
+    "description": "NOBB/NRF -nummeret. Som oftest 7 siffer. Se https://obb-vavvs.no/",
+    "objectTypes": ["ledninger"],
+    "required": "always",
+    "fieldFormat": "Heltall",
+    "order": 46,
+    "acceptableValues": [],
+    "__v": 0,
+    "createdAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    },
+    "updatedAt": {
+      "$date": "2025-08-20T07:52:04.968Z"
+    }
+  }
+]
