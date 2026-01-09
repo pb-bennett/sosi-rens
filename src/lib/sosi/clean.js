@@ -95,7 +95,9 @@ function filterFeatureBlock(blockLines, category, selection) {
 }
 
 export function cleanSosiText(sosiText, selection) {
-  const lines = String(sosiText).split(/\r?\n/);
+  const text = String(sosiText);
+  const newline = text.includes('\r\n') ? '\r\n' : '\n';
+  const lines = text.split(/\r?\n/);
 
   const keepObjTypesByCategory = {
     punkter: new Set((selection?.objTypesByCategory?.punkter || []).map(String)),
@@ -112,6 +114,13 @@ export function cleanSosiText(sosiText, selection) {
     const section = currentSection;
     const category = categorizeSection(section);
 
+    // Preserve non-feature sections (e.g. .HODE, .SLUTT) verbatim.
+    if (category === 'unknown') {
+      outLines.push(...currentBlock);
+      currentBlock = [];
+      return;
+    }
+
     // If it's not a feature block (no section), just pass-through.
     if (!section) {
       outLines.push(...currentBlock);
@@ -121,9 +130,10 @@ export function cleanSosiText(sosiText, selection) {
 
     const objType = extractObjTypeFromBlock(currentBlock);
 
-    // If we cannot determine objtype, keep it to avoid data loss.
+    // If we cannot determine objtype, keep the block unmodified to avoid
+    // corrupting SOSI structure (especially for uncommon/edge feature shapes).
     if (!objType) {
-      outLines.push(...filterFeatureBlock(currentBlock, category, selection));
+      outLines.push(...currentBlock);
       currentBlock = [];
       return;
     }
@@ -176,6 +186,6 @@ export function cleanSosiText(sosiText, selection) {
   flushBlock();
 
   return {
-    text: outLines.join('\n'),
+    text: outLines.join(newline),
   };
 }
