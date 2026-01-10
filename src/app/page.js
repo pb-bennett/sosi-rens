@@ -1142,9 +1142,9 @@ export default function Home() {
                                     <div
                                       className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
                                     >
-                                      <div className="mx-auto w-full max-w-xl">
+                                      <div className="mx-auto w-full max-w-lg">
                                         <div
-                                          className={`grid grid-cols-[minmax(0,1fr)_7rem] border-b px-3 py-2 text-xs font-semibold ${theme.surfaceMuted} ${theme.muted}`}
+                                          className={`grid grid-cols-[minmax(0,1fr)_6rem] border-b px-2 py-1.5 text-[11px] font-semibold ${theme.surfaceMuted} ${theme.muted}`}
                                         >
                                           <div>Verdi</div>
                                           <div className="text-right">
@@ -1156,7 +1156,7 @@ export default function Home() {
                                             ([value, count]) => (
                                               <div
                                                 key={`${row.keyUpper}:${value}`}
-                                                className={`grid grid-cols-[minmax(0,1fr)_7rem] gap-3 px-3 py-2 text-sm border-t ${theme.border} first:border-t-0`}
+                                                className={`grid grid-cols-[minmax(0,1fr)_6rem] gap-2 px-2 py-1.5 text-xs border-t ${theme.border} first:border-t-0`}
                                               >
                                                 <div className="break-all">
                                                   {String(value)}
