@@ -1,5 +1,7 @@
 We can call V0 just about feature complete. Well done team! There are a few minor features and improvements that we can consider for V1. Here are the instructions for next version:
 
+Note: We will communicate in English; the UI must be in Norwegian Bokmål.
+
 1. We need to restyle the app. A new logo can be found in the public folder. We need a colour scheme. We need modern and usable, but can have some colours too. Make me a few suggestions and implement a theme picker to allow users to select between them. We can decide on hardcoding one later. Think modern, professional but friendly.
 
 2. User should be allowed to drop a file into the upload area instead of selecting it via a file dialog.
@@ -21,7 +23,6 @@ We can call V0 just about feature complete. Well done team! There are a few mino
 8. On the "Filtrer" section the buttons for "Tilbake til standard" "Eksportere utvalg (JSON)" etc need looking at. It is not clear what they do, and they appear in a line with the most important button "Gå til nedlasting". The buttons need moving, maybe to a dropdown menu, and a better explanation of what they do is needed.
 
 9. A general overhaul of the UI could be good. We are not utilising the size of the screen. This app i designed for desktop use. Lets generally increase the size of the tables and lists to better us ehte space we have.
-
 
 ---
 
