@@ -1118,11 +1118,6 @@ export default function Home() {
                                     </div>
                                   </div>
                                 </div>
-                                <div className="shrink-0 text-right text-sm tabular-nums">
-                                  {Number(
-                                    row.count || 0
-                                  ).toLocaleString('nb-NO')}
-                                </div>
                               </button>
 
                               {isExpanded ? (
