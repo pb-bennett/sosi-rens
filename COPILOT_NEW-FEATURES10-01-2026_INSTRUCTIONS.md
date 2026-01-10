@@ -22,70 +22,71 @@ We can call V0 just about feature complete. Well done team! There are a few mino
 
 9. A general overhaul of the UI could be good. We are not utilising the size of the screen. This app i designed for desktop use. Lets generally increase the size of the tables and lists to better us ehte space we have.
 
+
 ---
 
-## Questions / avklaringer før vi koder (V1)
+## Questions / clarifications before we code (V1)
 
-Jeg har lest både denne filen og [COPILOT_INSTRUCTIONS.md](COPILOT_INSTRUCTIONS.md). Under er spørsmål/valg som vil påvirke implementasjonen.
+I have read both this file and [COPILOT_INSTRUCTIONS.md](COPILOT_INSTRUCTIONS.md). Below are questions/decisions that will affect the implementation.
 
-### Versjon / branch
+### Version / branch
 
-1. Jeg har laget branch `v1/2026-01-ui-upload-flow` og bumpet versjon fra `0.1.0` → `0.2.0` i `package.json`/`package-lock.json`. Er `0.2.0` OK som “V1 work-in-progress”, eller ønsker du en annen semver (f.eks. `0.1.1` eller `1.0.0`)?
+1. I created the branch `v1/2026-01-ui-upload-flow` and bumped the version from `0.1.0` → `0.2.0` in `package.json`/`package-lock.json`. Is `0.2.0` OK as “V1 work-in-progress”, or do you want a different semver (e.g. `0.1.1` or `1.0.0`)?
 
-### Tema + restyling
+### Theme + restyling
 
-2. Tema-velger: Skal valgt tema lagres i localStorage (anbefalt) og gjelde hele appen, eller bare gjelde for inneværende sesjon?
-3. Logo: Hvilken fil i `public/` er “ny logo” vi skal bruke (filnavn), og hvor ønsker du den plassert (øverst til venstre ved siden av tittel, eller sentrert i header)?
-4. Forslag til 3 enkle tema (kan endres senere):
-   - **Nøytral**: dagens “zinc/gray” (professionell)
-   - **Hav**: blå/indigo aksent (trygg/teknisk)
-   - **Skog**: grønn/teal aksent (vennlig)
-     Vil du at vi kun bytter aksentfarge + bakgrunn/kontrast, eller også tabellheader/knapper tydelig mer “tema”? (Jeg foreslår aksent + overflatefarger for å holde det ryddig.)
+2. Theme picker: Should the selected theme be saved in localStorage (recommended) and apply to the whole app, or only apply for the current session?
+3. Logo: Which file in `public/` is the “new logo” we should use (filename), and where should it be placed (top-left next to the title, or centered in the header)?
+4. Suggested 3 simple themes (can be changed later):
+   - **Neutral**: current “zinc/gray” (professional)
+   - **Ocean**: blue/indigo accent (safe/technical)
+   - **Forest**: green/teal accent (friendly)
+     Do you want us to only change accent + background/contrast, or also make table headers/buttons noticeably more “themed”? (I suggest accent + surface colors to keep it clean.)
 
-### Opplasting + automatisk analyse
+### Upload + auto analysis
 
-5. Instruksjon #4 sier analyse skal starte automatisk ved upload. Skal det trigges:
-   - når bruker velger fil i fil-dialog (onChange), og/eller
-   - når bruker dropper fil i dropzone?
-     (Jeg antar “begge”.)
-6. Når analyse starter automatisk: Skal vi beholde “steg-knappene” (1-4) som navigasjon, eller skal vi skjule/disable de under behandling for å unngå at folk hopper rundt mens den jobber?
+5. Instruction #4 says analysis should start automatically after upload. Should it trigger:
+   - when the user picks a file in the file dialog (onChange), and/or
+   - when the user drops a file into the dropzone?
+     (I’m assuming “both”.)
+6. When auto-analysis starts: Should we keep the step buttons (1–4) as navigation, or disable/hide them while processing so users can’t jump around mid-run?
 
-### Lasting / spinner
+### Loading / spinner
 
-7. Ønsker du en liten spinner i knappen (minimal), eller en tydelig overlay/”loading panel” i midten av skjermen som viser “Analyserer…” / “Genererer…” og blokkerer interaksjon?
+7. Do you want a small inline spinner (minimal), or a clearly visible overlay/loading panel centered on screen showing “Analyserer…” / “Genererer…” and blocking interaction?
 
-### Utforsk data (analysevisning)
+### Explore data (analysis view)
 
 8. “Show all results”:
-   - Bekrefter du at det er OK at listene blir scrollbare (ikke paginering)?
-   - Skal sorteringen fortsatt være “mest først”, deretter alfabetisk?
-9. “Objekttyper som første felt”: Ønsker du at vi viser `OBJTYPE` som en vanlig field-seksjon (med count/fordeling), og fjerner den separate “Objekttyper”-boksen helt?
-10. “Felt minimisert + expandable pivot table”: Hva mener du med pivot her?
+   - Confirm it’s OK for these lists to be scrollable (no pagination).
+   - Should sorting remain “highest first”, then alphabetical?
+9. “Object types as the first field”: Do you want `OBJTYPE` displayed as a normal field section (with count/distribution) and remove the separate “Objekttyper” card/section entirely?
+10. “Fields minimized + expandable pivot table”: What do you mean by pivot here?
 
-- A) En enkel frekvenstabell: **verdi → antall** for feltet (typisk), eller
-- B) En krysstabell: **OBJTYPE × feltverdi** (kan bli tung), eller
-- C) Noe annet?
-  NB: Dagens analyse teller bare felt-nøkler (ikke verdier). For pivot per felt må vi telle verdier også (helst lazy når feltet åpnes).
+- A) A simple frequency table: **value → count** for that field (typical), or
+- B) A cross-tab: **OBJTYPE × field value** (can get heavy), or
+- C) Something else?
+  Note: V0 analysis currently counts only field keys (not values). To build per-field pivot tables, we must count values too (ideally lazily when a field is expanded).
 
-### Feltnavn fra `fields.json`
+### Field names from `fields.json`
 
-11. Status i V0: Appen bruker ikke `src/data/fields.json` i UI i dag (ingen mapping). I tillegg ser `fields.json` ut til å ha domene-felter (GMI/innmålingsinstruks) som ikke matcher SOSI-nøklene vi ser (f.eks. `OBJTYPE`, `...P_TEMA`).
+11. Current V0 status: the app does not use `src/data/fields.json` in the UI yet (no mapping). Also, `fields.json` looks like it contains domain fields (GMI/surveying instruction) that don’t match the SOSI keys we see (e.g. `OBJTYPE`, `...P_TEMA`).
 
-- Har du en separat mapping fra SOSI-feltkode → “friendly name”, eller ønsker du at vi bygger en ny liten fil (f.eks. `src/data/field-names.json`) etter hvert?
-- Når du skriver eksempel `"12345 (Building Height)"`: Forekommer det faktisk numeriske feltkoder i dine SOSI-filer, eller var det bare et eksempel?
+- Do you have a separate mapping from SOSI field code → friendly name, or should we create a new small mapping file (e.g. `src/data/field-names.json`) over time?
+- When you wrote the example `"12345 (Building Height)"`: do numeric field codes actually appear in your SOSI files, or was it just an example?
 
-### Filtrer (forklaring + grå felter + knapper)
+### Filter view (explanation + greyed fields + buttons)
 
-12. “Grå felter” (f.eks. `EGS_PUNKT`, `EGS_LEDNING`): I V0 er disse låst som **obligatoriske** felter (kan ikke fjernes) og vises derfor disabled/grå. Jeg antar dette er bevisst for at renset SOSI fortsatt skal ha nødvendig struktur. Skal de fortsatt være låst i V1?
-13. Tekst “(keep)”: I V0 står det “Objekttyper (keep)” og “Felter (keep)”. Du ønsker dette fjernet og erstattet med en kort norsk setning øverst.
+12. “Greyed out fields” (e.g. `EGS_PUNKT`, `EGS_LEDNING`): In V0 these are locked as **mandatory** fields (cannot be removed) and therefore render disabled/grey. I assume this is intentional to keep SOSI structure valid. Should they remain locked in V1?
+13. Text “(keep)”: In V0 we show “Objekttyper (keep)” and “Felter (keep)”. You want this removed and replaced by a short Norwegian sentence at the top.
 
-- Forslag: “Velg hvilke objekttyper og felter som skal være med i eksporten.”
-  Er det OK, eller har du foretrukket formulering?
+- Suggested sentence: “Velg hvilke objekttyper og felter som skal være med i eksporten.”
+  Is that OK, or do you prefer different wording?
 
-14. Knapper i filtrering (“Tilbakestill…”, eksport/import JSON, slett innstillinger): Ønsker du at disse flyttes til en “Avanserte valg”-dropdown/meny, og at vi legger inn korte forklaringer under hver handling (tooltip/tekstlinje)?
+14. Filter actions (“Tilbakestill…”, export/import JSON, clear saved settings): Do you want these moved into an “Advanced options” dropdown/menu, with short explanations per action (tooltip/help text)?
 
-- Hvilke handlinger skal være synlige som primærknapper ved siden av “Gå til nedlasting”, og hvilke skal gjemmes i meny?
+- Which actions should remain as primary buttons next to “Gå til nedlasting”, and which should be moved into the menu?
 
-### Skjermbruk / desktop
+### Desktop layout / space usage
 
-15. “Utnytte skjermen”: Ønsker du full-bredde layout (f.eks. droppe `max-w-6xl`), eller fortsatt en maks-bredde men med større tabeller/typografi?
+15. “Use more screen”: Do you want full-width layout (e.g. remove `max-w-6xl`), or keep a max width but increase table/list sizing and typography?
