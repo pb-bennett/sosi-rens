@@ -160,7 +160,11 @@ function categorizeSection(section) {
   return 'unknown';
 }
 
-function computeValueFrequencyForField(sosiText, fieldKeyUpper, category) {
+function computeValueFrequencyForField(
+  sosiText,
+  fieldKeyUpper,
+  category
+) {
   const counts = new Map();
   let currentCategory = 'unknown';
   let currentSection = null;
@@ -189,7 +193,9 @@ function computeValueFrequencyForField(sosiText, fieldKeyUpper, category) {
   });
 
   return Array.from(counts.entries()).sort(
-    (a, b) => (b[1] || 0) - (a[1] || 0) || String(a[0]).localeCompare(String(b[0]))
+    (a, b) =>
+      (b[1] || 0) - (a[1] || 0) ||
+      String(a[0]).localeCompare(String(b[0]))
   );
 }
 
@@ -661,8 +667,13 @@ export default function Home() {
     if (fieldKeyUpper === 'OBJTYPE') return;
     if (!sosiText) return;
 
-    const existing = pivotCacheByCategory?.[category]?.[fieldKeyUpper];
-    if (existing?.status === 'loading' || existing?.status === 'ready') return;
+    const existing =
+      pivotCacheByCategory?.[category]?.[fieldKeyUpper];
+    if (
+      existing?.status === 'loading' ||
+      existing?.status === 'ready'
+    )
+      return;
 
     setPivotCacheByCategory((prev) => ({
       ...prev,
@@ -675,7 +686,11 @@ export default function Home() {
     // Allow UI to paint the expanded state before heavy work starts.
     await new Promise((r) => setTimeout(r, 0));
 
-    const entries = computeValueFrequencyForField(sosiText, fieldKeyUpper, category);
+    const entries = computeValueFrequencyForField(
+      sosiText,
+      fieldKeyUpper,
+      category
+    );
 
     setPivotCacheByCategory((prev) => ({
       ...prev,
@@ -687,9 +702,13 @@ export default function Home() {
   }
 
   return (
-    <div className={`h-screen overflow-hidden ${theme.appBg} ${theme.text}`}>
+    <div
+      className={`h-screen overflow-hidden ${theme.appBg} ${theme.text}`}
+    >
       <div className="flex h-full flex-col">
-        <header className={`shrink-0 border-b ${theme.border} ${theme.headerBg}`}>
+        <header
+          className={`shrink-0 border-b ${theme.border} ${theme.headerBg}`}
+        >
           <div className="mx-auto w-full max-w-7xl px-6 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -782,7 +801,6 @@ export default function Home() {
 
         <main className="min-h-0 flex-1 overflow-hidden">
           <div className="mx-auto h-full w-full max-w-7xl px-6 py-6">
-
             {error ? (
               <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
                 {error}
@@ -797,7 +815,9 @@ export default function Home() {
 
             {step === 'upload' ? (
               <section className="flex h-full flex-col">
-                <div className={`rounded-xl border p-6 ${theme.border} ${theme.surface} flex h-full flex-col`}>
+                <div
+                  className={`rounded-xl border p-6 ${theme.border} ${theme.surface} flex h-full flex-col`}
+                >
                   <img
                     src="/sosi-rens-logo.svg"
                     alt="SOSI-Rens"
@@ -808,13 +828,16 @@ export default function Home() {
                   </h2>
                   <p className={`mt-1 text-sm ${theme.muted}`}>
                     Støtter <span className="font-mono">.sos</span> og{' '}
-                    <span className="font-mono">.sosi</span>. Analyse starter automatisk.
+                    <span className="font-mono">.sosi</span>. Analyse
+                    starter automatisk.
                   </p>
 
                   <div className="mt-5 grid flex-1 grid-cols-1 gap-6 lg:grid-cols-2">
                     <div
                       className={`flex flex-col rounded-xl border-2 border-dashed p-6 transition-colors ${
-                        dragActive ? theme.accentSoft : theme.surfaceMuted
+                        dragActive
+                          ? theme.accentSoft
+                          : theme.surfaceMuted
                       } ${theme.border}`}
                       onDragEnter={(e) => {
                         e.preventDefault();
@@ -850,7 +873,9 @@ export default function Home() {
                           <div className="text-base font-semibold">
                             Dra og slipp fil her
                           </div>
-                          <div className={`mt-0.5 text-sm ${theme.muted}`}>
+                          <div
+                            className={`mt-0.5 text-sm ${theme.muted}`}
+                          >
                             Eller velg en fil med knappen til høyre.
                           </div>
                         </div>
@@ -871,7 +896,8 @@ export default function Home() {
                           </div>
                         </div>
                         <p className={`mt-1 text-sm ${theme.muted}`}>
-                          Når du velger en fil starter analysen automatisk.
+                          Når du velger en fil starter analysen
+                          automatisk.
                         </p>
                         <div className="mt-4">
                           <input
@@ -893,7 +919,9 @@ export default function Home() {
                       </div>
 
                       {file ? (
-                        <div className={`mt-6 rounded-lg border p-3 ${theme.border} ${theme.surfaceMuted}`}>
+                        <div
+                          className={`mt-6 rounded-lg border p-3 ${theme.border} ${theme.surfaceMuted}`}
+                        >
                           <div className={`text-xs ${theme.muted}`}>
                             Valgt fil
                           </div>
@@ -910,7 +938,9 @@ export default function Home() {
 
             {step === 'explore' && exploreData ? (
               <section className="flex h-full flex-col">
-                <div className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}>
+                <div
+                  className={`flex h-full flex-col rounded-xl border p-4 ${theme.border} ${theme.surface}`}
+                >
                   <div>
                     <h2 className="text-2xl font-semibold tracking-tight">
                       Utforsk data
@@ -918,7 +948,7 @@ export default function Home() {
                     <div className={`mt-1 text-sm ${theme.muted}`}>
                       Utvid et felt for å se fordeling av verdier.
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-2">
                       <Tabs
                         theme={theme}
                         value={activeTab}
@@ -927,49 +957,85 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <div className={`rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}>
-                      <div className={`text-sm ${theme.muted}`}>Antall objekter</div>
-                      <div className="mt-1 text-3xl font-semibold">
+                  <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
+                    <div
+                      className={`rounded-xl border p-3 ${theme.border} ${theme.surfaceMuted}`}
+                    >
+                      <div className={`text-sm ${theme.muted}`}>
+                        Antall objekter
+                      </div>
+                      <div className="mt-1 text-2xl font-semibold">
                         {tabData.features.toLocaleString('nb-NO')}
                       </div>
                     </div>
-                    <div className={`rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}>
-                      <div className={`text-sm ${theme.muted}`}>Unike objekttyper</div>
-                      <div className="mt-1 text-3xl font-semibold">
-                        {tabData.objTypes.length.toLocaleString('nb-NO')}
+                    <div
+                      className={`rounded-xl border p-3 ${theme.border} ${theme.surfaceMuted}`}
+                    >
+                      <div className={`text-sm ${theme.muted}`}>
+                        Unike objekttyper
+                      </div>
+                      <div className="mt-1 text-2xl font-semibold">
+                        {tabData.objTypes.length.toLocaleString(
+                          'nb-NO'
+                        )}
                       </div>
                     </div>
-                    <div className={`rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}>
-                      <div className={`text-sm ${theme.muted}`}>Unike felter</div>
-                      <div className="mt-1 text-3xl font-semibold">
-                        {tabData.fields.length.toLocaleString('nb-NO')}
+                    <div
+                      className={`rounded-xl border p-3 ${theme.border} ${theme.surfaceMuted}`}
+                    >
+                      <div className={`text-sm ${theme.muted}`}>
+                        Unike felter
+                      </div>
+                      <div className="mt-1 text-2xl font-semibold">
+                        {tabData.fields.length.toLocaleString(
+                          'nb-NO'
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 min-h-0 flex-1 overflow-hidden">
-                    <div className={`flex h-full flex-col overflow-hidden rounded-xl border ${theme.border}`}
+                  <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+                    <div
+                      className={`flex h-full flex-col overflow-hidden rounded-xl border ${theme.border}`}
                     >
-                      <div className={`px-4 py-3 text-sm font-semibold ${theme.surfaceMuted}`}>
+                      <div
+                        className={`px-4 py-2 text-sm font-semibold ${theme.surfaceMuted}`}
+                      >
                         Felter (klikk for å utvide)
                       </div>
                       <div className="min-h-0 flex-1 overflow-auto">
                         {exploreFieldRows.map((row) => {
-                          const isExpanded = (expandedFieldsByCategory?.[activeTab] || []).includes(row.keyUpper);
+                          const isExpanded = (
+                            expandedFieldsByCategory?.[activeTab] ||
+                            []
+                          ).includes(row.keyUpper);
                           const pivot = row.isObjType
-                            ? { status: 'ready', entries: tabData.objTypes }
-                            : pivotCacheByCategory?.[activeTab]?.[row.keyUpper];
+                            ? {
+                                status: 'ready',
+                                entries: tabData.objTypes,
+                              }
+                            : pivotCacheByCategory?.[activeTab]?.[
+                                row.keyUpper
+                              ];
 
                           return (
-                            <div key={row.keyUpper} className="border-t">
+                            <div
+                              key={row.keyUpper}
+                              className="border-t"
+                            >
                               <button
                                 type="button"
-                                className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${theme.hoverAccentSoft}`}
+                                className={`flex w-full items-center justify-between gap-3 px-4 py-2 text-left ${theme.hoverAccentSoft}`}
                                 onClick={async () => {
-                                  toggleExpandedField(activeTab, row.keyUpper);
+                                  toggleExpandedField(
+                                    activeTab,
+                                    row.keyUpper
+                                  );
                                   if (!isExpanded) {
-                                    await ensurePivot(activeTab, row.keyUpper);
+                                    await ensurePivot(
+                                      activeTab,
+                                      row.keyUpper
+                                    );
                                   }
                                 }}
                               >
@@ -983,29 +1049,44 @@ export default function Home() {
                                     <div className="truncate text-sm font-semibold">
                                       {row.key}
                                     </div>
-                                    <div className={`text-xs ${theme.muted}`}>
-                                      Forekomst: {Number(row.count || 0).toLocaleString('nb-NO')}
+                                    <div
+                                      className={`text-xs ${theme.muted}`}
+                                    >
+                                      Forekomst:{' '}
+                                      {Number(
+                                        row.count || 0
+                                      ).toLocaleString('nb-NO')}
                                     </div>
                                   </div>
                                 </div>
                                 <div className="shrink-0 text-right text-sm tabular-nums">
-                                  {Number(row.count || 0).toLocaleString('nb-NO')}
+                                  {Number(
+                                    row.count || 0
+                                  ).toLocaleString('nb-NO')}
                                 </div>
                               </button>
 
                               {isExpanded ? (
-                                <div className={`px-4 pb-4 ${theme.surface}`}>
+                                <div
+                                  className={`px-4 pb-4 ${theme.surface}`}
+                                >
                                   {pivot?.status === 'loading' ? (
-                                    <div className={`flex items-center gap-2 py-3 text-sm ${theme.muted}`}>
+                                    <div
+                                      className={`flex items-center gap-2 py-3 text-sm ${theme.muted}`}
+                                    >
                                       <Loader2 className="h-4 w-4 animate-spin" />
                                       Beregner fordeling…
                                     </div>
                                   ) : null}
 
                                   {pivot?.status === 'ready' ? (
-                                    <div className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}>
+                                    <div
+                                      className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
+                                    >
                                       <table className="w-full text-sm">
-                                        <thead className={`${theme.surfaceMuted} ${theme.muted}`}>
+                                        <thead
+                                          className={`${theme.surfaceMuted} ${theme.muted}`}
+                                        >
                                           <tr>
                                             <th className="px-3 py-2 text-left font-semibold">
                                               Verdi
@@ -1016,16 +1097,25 @@ export default function Home() {
                                           </tr>
                                         </thead>
                                         <tbody>
-                                          {(pivot.entries || []).map(([value, count]) => (
-                                            <tr key={`${row.keyUpper}:${value}`} className="border-t">
-                                              <td className="px-3 py-2 break-all">
-                                                {String(value)}
-                                              </td>
-                                              <td className="px-3 py-2 text-right tabular-nums">
-                                                {Number(count || 0).toLocaleString('nb-NO')}
-                                              </td>
-                                            </tr>
-                                          ))}
+                                          {(pivot.entries || []).map(
+                                            ([value, count]) => (
+                                              <tr
+                                                key={`${row.keyUpper}:${value}`}
+                                                className="border-t"
+                                              >
+                                                <td className="px-3 py-2 break-all">
+                                                  {String(value)}
+                                                </td>
+                                                <td className="px-3 py-2 text-right tabular-nums">
+                                                  {Number(
+                                                    count || 0
+                                                  ).toLocaleString(
+                                                    'nb-NO'
+                                                  )}
+                                                </td>
+                                              </tr>
+                                            )
+                                          )}
                                         </tbody>
                                       </table>
                                     </div>
@@ -1055,16 +1145,20 @@ export default function Home() {
 
             {step === 'filter' && exploreData && available ? (
               <section className="flex h-full flex-col">
-                <div className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}>
+                <div
+                  className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}
+                >
                   <div>
                     <h2 className="text-2xl font-semibold tracking-tight">
                       Filtrer
                     </h2>
                     <div className={`mt-1 text-sm ${theme.muted}`}>
-                      Velg hvilke objekttyper og felter som skal være med i eksporten.
+                      Velg hvilke objekttyper og felter som skal være
+                      med i eksporten.
                     </div>
                     <div className={`mt-1 text-xs ${theme.muted}`}>
-                      Noen felter er låst (f.eks. OBJTYPE/EGS_*) fordi de er nødvendige for gyldig SOSI.
+                      Noen felter er låst (f.eks. OBJTYPE/EGS_*) fordi
+                      de er nødvendige for gyldig SOSI.
                     </div>
                     <div className="mt-4">
                       <Tabs
@@ -1077,161 +1171,170 @@ export default function Home() {
 
                   <div className="mt-5 min-h-0 flex-1 overflow-hidden">
                     <div className="grid h-full grid-cols-1 gap-6 overflow-hidden lg:grid-cols-2">
-              <div className="min-h-0 flex flex-col">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">
-                    Objekttyper
-                  </h3>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                      onClick={() =>
-                        setAll(
-                          activeTab,
-                          'objTypes',
-                          available[activeTab].objTypes
-                        )
-                      }
-                    >
-                      Velg alle
-                    </button>
-                    <button
-                      type="button"
-                      className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                      onClick={() =>
-                        setAll(activeTab, 'objTypes', [])
-                      }
-                    >
-                      Velg ingen
-                    </button>
-                  </div>
-                </div>
+                      <div className="min-h-0 flex flex-col">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="text-sm font-semibold">
+                            Objekttyper
+                          </h3>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                              onClick={() =>
+                                setAll(
+                                  activeTab,
+                                  'objTypes',
+                                  available[activeTab].objTypes
+                                )
+                              }
+                            >
+                              Velg alle
+                            </button>
+                            <button
+                              type="button"
+                              className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                              onClick={() =>
+                                setAll(activeTab, 'objTypes', [])
+                              }
+                            >
+                              Velg ingen
+                            </button>
+                          </div>
+                        </div>
 
-                <div className={`mt-2 min-h-0 flex-1 overflow-auto rounded-md border p-2 ${theme.border}`}>
-                  {available[activeTab].objTypes.map((objType) => {
-                    const checked =
-                      selectedObjTypes.includes(objType);
-                    return (
-                      <label
-                        key={objType}
-                        className={`flex items-center gap-2 rounded px-2 py-1 ${theme.hoverAccentSoft}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => {
-                            setSelection((prev) => ({
-                              ...prev,
-                              objTypesByCategory: {
-                                ...prev.objTypesByCategory,
-                                [activeTab]: toggleInList(
-                                  prev.objTypesByCategory?.[
-                                    activeTab
-                                  ] || [],
-                                  objType
-                                ),
-                              },
-                            }));
-                          }}
-                        />
-                        <span className="text-sm">{objType}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
+                        <div
+                          className={`mt-2 min-h-0 flex-1 overflow-auto rounded-md border p-2 ${theme.border}`}
+                        >
+                          {available[activeTab].objTypes.map(
+                            (objType) => {
+                              const checked =
+                                selectedObjTypes.includes(objType);
+                              return (
+                                <label
+                                  key={objType}
+                                  className={`flex items-center gap-2 rounded px-2 py-1 ${theme.hoverAccentSoft}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => {
+                                      setSelection((prev) => ({
+                                        ...prev,
+                                        objTypesByCategory: {
+                                          ...prev.objTypesByCategory,
+                                          [activeTab]: toggleInList(
+                                            prev.objTypesByCategory?.[
+                                              activeTab
+                                            ] || [],
+                                            objType
+                                          ),
+                                        },
+                                      }));
+                                    }}
+                                  />
+                                  <span className="text-sm">
+                                    {objType}
+                                  </span>
+                                </label>
+                              );
+                            }
+                          )}
+                        </div>
+                      </div>
 
-              <div className="min-h-0 flex flex-col">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">
-                    Felter
-                  </h3>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                      onClick={() =>
-                        setAll(
-                          activeTab,
-                          'fields',
-                          uniq([
+                      <div className="min-h-0 flex flex-col">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="text-sm font-semibold">
+                            Felter
+                          </h3>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                              onClick={() =>
+                                setAll(
+                                  activeTab,
+                                  'fields',
+                                  uniq([
+                                    ...available[activeTab].fields,
+                                    ...Array.from(mandatoryFields),
+                                  ])
+                                )
+                              }
+                            >
+                              Velg alle
+                            </button>
+                            <button
+                              type="button"
+                              className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                              onClick={() =>
+                                setAll(
+                                  activeTab,
+                                  'fields',
+                                  Array.from(mandatoryFields)
+                                )
+                              }
+                            >
+                              Velg ingen
+                            </button>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`mt-2 min-h-0 flex-1 overflow-auto rounded-md border p-2 ${theme.border}`}
+                        >
+                          {uniq([
                             ...available[activeTab].fields,
                             ...Array.from(mandatoryFields),
-                          ])
-                        )
-                      }
-                    >
-                      Velg alle
-                    </button>
-                    <button
-                      type="button"
-                      className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                      onClick={() =>
-                        setAll(
-                          activeTab,
-                          'fields',
-                          Array.from(mandatoryFields)
-                        )
-                      }
-                    >
-                      Velg ingen
-                    </button>
+                          ]).map((fieldKey) => {
+                            const keyUpper =
+                              String(fieldKey).toUpperCase();
+                            const locked =
+                              mandatoryFields.has(keyUpper);
+                            const checked =
+                              locked ||
+                              selectedFields
+                                .map((f) => String(f).toUpperCase())
+                                .includes(keyUpper);
+                            return (
+                              <label
+                                key={fieldKey}
+                                className={`flex items-center gap-2 rounded px-2 py-1 ${theme.hoverAccentSoft}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  disabled={locked}
+                                  onChange={() => {
+                                    if (locked) return;
+                                    setSelection((prev) => ({
+                                      ...prev,
+                                      fieldsByCategory: {
+                                        ...prev.fieldsByCategory,
+                                        [activeTab]: toggleInList(
+                                          prev.fieldsByCategory?.[
+                                            activeTab
+                                          ] || [],
+                                          keyUpper
+                                        ),
+                                      },
+                                    }));
+                                  }}
+                                />
+                                <span
+                                  className={`text-sm ${
+                                    locked ? 'text-zinc-500' : ''
+                                  }`}
+                                >
+                                  {fieldKey}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                <div className={`mt-2 min-h-0 flex-1 overflow-auto rounded-md border p-2 ${theme.border}`}>
-                  {uniq([
-                    ...available[activeTab].fields,
-                    ...Array.from(mandatoryFields),
-                  ]).map((fieldKey) => {
-                    const keyUpper = String(fieldKey).toUpperCase();
-                    const locked = mandatoryFields.has(keyUpper);
-                    const checked =
-                      locked ||
-                      selectedFields
-                        .map((f) => String(f).toUpperCase())
-                        .includes(keyUpper);
-                    return (
-                      <label
-                        key={fieldKey}
-                        className={`flex items-center gap-2 rounded px-2 py-1 ${theme.hoverAccentSoft}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={locked}
-                          onChange={() => {
-                            if (locked) return;
-                            setSelection((prev) => ({
-                              ...prev,
-                              fieldsByCategory: {
-                                ...prev.fieldsByCategory,
-                                [activeTab]: toggleInList(
-                                  prev.fieldsByCategory?.[
-                                    activeTab
-                                  ] || [],
-                                  keyUpper
-                                ),
-                              },
-                            }));
-                          }}
-                        />
-                        <span
-                          className={`text-sm ${
-                            locked ? 'text-zinc-500' : ''
-                          }`}
-                        >
-                          {fieldKey}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            </div>
 
                   <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
                     <button
@@ -1265,7 +1368,8 @@ export default function Home() {
                               Tilbakestill til standard (fra fil)
                             </div>
                             <div className={`text-xs ${theme.muted}`}>
-                              Bruk feltene/objekttypene som finnes i den opplastede filen.
+                              Bruk feltene/objekttypene som finnes i
+                              den opplastede filen.
                             </div>
                           </div>
                         </button>
@@ -1318,7 +1422,8 @@ export default function Home() {
                               Slett lagrede innstillinger
                             </div>
                             <div className={`text-xs ${theme.muted}`}>
-                              Fjerner lagrede valg fra denne nettleseren.
+                              Fjerner lagrede valg fra denne
+                              nettleseren.
                             </div>
                           </div>
                         </button>
@@ -1331,12 +1436,15 @@ export default function Home() {
 
             {step === 'download' ? (
               <section className="flex h-full flex-col">
-                <div className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}>
+                <div
+                  className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}
+                >
                   <h2 className="text-2xl font-semibold tracking-tight">
                     Last ned renset fil
                   </h2>
                   <p className={`mt-2 text-sm ${theme.muted}`}>
-                    Viktig: Du er selv ansvarlig for at eksportert fil ikke inneholder sensitiv informasjon.
+                    Viktig: Du er selv ansvarlig for at eksportert fil
+                    ikke inneholder sensitiv informasjon.
                   </p>
 
                   <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -1361,12 +1469,13 @@ export default function Home() {
                 </div>
               </section>
             ) : null}
-
           </div>
         </main>
       </div>
 
-      {busy ? <LoadingOverlay theme={theme} label={busyLabel} /> : null}
+      {busy ? (
+        <LoadingOverlay theme={theme} label={busyLabel} />
+      ) : null}
     </div>
   );
 }
