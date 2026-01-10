@@ -1000,60 +1000,62 @@ export default function Home() {
                 <div
                   className={`flex h-full flex-col rounded-xl border p-4 ${theme.border} ${theme.surface}`}
                 >
-                  <div>
-                    <h2 className="text-2xl font-semibold tracking-tight">
-                      Utforsk data
-                    </h2>
-                    <div className={`mt-1 text-sm ${theme.muted}`}>
-                      Utvid et felt for å se fordeling av verdier.
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <h2 className="text-2xl font-semibold tracking-tight">
+                        Utforsk data
+                      </h2>
+                      <div className={`mt-1 text-sm ${theme.muted}`}>
+                        Utvid et felt for å se fordeling av verdier.
+                      </div>
+                      <div className="mt-2">
+                        <Tabs
+                          theme={theme}
+                          value={activeTab}
+                          onChange={setActiveTab}
+                        />
+                      </div>
                     </div>
-                    <div className="mt-2">
-                      <Tabs
-                        theme={theme}
-                        value={activeTab}
-                        onChange={setActiveTab}
-                      />
+
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto">
+                      <div
+                        className={`rounded-lg border px-3 py-2 ${theme.border} ${theme.surfaceMuted}`}
+                      >
+                        <div className={`text-xs ${theme.muted}`}>
+                          Antall objekter
+                        </div>
+                        <div className="mt-0.5 text-xl font-semibold tabular-nums">
+                          {tabData.features.toLocaleString('nb-NO')}
+                        </div>
+                      </div>
+                      <div
+                        className={`rounded-lg border px-3 py-2 ${theme.border} ${theme.surfaceMuted}`}
+                      >
+                        <div className={`text-xs ${theme.muted}`}>
+                          Unike objekttyper
+                        </div>
+                        <div className="mt-0.5 text-xl font-semibold tabular-nums">
+                          {tabData.objTypes.length.toLocaleString(
+                            'nb-NO'
+                          )}
+                        </div>
+                      </div>
+                      <div
+                        className={`rounded-lg border px-3 py-2 ${theme.border} ${theme.surfaceMuted}`}
+                      >
+                        <div className={`text-xs ${theme.muted}`}>
+                          Unike felter
+                        </div>
+                        <div className="mt-0.5 text-xl font-semibold tabular-nums">
+                          {tabData.fields.length.toLocaleString(
+                            'nb-NO'
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-                    <div
-                      className={`rounded-xl border p-3 ${theme.border} ${theme.surfaceMuted}`}
-                    >
-                      <div className={`text-sm ${theme.muted}`}>
-                        Antall objekter
-                      </div>
-                      <div className="mt-1 text-2xl font-semibold">
-                        {tabData.features.toLocaleString('nb-NO')}
-                      </div>
-                    </div>
-                    <div
-                      className={`rounded-xl border p-3 ${theme.border} ${theme.surfaceMuted}`}
-                    >
-                      <div className={`text-sm ${theme.muted}`}>
-                        Unike objekttyper
-                      </div>
-                      <div className="mt-1 text-2xl font-semibold">
-                        {tabData.objTypes.length.toLocaleString(
-                          'nb-NO'
-                        )}
-                      </div>
-                    </div>
-                    <div
-                      className={`rounded-xl border p-3 ${theme.border} ${theme.surfaceMuted}`}
-                    >
-                      <div className={`text-sm ${theme.muted}`}>
-                        Unike felter
-                      </div>
-                      <div className="mt-1 text-2xl font-semibold">
-                        {tabData.fields.length.toLocaleString(
-                          'nb-NO'
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+                  <div className="mt-2 min-h-0 flex-1 overflow-hidden">
                     <div
                       className={`flex h-full flex-col overflow-hidden rounded-xl border ${theme.border}`}
                     >
@@ -1134,39 +1136,39 @@ export default function Home() {
                                   ) : null}
 
                                   {pivot?.status === 'ready' ? (
-                                    <div
-                                      className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
-                                    >
-                                      <div className="mx-auto w-full max-w-3xl">
-                                        <div
-                                          className={`grid grid-cols-[minmax(0,1fr)_auto] border-b px-3 py-2 text-xs font-semibold ${theme.surfaceMuted} ${theme.muted}`}
-                                        >
-                                          <div>Verdi</div>
-                                          <div className="text-right">Antall</div>
-                                        </div>
-                                        <div>
-                                          {(pivot.entries || []).map(
-                                            ([value, count]) => (
-                                              <div
-                                                key={`${row.keyUpper}:${value}`}
-                                                className={`grid grid-cols-[minmax(0,1fr)_auto] gap-4 px-3 py-2 text-sm border-t ${theme.border} first:border-t-0`}
-                                              >
-                                                <div className="break-all">
-                                                  {String(value)}
+                                      <div
+                                        className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
+                                      >
+                                        <div className="mx-auto w-full max-w-xl">
+                                          <div
+                                            className={`grid grid-cols-[minmax(0,1fr)_7rem] border-b px-3 py-2 text-xs font-semibold ${theme.surfaceMuted} ${theme.muted}`}
+                                          >
+                                            <div>Verdi</div>
+                                            <div className="text-right">Antall</div>
+                                          </div>
+                                          <div>
+                                            {(pivot.entries || []).map(
+                                              ([value, count]) => (
+                                                <div
+                                                  key={`${row.keyUpper}:${value}`}
+                                                  className={`grid grid-cols-[minmax(0,1fr)_7rem] gap-3 px-3 py-2 text-sm border-t ${theme.border} first:border-t-0`}
+                                                >
+                                                  <div className="break-all">
+                                                    {String(value)}
+                                                  </div>
+                                                  <div className="text-right tabular-nums">
+                                                    {Number(
+                                                      count || 0
+                                                    ).toLocaleString(
+                                                      'nb-NO'
+                                                    )}
+                                                  </div>
                                                 </div>
-                                                <div className="text-right tabular-nums">
-                                                  {Number(
-                                                    count || 0
-                                                  ).toLocaleString(
-                                                    'nb-NO'
-                                                  )}
-                                                </div>
-                                              </div>
-                                            )
-                                          )}
+                                              )
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
                                   ) : null}
                                 </div>
                               ) : null}
