@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ChevronDown,
@@ -296,6 +296,8 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [busyLabel, setBusyLabel] = useState('');
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
+  const dragCounterRef = useRef(0);
 
   const [backendInfo, setBackendInfo] = useState(null);
   const [processingMode, setProcessingMode] = useState(null); // 'browser' | 'api'
@@ -323,6 +325,56 @@ export default function Home() {
       // ignore
     }
   }, [themeKey]);
+
+  useEffect(() => {
+    if (step !== 'upload') {
+      dragCounterRef.current = 0;
+      setDragActive(false);
+      return;
+    }
+
+    const hasFiles = (dt) =>
+      !!dt &&
+      ((dt.types && Array.from(dt.types).includes('Files')) ||
+        (dt.files && dt.files.length > 0));
+
+    const onDragEnter = (e) => {
+      if (!hasFiles(e.dataTransfer)) return;
+      dragCounterRef.current += 1;
+      setDragActive(true);
+    };
+
+    const onDragOver = (e) => {
+      if (!hasFiles(e.dataTransfer)) return;
+      e.preventDefault();
+      setDragActive(true);
+    };
+
+    const onDragLeave = (e) => {
+      if (!hasFiles(e.dataTransfer)) return;
+      dragCounterRef.current -= 1;
+      if (dragCounterRef.current <= 0) {
+        dragCounterRef.current = 0;
+        setDragActive(false);
+      }
+    };
+
+    const onDrop = () => {
+      dragCounterRef.current = 0;
+      setDragActive(false);
+    };
+
+    window.addEventListener('dragenter', onDragEnter);
+    window.addEventListener('dragover', onDragOver);
+    window.addEventListener('dragleave', onDragLeave);
+    window.addEventListener('drop', onDrop);
+    return () => {
+      window.removeEventListener('dragenter', onDragEnter);
+      window.removeEventListener('dragover', onDragOver);
+      window.removeEventListener('dragleave', onDragLeave);
+      window.removeEventListener('drop', onDrop);
+    };
+  }, [step]);
 
   const [selection, setSelection] = useState({
     objTypesByCategory: { punkter: [], ledninger: [] },
@@ -719,14 +771,18 @@ export default function Home() {
                     className="h-8 w-auto"
                   />
                 ) : null}
-                <div>
-                  <h1 className="text-xl font-semibold tracking-tight">
-                    SOSI-Rens
-                  </h1>
-                  <div className={`text-sm ${theme.muted}`}>
-                    Last opp → utforsk → filtrer → last ned
+                {step === 'upload' ? (
+                  <div>
+                    <h1 className="text-xl font-semibold tracking-tight">
+                      SOSI-Rens
+                    </h1>
+                    <div className={`text-sm ${theme.muted}`}>
+                      Last opp → utforsk → filtrer → last ned
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <h1 className="sr-only">SOSI-Rens</h1>
+                )}
               </div>
 
               <div className="flex items-center gap-3">
@@ -832,105 +888,108 @@ export default function Home() {
                     starter automatisk.
                   </p>
 
-                  <div className="mt-5 grid flex-1 grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div
-                      className={`flex flex-col rounded-xl border-2 border-dashed p-6 transition-colors ${
-                        dragActive
-                          ? theme.accentSoft
-                          : theme.surfaceMuted
-                      } ${theme.border}`}
-                      onDragEnter={(e) => {
+                  <div
+                    className={`mt-5 flex flex-1 flex-col rounded-xl border-2 border-dashed p-6 transition-colors ${
+                      dragActive ? theme.accentSoft : theme.surfaceMuted
+                    } ${theme.border}`}
+                    onClick={() => {
+                      if (busy) return;
+                      fileInputRef.current?.click();
+                    }}
+                    onDragEnter={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      const f = e.dataTransfer.files?.[0] || null;
+                      if (!f || busy) return;
+                      setAnalysis(null);
+                      setEncodingInfo(null);
+                      setSosiText(null);
+                      setFile(f);
+                      runAnalyze(f);
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        e.stopPropagation();
-                        setDragActive(true);
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setDragActive(true);
-                      }}
-                      onDragLeave={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setDragActive(false);
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setDragActive(false);
-                        const f = e.dataTransfer.files?.[0] || null;
-                        if (!f || busy) return;
-                        setAnalysis(null);
-                        setEncodingInfo(null);
-                        setSosiText(null);
-                        setFile(f);
-                        runAnalyze(f);
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileUp className="h-5 w-5" />
-                        <div>
-                          <div className="text-base font-semibold">
-                            Dra og slipp fil her
-                          </div>
-                          <div
-                            className={`mt-0.5 text-sm ${theme.muted}`}
-                          >
-                            Eller velg en fil med knappen til høyre.
-                          </div>
+                        if (busy) return;
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <FileUp className="mt-0.5 h-5 w-5" />
+                      <div className="min-w-0">
+                        <div className="text-base font-semibold">
+                          Dra og slipp fil her
                         </div>
-                      </div>
-                      <div className={`mt-4 text-xs ${theme.muted}`}>
-                        Tips: Store filer analyseres i nettleseren.
+                        <div className={`mt-0.5 text-sm ${theme.muted}`}>
+                          Eller klikk for å velge fil.
+                        </div>
+                        <div className={`mt-3 text-xs ${theme.muted}`}>
+                          Tips: Store filer analyseres i nettleseren.
+                        </div>
                       </div>
                     </div>
 
-                    <div
-                      className={`flex flex-col justify-between rounded-xl border p-6 ${theme.border} ${theme.surface}`}
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Upload className="h-4 w-4" />
-                          <div className="text-sm font-semibold">
-                            Velg fil
-                          </div>
+                    <div className="mt-5">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (busy) return;
+                          fileInputRef.current?.click();
+                        }}
+                      >
+                        <Upload className="h-4 w-4" />
+                        Velg fil
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".sos,.sosi"
+                        className="hidden"
+                        disabled={busy}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] || null;
+                          if (!f) return;
+                          setAnalysis(null);
+                          setEncodingInfo(null);
+                          setSosiText(null);
+                          setFile(f);
+                          runAnalyze(f);
+                          e.target.value = '';
+                        }}
+                      />
+                    </div>
+
+                    {file ? (
+                      <div
+                        className={`mt-6 rounded-lg border p-3 ${theme.border} ${theme.surface}`}
+                      >
+                        <div className={`text-xs ${theme.muted}`}>
+                          Valgt fil
                         </div>
-                        <p className={`mt-1 text-sm ${theme.muted}`}>
-                          Når du velger en fil starter analysen
-                          automatisk.
-                        </p>
-                        <div className="mt-4">
-                          <input
-                            type="file"
-                            accept=".sos,.sosi"
-                            disabled={busy}
-                            onChange={(e) => {
-                              const f = e.target.files?.[0] || null;
-                              if (!f) return;
-                              setAnalysis(null);
-                              setEncodingInfo(null);
-                              setSosiText(null);
-                              setFile(f);
-                              runAnalyze(f);
-                              e.target.value = '';
-                            }}
-                          />
+                        <div className="mt-1 text-sm font-semibold">
+                          {file.name}
                         </div>
                       </div>
-
-                      {file ? (
-                        <div
-                          className={`mt-6 rounded-lg border p-3 ${theme.border} ${theme.surfaceMuted}`}
-                        >
-                          <div className={`text-xs ${theme.muted}`}>
-                            Valgt fil
-                          </div>
-                          <div className="mt-1 text-sm font-semibold">
-                            {file.name}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
+                    ) : null}
                   </div>
                 </div>
               </section>
