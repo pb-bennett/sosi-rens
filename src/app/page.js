@@ -870,14 +870,14 @@ export default function Home() {
             ) : null}
 
             {step === 'upload' ? (
-              <section className="flex h-full flex-col">
+              <section className="flex h-full items-center justify-center">
                 <div
-                  className={`rounded-xl border p-6 ${theme.border} ${theme.surface} flex h-full flex-col`}
+                  className={`w-full max-w-3xl rounded-xl border p-5 ${theme.border} ${theme.surface} flex flex-col`}
                 >
                   <img
                     src="/sosi-rens-logo.svg"
                     alt="SOSI-Rens"
-                    className="mx-auto mb-6 h-20 w-auto"
+                    className="mx-auto mb-4 h-14 w-auto"
                   />
                   <h2 className="text-2xl font-semibold tracking-tight">
                     Last opp SOSI-fil
@@ -889,7 +889,7 @@ export default function Home() {
                   </p>
 
                   <div
-                    className={`mt-5 flex flex-1 flex-col rounded-xl border-2 border-dashed p-6 transition-colors ${
+                    className={`mt-4 flex min-h-56 flex-col rounded-xl border-2 border-dashed p-4 transition-colors ${
                       dragActive
                         ? theme.accentSoft
                         : theme.surfaceMuted
@@ -951,7 +951,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="mt-5">
+                    <div className="mt-4">
                       <button
                         type="button"
                         disabled={busy}
@@ -986,7 +986,7 @@ export default function Home() {
 
                     {file ? (
                       <div
-                        className={`mt-6 rounded-lg border p-3 ${theme.border} ${theme.surface}`}
+                        className={`mt-4 rounded-lg border p-2.5 ${theme.border} ${theme.surface}`}
                       >
                         <div className={`text-xs ${theme.muted}`}>
                           Valgt fil
