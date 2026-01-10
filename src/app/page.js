@@ -1,15 +1,22 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { analyzeSosiText } from "../lib/sosi/analyze.js";
-import { cleanSosiText } from "../lib/sosi/clean.js";
-import { decodeSosiArrayBuffer, encodeSosiTextToBytes } from "../lib/sosi/browserEncoding.js";
+import { useEffect, useMemo, useState } from 'react';
+import { analyzeSosiText } from '../lib/sosi/analyze.js';
+import { cleanSosiText } from '../lib/sosi/clean.js';
+import {
+  decodeSosiArrayBuffer,
+  encodeSosiTextToBytes,
+} from '../lib/sosi/browserEncoding.js';
 
-const STORAGE_KEY = "sosi-rens:v0";
-const HOSTED_BODY_LIMIT_BYTES = 4_000_000;
+const STORAGE_KEY = 'sosi-rens:v0';
+const HOSTED_BODY_LIMIT_BYTES = 2_000_000;
 
 function sortEntriesDesc(obj) {
-  return Object.entries(obj || {}).sort((a, b) => (b[1] || 0) - (a[1] || 0) || String(a[0]).localeCompare(String(b[0])));
+  return Object.entries(obj || {}).sort(
+    (a, b) =>
+      (b[1] || 0) - (a[1] || 0) ||
+      String(a[0]).localeCompare(String(b[0]))
+  );
 }
 
 function uniq(list) {
@@ -18,7 +25,7 @@ function uniq(list) {
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
@@ -30,12 +37,12 @@ function downloadBlob(blob, filename) {
 function readJsonFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Kunne ikke lese fil."));
+    reader.onerror = () => reject(new Error('Kunne ikke lese fil.'));
     reader.onload = () => {
       try {
-        resolve(JSON.parse(String(reader.result || "{}")));
+        resolve(JSON.parse(String(reader.result || '{}')));
       } catch {
-        reject(new Error("Ugyldig JSON-fil."));
+        reject(new Error('Ugyldig JSON-fil.'));
       }
     };
     reader.readAsText(file);
@@ -43,8 +50,8 @@ function readJsonFile(file) {
 }
 
 export default function Home() {
-  const [step, setStep] = useState("upload"); // upload | explore | filter | download
-  const [activeTab, setActiveTab] = useState("punkter"); // punkter | ledninger
+  const [step, setStep] = useState('upload'); // upload | explore | filter | download
+  const [activeTab, setActiveTab] = useState('punkter'); // punkter | ledninger
 
   const [file, setFile] = useState(null);
   const [fileArrayBuffer, setFileArrayBuffer] = useState(null);
@@ -52,6 +59,9 @@ export default function Home() {
   const [encodingInfo, setEncodingInfo] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+
+  const [backendInfo, setBackendInfo] = useState(null);
+  const [processingMode, setProcessingMode] = useState(null); // 'browser' | 'api'
 
   const [selection, setSelection] = useState({
     objTypesByCategory: { punkter: [], ledninger: [] },
@@ -68,6 +78,26 @@ export default function Home() {
     } catch {
       // ignore
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/version', {
+          cache: 'no-store',
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (cancelled) return;
+        setBackendInfo(json);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -91,7 +121,9 @@ export default function Home() {
       },
       ledninger: {
         features: byCategory.ledninger?.features || 0,
-        objTypes: sortEntriesDesc(byCategory.ledninger?.objTypes || {}),
+        objTypes: sortEntriesDesc(
+          byCategory.ledninger?.objTypes || {}
+        ),
         fields: sortEntriesDesc(byCategory.ledninger?.fields || {}),
         tema: sortEntriesDesc(byCategory.ledninger?.lTema || {}),
       },
@@ -113,6 +145,7 @@ export default function Home() {
   }, [exploreData]);
 
   async function runAnalyzeClient(selectedFile) {
+    setProcessingMode('browser');
     const arrayBuffer = await selectedFile.arrayBuffer();
     setFileArrayBuffer(arrayBuffer);
 
@@ -130,22 +163,32 @@ export default function Home() {
 
     setAnalysis(payload);
     setEncodingInfo(payload.encoding || null);
-    setStep("explore");
+    setStep('explore');
   }
 
   async function runAnalyze(selectedFile) {
     setError(null);
     setBusy(true);
     try {
+      // On Vercel, always process in-browser to avoid strict request body limits (413).
+      if (backendInfo?.env === 'vercel') {
+        await runAnalyzeClient(selectedFile);
+        return;
+      }
+
       // Vercel serverless functions have a strict request body limit; avoid uploading large files.
       if ((selectedFile?.size || 0) > HOSTED_BODY_LIMIT_BYTES) {
         await runAnalyzeClient(selectedFile);
         return;
       }
 
+      setProcessingMode('api');
       const fd = new FormData();
-      fd.set("file", selectedFile);
-      const res = await fetch("/api/analyze", { method: "POST", body: fd });
+      fd.set('file', selectedFile);
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        body: fd,
+      });
 
       if (res.status === 413) {
         await runAnalyzeClient(selectedFile);
@@ -153,8 +196,8 @@ export default function Home() {
       }
 
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(text || "Analyse feilet.");
+        const text = await res.text().catch(() => '');
+        throw new Error(text || 'Analyse feilet.');
       }
 
       const json = await res.json();
@@ -164,12 +207,15 @@ export default function Home() {
 
       // Initialize defaults: keep all discovered objTypes/fields if user has nothing stored yet.
       setSelection((prev) => {
-        const next = { ...prev, lastFileName: selectedFile.name || null };
+        const next = {
+          ...prev,
+          lastFileName: selectedFile.name || null,
+        };
         if (available) return next;
         return next;
       });
 
-      setStep("explore");
+      setStep('explore');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -182,12 +228,20 @@ export default function Home() {
     setSelection((prev) => {
       const next = { ...prev };
       next.objTypesByCategory = {
-        punkter: prev.objTypesByCategory?.punkter?.length ? prev.objTypesByCategory.punkter : available.punkter.objTypes,
-        ledninger: prev.objTypesByCategory?.ledninger?.length ? prev.objTypesByCategory.ledninger : available.ledninger.objTypes,
+        punkter: prev.objTypesByCategory?.punkter?.length
+          ? prev.objTypesByCategory.punkter
+          : available.punkter.objTypes,
+        ledninger: prev.objTypesByCategory?.ledninger?.length
+          ? prev.objTypesByCategory.ledninger
+          : available.ledninger.objTypes,
       };
       next.fieldsByCategory = {
-        punkter: prev.fieldsByCategory?.punkter?.length ? prev.fieldsByCategory.punkter : available.punkter.fields,
-        ledninger: prev.fieldsByCategory?.ledninger?.length ? prev.fieldsByCategory.ledninger : available.ledninger.fields,
+        punkter: prev.fieldsByCategory?.punkter?.length
+          ? prev.fieldsByCategory.punkter
+          : available.punkter.fields,
+        ledninger: prev.fieldsByCategory?.ledninger?.length
+          ? prev.fieldsByCategory.ledninger
+          : available.ledninger.fields,
       };
       return next;
     });
@@ -198,7 +252,10 @@ export default function Home() {
     if (!available) return;
     ensureDefaultsFromAnalysis();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [available?.punkter?.objTypes?.length, available?.ledninger?.objTypes?.length]);
+  }, [
+    available?.punkter?.objTypes?.length,
+    available?.ledninger?.objTypes?.length,
+  ]);
 
   function toggleInList(list, value) {
     const set = new Set(list || []);
@@ -210,13 +267,17 @@ export default function Home() {
   function setAll(category, kind, values) {
     setSelection((prev) => {
       const next = { ...prev };
-      next[`${kind}ByCategory`] = { ...prev[`${kind}ByCategory`], [category]: [...values] };
+      next[`${kind}ByCategory`] = {
+        ...prev[`${kind}ByCategory`],
+        [category]: [...values],
+      };
       return next;
     });
   }
 
   async function downloadCleanedClient() {
     if (!file) return;
+    setProcessingMode('browser');
     const arrayBuffer = fileArrayBuffer || (await file.arrayBuffer());
     setFileArrayBuffer(arrayBuffer);
 
@@ -226,11 +287,19 @@ export default function Home() {
       fieldsByCategory: selection.fieldsByCategory,
     }).text;
 
-    const outBytes = encodeSosiTextToBytes(cleanedText, decoded.encoding?.used || 'utf8');
-    const blob = new Blob([outBytes], { type: "application/octet-stream" });
+    const outBytes = encodeSosiTextToBytes(
+      cleanedText,
+      decoded.encoding?.used || 'utf8'
+    );
+    const blob = new Blob([outBytes], {
+      type: 'application/octet-stream',
+    });
 
-    const originalName = file.name || "fil.sos";
-    const cleanedName = originalName.replace(/(\.[^.]+)?$/, "-renset$1");
+    const originalName = file.name || 'fil.sos';
+    const cleanedName = originalName.replace(
+      /(\.[^.]+)?$/,
+      '-renset$1'
+    );
     downloadBlob(blob, cleanedName);
   }
 
@@ -239,19 +308,31 @@ export default function Home() {
     setError(null);
     setBusy(true);
     try {
+      if (backendInfo?.env === 'vercel') {
+        await downloadCleanedClient();
+        return;
+      }
+
       if ((file?.size || 0) > HOSTED_BODY_LIMIT_BYTES) {
         await downloadCleanedClient();
         return;
       }
 
+      setProcessingMode('api');
       const fd = new FormData();
-      fd.set("file", file);
-      fd.set("selection", JSON.stringify({
-        objTypesByCategory: selection.objTypesByCategory,
-        fieldsByCategory: selection.fieldsByCategory,
-      }));
+      fd.set('file', file);
+      fd.set(
+        'selection',
+        JSON.stringify({
+          objTypesByCategory: selection.objTypesByCategory,
+          fieldsByCategory: selection.fieldsByCategory,
+        })
+      );
 
-      const res = await fetch("/api/clean", { method: "POST", body: fd });
+      const res = await fetch('/api/clean', {
+        method: 'POST',
+        body: fd,
+      });
 
       if (res.status === 413) {
         await downloadCleanedClient();
@@ -259,14 +340,14 @@ export default function Home() {
       }
 
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(text || "Rensing feilet.");
+        const text = await res.text().catch(() => '');
+        throw new Error(text || 'Rensing feilet.');
       }
 
       const blob = await res.blob();
-      const header = res.headers.get("Content-Disposition") || "";
+      const header = res.headers.get('Content-Disposition') || '';
       const match = header.match(/filename="([^"]+)"/);
-      const name = match?.[1] || "renset.sos";
+      const name = match?.[1] || 'renset.sos';
       downloadBlob(blob, name);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -280,8 +361,10 @@ export default function Home() {
       objTypesByCategory: selection.objTypesByCategory,
       fieldsByCategory: selection.fieldsByCategory,
     };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    downloadBlob(blob, "sosi-rens-utvalg.json");
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json',
+    });
+    downloadBlob(blob, 'sosi-rens-utvalg.json');
   }
 
   async function importSettingsFromFile(fileObj) {
@@ -290,8 +373,10 @@ export default function Home() {
       const imported = await readJsonFile(fileObj);
       setSelection((prev) => ({
         ...prev,
-        objTypesByCategory: imported.objTypesByCategory || prev.objTypesByCategory,
-        fieldsByCategory: imported.fieldsByCategory || prev.fieldsByCategory,
+        objTypesByCategory:
+          imported.objTypesByCategory || prev.objTypesByCategory,
+        fieldsByCategory:
+          imported.fieldsByCategory || prev.fieldsByCategory,
       }));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -313,19 +398,38 @@ export default function Home() {
   }
 
   const tabData = exploreData ? exploreData[activeTab] : null;
-  const selectedObjTypes = selection.objTypesByCategory?.[activeTab] || [];
-  const selectedFields = selection.fieldsByCategory?.[activeTab] || [];
+  const selectedObjTypes =
+    selection.objTypesByCategory?.[activeTab] || [];
+  const selectedFields =
+    selection.fieldsByCategory?.[activeTab] || [];
 
-  const mandatoryFields = useMemo(() => new Set(["OBJTYPE", "EGS_PUNKT", "EGS_LEDNING"]), []);
+  const mandatoryFields = useMemo(
+    () => new Set(['OBJTYPE', 'EGS_PUNKT', 'EGS_LEDNING']),
+    []
+  );
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-950">
       <main className="mx-auto w-full max-w-6xl px-6 py-10">
         <header className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight">SOSI-Rens</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            SOSI-Rens
+          </h1>
           <p className="mt-2 text-zinc-600">
-            Last opp SOSI → utforsk innhold → velg utvalg → last ned renset fil.
+            Last opp SOSI → utforsk innhold → velg utvalg → last ned
+            renset fil.
           </p>
+          <div className="mt-2 text-xs text-zinc-500">
+            Backend: {backendInfo?.env || 'ukjent'}
+            {backendInfo?.commit ? ` (${backendInfo.commit})` : ''}
+            {processingMode
+              ? ` · Behandling: ${
+                  processingMode === 'browser'
+                    ? 'nettleser'
+                    : 'server'
+                }`
+              : ''}
+          </div>
         </header>
 
         {error ? (
@@ -342,31 +446,47 @@ export default function Home() {
 
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <button
-            className={`rounded-md px-3 py-2 text-sm font-medium ${step === "upload" ? "bg-zinc-900 text-white" : "bg-white border border-zinc-200"}`}
-            onClick={() => setStep("upload")}
+            className={`rounded-md px-3 py-2 text-sm font-medium ${
+              step === 'upload'
+                ? 'bg-zinc-900 text-white'
+                : 'bg-white border border-zinc-200'
+            }`}
+            onClick={() => setStep('upload')}
             type="button"
           >
             1. Last opp
           </button>
           <button
-            className={`rounded-md px-3 py-2 text-sm font-medium ${step === "explore" ? "bg-zinc-900 text-white" : "bg-white border border-zinc-200"}`}
-            onClick={() => analysis && setStep("explore")}
+            className={`rounded-md px-3 py-2 text-sm font-medium ${
+              step === 'explore'
+                ? 'bg-zinc-900 text-white'
+                : 'bg-white border border-zinc-200'
+            }`}
+            onClick={() => analysis && setStep('explore')}
             type="button"
             disabled={!analysis}
           >
             2. Utforsk data
           </button>
           <button
-            className={`rounded-md px-3 py-2 text-sm font-medium ${step === "filter" ? "bg-zinc-900 text-white" : "bg-white border border-zinc-200"}`}
-            onClick={() => analysis && setStep("filter")}
+            className={`rounded-md px-3 py-2 text-sm font-medium ${
+              step === 'filter'
+                ? 'bg-zinc-900 text-white'
+                : 'bg-white border border-zinc-200'
+            }`}
+            onClick={() => analysis && setStep('filter')}
             type="button"
             disabled={!analysis}
           >
             3. Filtrer
           </button>
           <button
-            className={`rounded-md px-3 py-2 text-sm font-medium ${step === "download" ? "bg-zinc-900 text-white" : "bg-white border border-zinc-200"}`}
-            onClick={() => analysis && setStep("download")}
+            className={`rounded-md px-3 py-2 text-sm font-medium ${
+              step === 'download'
+                ? 'bg-zinc-900 text-white'
+                : 'bg-white border border-zinc-200'
+            }`}
+            onClick={() => analysis && setStep('download')}
             type="button"
             disabled={!analysis}
           >
@@ -374,11 +494,14 @@ export default function Home() {
           </button>
         </div>
 
-        {step === "upload" ? (
+        {step === 'upload' ? (
           <section className="rounded-lg border border-zinc-200 bg-white p-6">
-            <h2 className="text-lg font-semibold">Last opp SOSI-fil</h2>
+            <h2 className="text-lg font-semibold">
+              Last opp SOSI-fil
+            </h2>
             <p className="mt-1 text-sm text-zinc-600">
-              Støtter <span className="font-mono">.sos</span> og <span className="font-mono">.sosi</span>.
+              Støtter <span className="font-mono">.sos</span> og{' '}
+              <span className="font-mono">.sosi</span>.
             </p>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -398,34 +521,43 @@ export default function Home() {
                 className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                 onClick={() => file && runAnalyze(file)}
               >
-                {busy ? "Analyserer…" : "Analyser fil"}
+                {busy ? 'Analyserer…' : 'Analyser fil'}
               </button>
             </div>
 
             {file ? (
               <div className="mt-4 text-sm text-zinc-700">
-                Valgt fil: <span className="font-medium">{file.name}</span>
+                Valgt fil:{' '}
+                <span className="font-medium">{file.name}</span>
               </div>
             ) : null}
           </section>
         ) : null}
 
-        {step === "explore" && exploreData ? (
+        {step === 'explore' && exploreData ? (
           <section className="rounded-lg border border-zinc-200 bg-white p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-semibold">Utforsk data</h2>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className={`rounded-md px-3 py-2 text-sm font-medium ${activeTab === "punkter" ? "bg-zinc-900 text-white" : "bg-white border border-zinc-200"}`}
-                  onClick={() => setActiveTab("punkter")}
+                  className={`rounded-md px-3 py-2 text-sm font-medium ${
+                    activeTab === 'punkter'
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-white border border-zinc-200'
+                  }`}
+                  onClick={() => setActiveTab('punkter')}
                 >
                   Punkter
                 </button>
                 <button
                   type="button"
-                  className={`rounded-md px-3 py-2 text-sm font-medium ${activeTab === "ledninger" ? "bg-zinc-900 text-white" : "bg-white border border-zinc-200"}`}
-                  onClick={() => setActiveTab("ledninger")}
+                  className={`rounded-md px-3 py-2 text-sm font-medium ${
+                    activeTab === 'ledninger'
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-white border border-zinc-200'
+                  }`}
+                  onClick={() => setActiveTab('ledninger')}
                 >
                   Ledninger
                 </button>
@@ -434,35 +566,58 @@ export default function Home() {
 
             <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="rounded-md border border-zinc-200 p-4">
-                <div className="text-sm text-zinc-600">Antall objekter</div>
-                <div className="mt-1 text-2xl font-semibold">{tabData.features.toLocaleString("nb-NO")}</div>
+                <div className="text-sm text-zinc-600">
+                  Antall objekter
+                </div>
+                <div className="mt-1 text-2xl font-semibold">
+                  {tabData.features.toLocaleString('nb-NO')}
+                </div>
               </div>
               <div className="rounded-md border border-zinc-200 p-4">
-                <div className="text-sm text-zinc-600">Unike objekttyper</div>
-                <div className="mt-1 text-2xl font-semibold">{tabData.objTypes.length.toLocaleString("nb-NO")}</div>
+                <div className="text-sm text-zinc-600">
+                  Unike objekttyper
+                </div>
+                <div className="mt-1 text-2xl font-semibold">
+                  {tabData.objTypes.length.toLocaleString('nb-NO')}
+                </div>
               </div>
               <div className="rounded-md border border-zinc-200 p-4">
-                <div className="text-sm text-zinc-600">Unike felter</div>
-                <div className="mt-1 text-2xl font-semibold">{tabData.fields.length.toLocaleString("nb-NO")}</div>
+                <div className="text-sm text-zinc-600">
+                  Unike felter
+                </div>
+                <div className="mt-1 text-2xl font-semibold">
+                  {tabData.fields.length.toLocaleString('nb-NO')}
+                </div>
               </div>
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900">Objekttyper (topp 25)</h3>
+                <h3 className="text-sm font-semibold text-zinc-900">
+                  Objekttyper (topp 25)
+                </h3>
                 <div className="mt-2 max-h-80 overflow-auto rounded-md border border-zinc-200">
                   <table className="w-full text-sm">
                     <thead className="bg-zinc-50 text-zinc-600">
                       <tr>
-                        <th className="px-3 py-2 text-left font-medium">OBJTYPE</th>
-                        <th className="px-3 py-2 text-right font-medium">Antall</th>
+                        <th className="px-3 py-2 text-left font-medium">
+                          OBJTYPE
+                        </th>
+                        <th className="px-3 py-2 text-right font-medium">
+                          Antall
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {tabData.objTypes.slice(0, 25).map(([k, v]) => (
-                        <tr key={k} className="border-t border-zinc-200">
+                        <tr
+                          key={k}
+                          className="border-t border-zinc-200"
+                        >
                           <td className="px-3 py-2">{k}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{Number(v || 0).toLocaleString("nb-NO")}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">
+                            {Number(v || 0).toLocaleString('nb-NO')}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -471,20 +626,31 @@ export default function Home() {
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900">Felter (topp 25)</h3>
+                <h3 className="text-sm font-semibold text-zinc-900">
+                  Felter (topp 25)
+                </h3>
                 <div className="mt-2 max-h-80 overflow-auto rounded-md border border-zinc-200">
                   <table className="w-full text-sm">
                     <thead className="bg-zinc-50 text-zinc-600">
                       <tr>
-                        <th className="px-3 py-2 text-left font-medium">Felt</th>
-                        <th className="px-3 py-2 text-right font-medium">Forekomst</th>
+                        <th className="px-3 py-2 text-left font-medium">
+                          Felt
+                        </th>
+                        <th className="px-3 py-2 text-right font-medium">
+                          Forekomst
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {tabData.fields.slice(0, 25).map(([k, v]) => (
-                        <tr key={k} className="border-t border-zinc-200">
+                        <tr
+                          key={k}
+                          className="border-t border-zinc-200"
+                        >
                           <td className="px-3 py-2">{k}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{Number(v || 0).toLocaleString("nb-NO")}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">
+                            {Number(v || 0).toLocaleString('nb-NO')}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -497,7 +663,7 @@ export default function Home() {
               <button
                 type="button"
                 className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-                onClick={() => setStep("filter")}
+                onClick={() => setStep('filter')}
               >
                 Gå til filtrering
               </button>
@@ -505,22 +671,30 @@ export default function Home() {
           </section>
         ) : null}
 
-        {step === "filter" && exploreData && available ? (
+        {step === 'filter' && exploreData && available ? (
           <section className="rounded-lg border border-zinc-200 bg-white p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-semibold">Filtrer</h2>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className={`rounded-md px-3 py-2 text-sm font-medium ${activeTab === "punkter" ? "bg-zinc-900 text-white" : "bg-white border border-zinc-200"}`}
-                  onClick={() => setActiveTab("punkter")}
+                  className={`rounded-md px-3 py-2 text-sm font-medium ${
+                    activeTab === 'punkter'
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-white border border-zinc-200'
+                  }`}
+                  onClick={() => setActiveTab('punkter')}
                 >
                   Punkter
                 </button>
                 <button
                   type="button"
-                  className={`rounded-md px-3 py-2 text-sm font-medium ${activeTab === "ledninger" ? "bg-zinc-900 text-white" : "bg-white border border-zinc-200"}`}
-                  onClick={() => setActiveTab("ledninger")}
+                  className={`rounded-md px-3 py-2 text-sm font-medium ${
+                    activeTab === 'ledninger'
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-white border border-zinc-200'
+                  }`}
+                  onClick={() => setActiveTab('ledninger')}
                 >
                   Ledninger
                 </button>
@@ -530,19 +704,29 @@ export default function Home() {
             <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">Objekttyper (keep)</h3>
+                  <h3 className="text-sm font-semibold">
+                    Objekttyper (keep)
+                  </h3>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium"
-                      onClick={() => setAll(activeTab, "objTypes", available[activeTab].objTypes)}
+                      onClick={() =>
+                        setAll(
+                          activeTab,
+                          'objTypes',
+                          available[activeTab].objTypes
+                        )
+                      }
                     >
                       Velg alle
                     </button>
                     <button
                       type="button"
                       className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium"
-                      onClick={() => setAll(activeTab, "objTypes", [])}
+                      onClick={() =>
+                        setAll(activeTab, 'objTypes', [])
+                      }
                     >
                       Velg ingen
                     </button>
@@ -551,9 +735,13 @@ export default function Home() {
 
                 <div className="mt-2 max-h-104 overflow-auto rounded-md border border-zinc-200 p-2">
                   {available[activeTab].objTypes.map((objType) => {
-                    const checked = selectedObjTypes.includes(objType);
+                    const checked =
+                      selectedObjTypes.includes(objType);
                     return (
-                      <label key={objType} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-50">
+                      <label
+                        key={objType}
+                        className="flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-50"
+                      >
                         <input
                           type="checkbox"
                           checked={checked}
@@ -562,7 +750,12 @@ export default function Home() {
                               ...prev,
                               objTypesByCategory: {
                                 ...prev.objTypesByCategory,
-                                [activeTab]: toggleInList(prev.objTypesByCategory?.[activeTab] || [], objType),
+                                [activeTab]: toggleInList(
+                                  prev.objTypesByCategory?.[
+                                    activeTab
+                                  ] || [],
+                                  objType
+                                ),
                               },
                             }));
                           }}
@@ -576,19 +769,36 @@ export default function Home() {
 
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">Felter (keep)</h3>
+                  <h3 className="text-sm font-semibold">
+                    Felter (keep)
+                  </h3>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium"
-                      onClick={() => setAll(activeTab, "fields", uniq([...available[activeTab].fields, ...Array.from(mandatoryFields)]))}
+                      onClick={() =>
+                        setAll(
+                          activeTab,
+                          'fields',
+                          uniq([
+                            ...available[activeTab].fields,
+                            ...Array.from(mandatoryFields),
+                          ])
+                        )
+                      }
                     >
                       Velg alle
                     </button>
                     <button
                       type="button"
                       className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium"
-                      onClick={() => setAll(activeTab, "fields", Array.from(mandatoryFields))}
+                      onClick={() =>
+                        setAll(
+                          activeTab,
+                          'fields',
+                          Array.from(mandatoryFields)
+                        )
+                      }
                     >
                       Velg ingen
                     </button>
@@ -596,12 +806,22 @@ export default function Home() {
                 </div>
 
                 <div className="mt-2 max-h-104 overflow-auto rounded-md border border-zinc-200 p-2">
-                  {uniq([...available[activeTab].fields, ...Array.from(mandatoryFields)]).map((fieldKey) => {
+                  {uniq([
+                    ...available[activeTab].fields,
+                    ...Array.from(mandatoryFields),
+                  ]).map((fieldKey) => {
                     const keyUpper = String(fieldKey).toUpperCase();
                     const locked = mandatoryFields.has(keyUpper);
-                    const checked = locked || selectedFields.map((f) => String(f).toUpperCase()).includes(keyUpper);
+                    const checked =
+                      locked ||
+                      selectedFields
+                        .map((f) => String(f).toUpperCase())
+                        .includes(keyUpper);
                     return (
-                      <label key={fieldKey} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-50">
+                      <label
+                        key={fieldKey}
+                        className="flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-50"
+                      >
                         <input
                           type="checkbox"
                           checked={checked}
@@ -612,12 +832,23 @@ export default function Home() {
                               ...prev,
                               fieldsByCategory: {
                                 ...prev.fieldsByCategory,
-                                [activeTab]: toggleInList(prev.fieldsByCategory?.[activeTab] || [], keyUpper),
+                                [activeTab]: toggleInList(
+                                  prev.fieldsByCategory?.[
+                                    activeTab
+                                  ] || [],
+                                  keyUpper
+                                ),
                               },
                             }));
                           }}
                         />
-                        <span className={`text-sm ${locked ? "text-zinc-500" : ""}`}>{fieldKey}</span>
+                        <span
+                          className={`text-sm ${
+                            locked ? 'text-zinc-500' : ''
+                          }`}
+                        >
+                          {fieldKey}
+                        </span>
                       </label>
                     );
                   })}
@@ -629,7 +860,7 @@ export default function Home() {
               <button
                 type="button"
                 className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-                onClick={() => setStep("download")}
+                onClick={() => setStep('download')}
               >
                 Gå til nedlasting
               </button>
@@ -656,7 +887,7 @@ export default function Home() {
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) importSettingsFromFile(f);
-                    e.target.value = "";
+                    e.target.value = '';
                   }}
                 />
               </label>
@@ -671,11 +902,14 @@ export default function Home() {
           </section>
         ) : null}
 
-        {step === "download" ? (
+        {step === 'download' ? (
           <section className="rounded-lg border border-zinc-200 bg-white p-6">
-            <h2 className="text-lg font-semibold">Last ned renset fil</h2>
+            <h2 className="text-lg font-semibold">
+              Last ned renset fil
+            </h2>
             <p className="mt-1 text-sm text-zinc-600">
-              Viktig: Du er selv ansvarlig for at eksportert fil ikke inneholder sensitiv informasjon.
+              Viktig: Du er selv ansvarlig for at eksportert fil ikke
+              inneholder sensitiv informasjon.
             </p>
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -685,12 +919,12 @@ export default function Home() {
                 className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                 onClick={downloadCleaned}
               >
-                {busy ? "Genererer…" : "Last ned renset SOSI"}
+                {busy ? 'Genererer…' : 'Last ned renset SOSI'}
               </button>
               <button
                 type="button"
                 className="rounded-md border border-zinc-200 bg-white px-4 py-2 text-sm font-medium"
-                onClick={() => setStep("filter")}
+                onClick={() => setStep('filter')}
               >
                 Tilbake til filtrering
               </button>
