@@ -1142,7 +1142,7 @@ export default function Home() {
                                     <div
                                       className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
                                     >
-                                      <div className="mx-auto w-full max-w-lg">
+                                      <div className="w-full max-w-lg">
                                         <div
                                           className={`grid grid-cols-[minmax(0,1fr)_6rem] border-b px-2 py-1.5 text-[11px] font-semibold ${theme.surfaceMuted} ${theme.muted}`}
                                         >
