@@ -1142,41 +1142,35 @@ export default function Home() {
                                     <div
                                       className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
                                     >
-                                      <table className="w-full text-sm">
-                                        <thead
-                                          className={`${theme.surfaceMuted} ${theme.muted}`}
+                                      <div className="mx-auto w-full max-w-3xl">
+                                        <div
+                                          className={`grid grid-cols-[minmax(0,1fr)_auto] border-b px-3 py-2 text-xs font-semibold ${theme.surfaceMuted} ${theme.muted}`}
                                         >
-                                          <tr>
-                                            <th className="px-3 py-2 text-left font-semibold">
-                                              Verdi
-                                            </th>
-                                            <th className="px-3 py-2 text-right font-semibold">
-                                              Antall
-                                            </th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
+                                          <div>Verdi</div>
+                                          <div className="text-right">Antall</div>
+                                        </div>
+                                        <div>
                                           {(pivot.entries || []).map(
                                             ([value, count]) => (
-                                              <tr
+                                              <div
                                                 key={`${row.keyUpper}:${value}`}
-                                                className="border-t"
+                                                className={`grid grid-cols-[minmax(0,1fr)_auto] gap-4 px-3 py-2 text-sm border-t ${theme.border} first:border-t-0`}
                                               >
-                                                <td className="px-3 py-2 break-all">
+                                                <div className="break-all">
                                                   {String(value)}
-                                                </td>
-                                                <td className="px-3 py-2 text-right tabular-nums">
+                                                </div>
+                                                <div className="text-right tabular-nums">
                                                   {Number(
                                                     count || 0
                                                   ).toLocaleString(
                                                     'nb-NO'
                                                   )}
-                                                </td>
-                                              </tr>
+                                                </div>
+                                              </div>
                                             )
                                           )}
-                                        </tbody>
-                                      </table>
+                                        </div>
+                                      </div>
                                     </div>
                                   ) : null}
                                 </div>
