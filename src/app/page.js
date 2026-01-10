@@ -890,7 +890,9 @@ export default function Home() {
 
                   <div
                     className={`mt-5 flex flex-1 flex-col rounded-xl border-2 border-dashed p-6 transition-colors ${
-                      dragActive ? theme.accentSoft : theme.surfaceMuted
+                      dragActive
+                        ? theme.accentSoft
+                        : theme.surfaceMuted
                     } ${theme.border}`}
                     onClick={() => {
                       if (busy) return;
@@ -936,10 +938,14 @@ export default function Home() {
                         <div className="text-base font-semibold">
                           Dra og slipp fil her
                         </div>
-                        <div className={`mt-0.5 text-sm ${theme.muted}`}>
+                        <div
+                          className={`mt-0.5 text-sm ${theme.muted}`}
+                        >
                           Eller klikk for å velge fil.
                         </div>
-                        <div className={`mt-3 text-xs ${theme.muted}`}>
+                        <div
+                          className={`mt-3 text-xs ${theme.muted}`}
+                        >
                           Tips: Store filer analyseres i nettleseren.
                         </div>
                       </div>
@@ -1086,7 +1092,7 @@ export default function Home() {
                             >
                               <button
                                 type="button"
-                                className={`flex w-full items-center justify-between gap-3 px-4 py-2 text-left ${theme.hoverAccentSoft}`}
+                                className={`flex w-full items-center justify-between gap-3 px-4 py-1.5 text-left ${theme.hoverAccentSoft}`}
                                 onClick={async () => {
                                   toggleExpandedField(
                                     activeTab,
@@ -1106,18 +1112,15 @@ export default function Home() {
                                   ) : (
                                     <ChevronRight className="h-4 w-4 shrink-0" />
                                   )}
-                                  <div className="min-w-0">
-                                    <div className="truncate text-sm font-semibold">
-                                      {row.key}
-                                    </div>
-                                    <div
-                                      className={`text-xs ${theme.muted}`}
-                                    >
-                                      Forekomst:{' '}
-                                      {Number(
-                                        row.count || 0
-                                      ).toLocaleString('nb-NO')}
-                                    </div>
+                                  <div className="min-w-0 truncate text-sm font-semibold">
+                                    {row.key}
+                                  </div>
+                                  <div
+                                    className={`shrink-0 text-xs tabular-nums ${theme.muted}`}
+                                  >
+                                    {Number(
+                                      row.count || 0
+                                    ).toLocaleString('nb-NO')}
                                   </div>
                                 </div>
                               </button>
@@ -1136,39 +1139,41 @@ export default function Home() {
                                   ) : null}
 
                                   {pivot?.status === 'ready' ? (
-                                      <div
-                                        className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
-                                      >
-                                        <div className="mx-auto w-full max-w-xl">
-                                          <div
-                                            className={`grid grid-cols-[minmax(0,1fr)_7rem] border-b px-3 py-2 text-xs font-semibold ${theme.surfaceMuted} ${theme.muted}`}
-                                          >
-                                            <div>Verdi</div>
-                                            <div className="text-right">Antall</div>
-                                          </div>
-                                          <div>
-                                            {(pivot.entries || []).map(
-                                              ([value, count]) => (
-                                                <div
-                                                  key={`${row.keyUpper}:${value}`}
-                                                  className={`grid grid-cols-[minmax(0,1fr)_7rem] gap-3 px-3 py-2 text-sm border-t ${theme.border} first:border-t-0`}
-                                                >
-                                                  <div className="break-all">
-                                                    {String(value)}
-                                                  </div>
-                                                  <div className="text-right tabular-nums">
-                                                    {Number(
-                                                      count || 0
-                                                    ).toLocaleString(
-                                                      'nb-NO'
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              )
-                                            )}
+                                    <div
+                                      className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
+                                    >
+                                      <div className="mx-auto w-full max-w-xl">
+                                        <div
+                                          className={`grid grid-cols-[minmax(0,1fr)_7rem] border-b px-3 py-2 text-xs font-semibold ${theme.surfaceMuted} ${theme.muted}`}
+                                        >
+                                          <div>Verdi</div>
+                                          <div className="text-right">
+                                            Antall
                                           </div>
                                         </div>
+                                        <div>
+                                          {(pivot.entries || []).map(
+                                            ([value, count]) => (
+                                              <div
+                                                key={`${row.keyUpper}:${value}`}
+                                                className={`grid grid-cols-[minmax(0,1fr)_7rem] gap-3 px-3 py-2 text-sm border-t ${theme.border} first:border-t-0`}
+                                              >
+                                                <div className="break-all">
+                                                  {String(value)}
+                                                </div>
+                                                <div className="text-right tabular-nums">
+                                                  {Number(
+                                                    count || 0
+                                                  ).toLocaleString(
+                                                    'nb-NO'
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )
+                                          )}
+                                        </div>
                                       </div>
+                                    </div>
                                   ) : null}
                                 </div>
                               ) : null}
