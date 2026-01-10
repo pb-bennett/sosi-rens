@@ -1410,7 +1410,7 @@ export default function Home() {
                         <ChevronDown className="h-4 w-4" />
                       </summary>
                       <div
-                        className={`absolute right-0 z-20 mt-2 w-80 overflow-hidden rounded-xl border shadow-lg ${theme.border} ${theme.surface}`}
+                        className={`absolute right-0 bottom-full z-20 mb-2 w-80 overflow-hidden rounded-xl border shadow-lg ${theme.border} ${theme.surface}`}
                       >
                         <button
                           type="button"
