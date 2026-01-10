@@ -42,7 +42,7 @@ Example (from the start of the file):
 - `OBJTYPE` present: **36,942 / 36,942**
 - `P_TEMA` present: **26,467 / 36,942** (≈ **71.6%**)
 - `P_TEMA` missing: **10,475 / 36,942** (≈ **28.4%**)
-  - In this file, *all* missing `P_TEMA` are `OBJTYPE = VADRIFTSDATA` (**10,475** items)
+  - In this file, _all_ missing `P_TEMA` are `OBJTYPE = VADRIFTSDATA` (**10,475** items)
 - Distinct `P_TEMA` codes observed: **98**
 
 Top `P_TEMA` codes (count):
@@ -104,13 +104,14 @@ Examples (ledninger):
 - `OBJTYPE = VANNLEDNING` → `L_TEMA = VL` (**2,864 / 2,864**)
 - `OBJTYPE = OVERVANNSLEDNING` → mostly `L_TEMA = OV` (**5,344 / 5,370**, ≈ **99.5%**)
 
-### 2) Some OBJTYPE values use Tema as a *subtype* discriminator
+### 2) Some OBJTYPE values use Tema as a _subtype_ discriminator
 
-Here, the *same* `OBJTYPE` occurs with multiple Tema codes, and Tema appears to differentiate subtypes.
+Here, the _same_ `OBJTYPE` occurs with multiple Tema codes, and Tema appears to differentiate subtypes.
 
 Notable examples (punkter):
 
 - `OBJTYPE = PÅKOPLINGSPUNKT` (5,640) splits across **5** `P_TEMA` codes:
+
   - `ANB` (2,425)
   - `STK` (2,329)
   - `STO` (845)
@@ -134,7 +135,7 @@ Notable examples (ledninger):
 
 In this file, I did **not** observe a `P_TEMA` value `SLK`.
 
-What *is* present is:
+What _is_ present is:
 
 - `OBJTYPE = SLUK` (2,255)
 - `P_TEMA` values related to sluk: `SLU` (1,384), `SLS` (869), `SLG` (2)
@@ -152,11 +153,11 @@ So based on this example export, the “sluk” tema codes are **not** represent
 
 - `fields.json` declares **72** acceptable codes.
 - The SOSI file uses **98** distinct `P_TEMA` codes.
-- Intersection (codes present in *both*): **37**.
+- Intersection (codes present in _both_): **37**.
 
 This means:
 
-- **61** `P_TEMA` codes in the SOSI file are *not* listed in `fields.json`.
+- **61** `P_TEMA` codes in the SOSI file are _not_ listed in `fields.json`.
 - Many acceptable values in `fields.json` do not appear in this export (which can be normal for a specific municipality/export).
 
 Top `P_TEMA` codes that are **in the SOSI file but not in `fields.json`** (count):
@@ -176,7 +177,7 @@ There are also a few “near-miss” spelling differences (example):
 
 - `fields.json` declares **73** acceptable codes.
 - The SOSI file uses **39** distinct `L_TEMA` codes.
-- Intersection (codes present in *both*): **18**.
+- Intersection (codes present in _both_): **18**.
 
 Top `L_TEMA` codes that are **in the SOSI file but not in `fields.json`** (count):
 
@@ -189,7 +190,7 @@ Top `L_TEMA` codes that are **in the SOSI file but not in `fields.json`** (count
 
 ## Notes / limitations
 
-- This is an empirical analysis of *one* export. It shows how Gemini VA represented these fields here; it does not prove semantic equivalence across municipalities or exports.
+- This is an empirical analysis of _one_ export. It shows how Gemini VA represented these fields here; it does not prove semantic equivalence across municipalities or exports.
 - The parser treats the first seen `OBJTYPE` / `P_TEMA` / `L_TEMA` within each `.PUNKT`/`.KURVE` feature as the value for that feature.
 - Full raw aggregates are saved in:
   - `analysis/tema-objtype-relations.json`

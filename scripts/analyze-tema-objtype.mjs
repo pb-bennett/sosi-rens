@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import readline from 'node:readline';
 
-const SOSI_PATH = process.argv[2] || 'REF_FILES/EXAMPLE_SOSI/20260108_VA_eksport-kommunalt(ingen filter).sos';
+const SOSI_PATH =
+  process.argv[2] ||
+  'REF_FILES/EXAMPLE_SOSI/20260108_VA_eksport-kommunalt(ingen filter).sos';
 const FIELDS_PATH = 'src/data/fields.json';
 const OUT_JSON_PATH = 'analysis/tema-objtype-relations.json';
 
@@ -65,7 +67,8 @@ function unknownCodes(usedCounts, allowedSet) {
 function missingCodes(usedCounts, allowedSet) {
   const missing = [];
   for (const k of allowedSet) {
-    if (!Object.prototype.hasOwnProperty.call(usedCounts, k)) missing.push(k);
+    if (!Object.prototype.hasOwnProperty.call(usedCounts, k))
+      missing.push(k);
   }
   missing.sort();
   return missing;
@@ -79,7 +82,10 @@ function mapOfMapsToTop(obj, n = 10) {
   return out;
 }
 
-function summarizeMapOfMaps(mapObj, { topEntities = 50, topEntriesPerEntity = 5 } = {}) {
+function summarizeMapOfMaps(
+  mapObj,
+  { topEntities = 50, topEntriesPerEntity = 5 } = {}
+) {
   const rows = [];
   for (const [entityKey, countMap] of Object.entries(mapObj)) {
     const entries = Array.from(countMap.entries());
@@ -178,7 +184,10 @@ async function main() {
       generatedAt: new Date().toISOString(),
     },
     temaReference: {
-      punkt: { fieldKey: temaSets.punkt.fieldKey, count: temaSets.punkt.count },
+      punkt: {
+        fieldKey: temaSets.punkt.fieldKey,
+        count: temaSets.punkt.count,
+      },
       ledninger: {
         fieldKey: temaSets.ledninger.fieldKey,
         count: temaSets.ledninger.count,
@@ -255,7 +264,11 @@ async function main() {
       if (obj && pTema) {
         const byObj = ensureObj(cat.objtypeToPTema, obj, new Map());
         inc(byObj, pTema);
-        const byTema = ensureObj(cat.pTemaToObjtype, pTema, new Map());
+        const byTema = ensureObj(
+          cat.pTemaToObjtype,
+          pTema,
+          new Map()
+        );
         inc(byTema, obj);
       }
     }
@@ -269,7 +282,11 @@ async function main() {
       if (obj && lTema) {
         const byObj = ensureObj(cat.objtypeToLTema, obj, new Map());
         inc(byObj, lTema);
-        const byTema = ensureObj(cat.lTemaToObjtype, lTema, new Map());
+        const byTema = ensureObj(
+          cat.lTemaToObjtype,
+          lTema,
+          new Map()
+        );
         inc(byTema, obj);
       }
     }
@@ -277,8 +294,13 @@ async function main() {
 
   fs.mkdirSync('analysis', { recursive: true });
 
-  const stream = fs.createReadStream(SOSI_PATH, { encoding: 'latin1' });
-  const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+  const stream = fs.createReadStream(SOSI_PATH, {
+    encoding: 'latin1',
+  });
+  const rl = readline.createInterface({
+    input: stream,
+    crlfDelay: Infinity,
+  });
 
   for await (const rawLine of rl) {
     const line = rawLine.trimEnd();
@@ -317,7 +339,10 @@ async function main() {
   flushCurrent();
 
   const punkter = finalizeCategory('punkter', categories.punkter);
-  const ledninger = finalizeCategory('ledninger', categories.ledninger);
+  const ledninger = finalizeCategory(
+    'ledninger',
+    categories.ledninger
+  );
 
   const out = {
     ...baseStats,
@@ -326,26 +351,46 @@ async function main() {
         ...punkter,
         temaReference: {
           allowedCount: temaSets.punkt.count,
-          unknownInFile: unknownCodes(punkter.fullCounts.pTema, temaSets.punkt.values),
-          missingFromFile: missingCodes(punkter.fullCounts.pTema, temaSets.punkt.values),
+          unknownInFile: unknownCodes(
+            punkter.fullCounts.pTema,
+            temaSets.punkt.values
+          ),
+          missingFromFile: missingCodes(
+            punkter.fullCounts.pTema,
+            temaSets.punkt.values
+          ),
         },
       },
       ledninger: {
         ...ledninger,
         temaReference: {
           allowedCount: temaSets.ledninger.count,
-          unknownInFile: unknownCodes(ledninger.fullCounts.lTema, temaSets.ledninger.values),
-          missingFromFile: missingCodes(ledninger.fullCounts.lTema, temaSets.ledninger.values),
+          unknownInFile: unknownCodes(
+            ledninger.fullCounts.lTema,
+            temaSets.ledninger.values
+          ),
+          missingFromFile: missingCodes(
+            ledninger.fullCounts.lTema,
+            temaSets.ledninger.values
+          ),
         },
       },
     },
   };
 
-  fs.writeFileSync(OUT_JSON_PATH, JSON.stringify(out, null, 2), 'utf8');
+  fs.writeFileSync(
+    OUT_JSON_PATH,
+    JSON.stringify(out, null, 2),
+    'utf8'
+  );
 
   console.log(`Wrote ${OUT_JSON_PATH}`);
-  console.log(`punkter: ${out.results.punkter.featureCount} features`);
-  console.log(`ledninger: ${out.results.ledninger.featureCount} features`);
+  console.log(
+    `punkter: ${out.results.punkter.featureCount} features`
+  );
+  console.log(
+    `ledninger: ${out.results.ledninger.featureCount} features`
+  );
 }
 
 main().catch((err) => {
