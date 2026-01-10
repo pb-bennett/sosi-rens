@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "assets:build": "node ./scripts/prepare-assets.mjs"
   },
   "dependencies": {
     "iconv-lite": "^0.7.2",
@@ -20,6 +21,9 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5",
+    "svgo": "^4.0.0",
     "tailwindcss": "^4"
   }
 }
