@@ -68,8 +68,10 @@ export function analyzeSosiText(sosiText) {
 
       inc(result.featuresBySection, currentSection);
 
-      if (currentCategory === 'punkter') result.byCategory.punkter.features++;
-      else if (currentCategory === 'ledninger') result.byCategory.ledninger.features++;
+      if (currentCategory === 'punkter')
+        result.byCategory.punkter.features++;
+      else if (currentCategory === 'ledninger')
+        result.byCategory.ledninger.features++;
       else result.unknown.features++;
 
       continue;
@@ -79,29 +81,42 @@ export function analyzeSosiText(sosiText) {
       const objType = line.replace('..OBJTYPE', '').trim();
       currentObjType = objType || currentObjType;
 
-      if (currentCategory === 'punkter') inc(result.byCategory.punkter.objTypes, currentObjType || '(unknown)');
-      else if (currentCategory === 'ledninger') inc(result.byCategory.ledninger.objTypes, currentObjType || '(unknown)');
-      else inc(result.unknown.objTypes, currentObjType || '(unknown)');
+      if (currentCategory === 'punkter')
+        inc(
+          result.byCategory.punkter.objTypes,
+          currentObjType || '(unknown)'
+        );
+      else if (currentCategory === 'ledninger')
+        inc(
+          result.byCategory.ledninger.objTypes,
+          currentObjType || '(unknown)'
+        );
+      else
+        inc(result.unknown.objTypes, currentObjType || '(unknown)');
 
       continue;
     }
 
     if (line.startsWith('...P_TEMA')) {
       const value = line.replace('...P_TEMA', '').trim();
-      if (value && currentCategory === 'punkter') inc(result.byCategory.punkter.pTema, value);
+      if (value && currentCategory === 'punkter')
+        inc(result.byCategory.punkter.pTema, value);
     }
 
     if (line.startsWith('...L_TEMA')) {
       const value = line.replace('...L_TEMA', '').trim();
-      if (value && currentCategory === 'ledninger') inc(result.byCategory.ledninger.lTema, value);
+      if (value && currentCategory === 'ledninger')
+        inc(result.byCategory.ledninger.lTema, value);
     }
 
     if (line.startsWith('..') || line.startsWith('...')) {
       const key = extractKeyFromAttributeLine(line);
       if (!key) continue;
 
-      if (currentCategory === 'punkter') inc(result.byCategory.punkter.fields, key);
-      else if (currentCategory === 'ledninger') inc(result.byCategory.ledninger.fields, key);
+      if (currentCategory === 'punkter')
+        inc(result.byCategory.punkter.fields, key);
+      else if (currentCategory === 'ledninger')
+        inc(result.byCategory.ledninger.fields, key);
       else inc(result.unknown.fields, key);
     }
   }

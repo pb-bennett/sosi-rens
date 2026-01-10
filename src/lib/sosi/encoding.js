@@ -4,10 +4,18 @@ function mapSosiDeclaredEncodingToIconv(name) {
   const upper = String(name || '').toUpperCase();
   if (!upper) return null;
 
-  if (upper.includes('ISO8859-1') || upper.includes('ISO-8859-1')) return 'latin1';
-  if (upper.includes('ISO8859-10') || upper.includes('ISO-8859-10')) return 'iso-8859-10';
-  if (upper.includes('WINDOWS') || upper.includes('CP1252') || upper.includes('1252')) return 'win1252';
-  if (upper.includes('UTF-8') || upper.includes('UTF8')) return 'utf8';
+  if (upper.includes('ISO8859-1') || upper.includes('ISO-8859-1'))
+    return 'latin1';
+  if (upper.includes('ISO8859-10') || upper.includes('ISO-8859-10'))
+    return 'iso-8859-10';
+  if (
+    upper.includes('WINDOWS') ||
+    upper.includes('CP1252') ||
+    upper.includes('1252')
+  )
+    return 'win1252';
+  if (upper.includes('UTF-8') || upper.includes('UTF8'))
+    return 'utf8';
 
   return null;
 }
@@ -36,11 +44,15 @@ function utf8LooksBroken(text) {
 }
 
 export function detectSosiEncoding(buffer) {
-  const sampleBytes = buffer.subarray(0, Math.min(buffer.length, 65536));
+  const sampleBytes = buffer.subarray(
+    0,
+    Math.min(buffer.length, 65536)
+  );
 
   // Decode a header sample as latin1 so we can reliably read the ..TEGNSETT line.
   const headerLatin1 = iconv.decode(sampleBytes, 'latin1');
-  const declared = tryFindDeclaredEncodingInLatin1Header(headerLatin1);
+  const declared =
+    tryFindDeclaredEncodingInLatin1Header(headerLatin1);
 
   if (declared) {
     return {

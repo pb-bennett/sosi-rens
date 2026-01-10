@@ -32,11 +32,17 @@ function extractKeyFromAttributeLine(line) {
 
 function shouldAlwaysKeepFieldKey(keyUpper) {
   // Keep core structure + geometry groups.
-  return keyUpper === 'OBJTYPE' || keyUpper === 'EGS_PUNKT' || keyUpper === 'EGS_LEDNING';
+  return (
+    keyUpper === 'OBJTYPE' ||
+    keyUpper === 'EGS_PUNKT' ||
+    keyUpper === 'EGS_LEDNING'
+  );
 }
 
 function filterFeatureBlock(blockLines, category, selection) {
-  const keepFields = (selection?.fieldsByCategory?.[category] || []).map((k) => String(k).toUpperCase());
+  const keepFields = (
+    selection?.fieldsByCategory?.[category] || []
+  ).map((k) => String(k).toUpperCase());
   const keepFieldSet = new Set(keepFields);
 
   const out = [];
@@ -100,8 +106,12 @@ export function cleanSosiText(sosiText, selection) {
   const lines = text.split(/\r?\n/);
 
   const keepObjTypesByCategory = {
-    punkter: new Set((selection?.objTypesByCategory?.punkter || []).map(String)),
-    ledninger: new Set((selection?.objTypesByCategory?.ledninger || []).map(String)),
+    punkter: new Set(
+      (selection?.objTypesByCategory?.punkter || []).map(String)
+    ),
+    ledninger: new Set(
+      (selection?.objTypesByCategory?.ledninger || []).map(String)
+    ),
   };
 
   const outLines = [];
@@ -139,21 +149,31 @@ export function cleanSosiText(sosiText, selection) {
     }
 
     if (category === 'punkter') {
-      if (keepObjTypesByCategory.punkter.size > 0 && !keepObjTypesByCategory.punkter.has(objType)) {
+      if (
+        keepObjTypesByCategory.punkter.size > 0 &&
+        !keepObjTypesByCategory.punkter.has(objType)
+      ) {
         currentBlock = [];
         return;
       }
-      outLines.push(...filterFeatureBlock(currentBlock, 'punkter', selection));
+      outLines.push(
+        ...filterFeatureBlock(currentBlock, 'punkter', selection)
+      );
       currentBlock = [];
       return;
     }
 
     if (category === 'ledninger') {
-      if (keepObjTypesByCategory.ledninger.size > 0 && !keepObjTypesByCategory.ledninger.has(objType)) {
+      if (
+        keepObjTypesByCategory.ledninger.size > 0 &&
+        !keepObjTypesByCategory.ledninger.has(objType)
+      ) {
         currentBlock = [];
         return;
       }
-      outLines.push(...filterFeatureBlock(currentBlock, 'ledninger', selection));
+      outLines.push(
+        ...filterFeatureBlock(currentBlock, 'ledninger', selection)
+      );
       currentBlock = [];
       return;
     }

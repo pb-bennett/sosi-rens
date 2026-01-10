@@ -40,14 +40,14 @@ Jeg har lest både denne filen og [COPILOT_INSTRUCTIONS.md](COPILOT_INSTRUCTIONS
    - **Nøytral**: dagens “zinc/gray” (professionell)
    - **Hav**: blå/indigo aksent (trygg/teknisk)
    - **Skog**: grønn/teal aksent (vennlig)
-   Vil du at vi kun bytter aksentfarge + bakgrunn/kontrast, eller også tabellheader/knapper tydelig mer “tema”? (Jeg foreslår aksent + overflatefarger for å holde det ryddig.)
+     Vil du at vi kun bytter aksentfarge + bakgrunn/kontrast, eller også tabellheader/knapper tydelig mer “tema”? (Jeg foreslår aksent + overflatefarger for å holde det ryddig.)
 
 ### Opplasting + automatisk analyse
 
 5. Instruksjon #4 sier analyse skal starte automatisk ved upload. Skal det trigges:
    - når bruker velger fil i fil-dialog (onChange), og/eller
    - når bruker dropper fil i dropzone?
-   (Jeg antar “begge”.)
+     (Jeg antar “begge”.)
 6. Når analyse starter automatisk: Skal vi beholde “steg-knappene” (1-4) som navigasjon, eller skal vi skjule/disable de under behandling for å unngå at folk hopper rundt mens den jobber?
 
 ### Lasting / spinner
@@ -61,27 +61,31 @@ Jeg har lest både denne filen og [COPILOT_INSTRUCTIONS.md](COPILOT_INSTRUCTIONS
    - Skal sorteringen fortsatt være “mest først”, deretter alfabetisk?
 9. “Objekttyper som første felt”: Ønsker du at vi viser `OBJTYPE` som en vanlig field-seksjon (med count/fordeling), og fjerner den separate “Objekttyper”-boksen helt?
 10. “Felt minimisert + expandable pivot table”: Hva mener du med pivot her?
-   - A) En enkel frekvenstabell: **verdi → antall** for feltet (typisk), eller
-   - B) En krysstabell: **OBJTYPE × feltverdi** (kan bli tung), eller
-   - C) Noe annet?
-   NB: Dagens analyse teller bare felt-nøkler (ikke verdier). For pivot per felt må vi telle verdier også (helst lazy når feltet åpnes).
+
+- A) En enkel frekvenstabell: **verdi → antall** for feltet (typisk), eller
+- B) En krysstabell: **OBJTYPE × feltverdi** (kan bli tung), eller
+- C) Noe annet?
+  NB: Dagens analyse teller bare felt-nøkler (ikke verdier). For pivot per felt må vi telle verdier også (helst lazy når feltet åpnes).
 
 ### Feltnavn fra `fields.json`
 
 11. Status i V0: Appen bruker ikke `src/data/fields.json` i UI i dag (ingen mapping). I tillegg ser `fields.json` ut til å ha domene-felter (GMI/innmålingsinstruks) som ikke matcher SOSI-nøklene vi ser (f.eks. `OBJTYPE`, `...P_TEMA`).
-   - Har du en separat mapping fra SOSI-feltkode → “friendly name”, eller ønsker du at vi bygger en ny liten fil (f.eks. `src/data/field-names.json`) etter hvert?
-   - Når du skriver eksempel `"12345 (Building Height)"`: Forekommer det faktisk numeriske feltkoder i dine SOSI-filer, eller var det bare et eksempel?
+
+- Har du en separat mapping fra SOSI-feltkode → “friendly name”, eller ønsker du at vi bygger en ny liten fil (f.eks. `src/data/field-names.json`) etter hvert?
+- Når du skriver eksempel `"12345 (Building Height)"`: Forekommer det faktisk numeriske feltkoder i dine SOSI-filer, eller var det bare et eksempel?
 
 ### Filtrer (forklaring + grå felter + knapper)
 
 12. “Grå felter” (f.eks. `EGS_PUNKT`, `EGS_LEDNING`): I V0 er disse låst som **obligatoriske** felter (kan ikke fjernes) og vises derfor disabled/grå. Jeg antar dette er bevisst for at renset SOSI fortsatt skal ha nødvendig struktur. Skal de fortsatt være låst i V1?
 13. Tekst “(keep)”: I V0 står det “Objekttyper (keep)” og “Felter (keep)”. Du ønsker dette fjernet og erstattet med en kort norsk setning øverst.
-   - Forslag: “Velg hvilke objekttyper og felter som skal være med i eksporten.”
-   Er det OK, eller har du foretrukket formulering?
+
+- Forslag: “Velg hvilke objekttyper og felter som skal være med i eksporten.”
+  Er det OK, eller har du foretrukket formulering?
+
 14. Knapper i filtrering (“Tilbakestill…”, eksport/import JSON, slett innstillinger): Ønsker du at disse flyttes til en “Avanserte valg”-dropdown/meny, og at vi legger inn korte forklaringer under hver handling (tooltip/tekstlinje)?
-   - Hvilke handlinger skal være synlige som primærknapper ved siden av “Gå til nedlasting”, og hvilke skal gjemmes i meny?
+
+- Hvilke handlinger skal være synlige som primærknapper ved siden av “Gå til nedlasting”, og hvilke skal gjemmes i meny?
 
 ### Skjermbruk / desktop
 
 15. “Utnytte skjermen”: Ønsker du full-bredde layout (f.eks. droppe `max-w-6xl`), eller fortsatt en maks-bredde men med større tabeller/typografi?
-

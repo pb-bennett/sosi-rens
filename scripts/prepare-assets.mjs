@@ -15,8 +15,8 @@ async function build() {
     plugins: [
       'preset-default',
       { name: 'removeXMLNS', active: false },
-      { name: 'removeTitle', active: false }
-    ]
+      { name: 'removeTitle', active: false },
+    ],
   });
 
   await fs.writeFile(OUT_SVG, optimized.data, 'utf8');
@@ -28,7 +28,10 @@ async function build() {
   for (const size of sizes) {
     const out = path.join(OUT_DIR, `sosi-rens-${size}.png`);
     await sharp(Buffer.from(optimized.data))
-      .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .resize(size, size, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
       .png()
       .toFile(out);
     pngPaths.push(out);
@@ -36,12 +39,15 @@ async function build() {
   }
 
   // Create favicon.ico from 16 & 32 px PNGs
-  const icoBuffer = await pngToIco([path.join(OUT_DIR, 'sosi-rens-16.png'), path.join(OUT_DIR, 'sosi-rens-32.png')]);
+  const icoBuffer = await pngToIco([
+    path.join(OUT_DIR, 'sosi-rens-16.png'),
+    path.join(OUT_DIR, 'sosi-rens-32.png'),
+  ]);
   await fs.writeFile(path.join(OUT_DIR, 'favicon.ico'), icoBuffer);
   console.log('Wrote favicon.ico');
 }
 
-build().catch(err => {
+build().catch((err) => {
   console.error(err);
   process.exit(1);
 });

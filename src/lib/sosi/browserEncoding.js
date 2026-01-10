@@ -2,9 +2,16 @@ function mapSosiDeclaredEncodingToInternal(name) {
   const upper = String(name || '').toUpperCase();
   if (!upper) return null;
 
-  if (upper.includes('ISO8859-1') || upper.includes('ISO-8859-1')) return 'latin1';
-  if (upper.includes('WINDOWS') || upper.includes('CP1252') || upper.includes('1252')) return 'win1252';
-  if (upper.includes('UTF-8') || upper.includes('UTF8')) return 'utf8';
+  if (upper.includes('ISO8859-1') || upper.includes('ISO-8859-1'))
+    return 'latin1';
+  if (
+    upper.includes('WINDOWS') ||
+    upper.includes('CP1252') ||
+    upper.includes('1252')
+  )
+    return 'win1252';
+  if (upper.includes('UTF-8') || upper.includes('UTF8'))
+    return 'utf8';
 
   return null;
 }
@@ -16,7 +23,12 @@ function tryFindDeclaredEncodingInLatin1Header(sampleLatin1Text) {
     const match = line.match(/^\.\.TEGNSETT\s+(\S+)/i);
     if (match) return mapSosiDeclaredEncodingToInternal(match[1]);
 
-    if (line.startsWith('.PUNKT') || line.startsWith('.KURVE') || line.startsWith('.FLATE') || line.startsWith('.TEKST')) {
+    if (
+      line.startsWith('.PUNKT') ||
+      line.startsWith('.KURVE') ||
+      line.startsWith('.FLATE') ||
+      line.startsWith('.TEKST')
+    ) {
       break;
     }
   }
@@ -24,7 +36,8 @@ function tryFindDeclaredEncodingInLatin1Header(sampleLatin1Text) {
 }
 
 function bytesToLatin1String(bytes) {
-  const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const view =
+    bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   const chunkSize = 0x8000;
   let out = '';
   for (let i = 0; i < view.length; i += chunkSize) {
@@ -39,19 +52,22 @@ function utf8LooksBroken(text) {
 }
 
 function decodeWithTextDecoder(bytes, encodingLabel) {
-  const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const view =
+    bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   // TextDecoder labels: 'utf-8', 'windows-1252', 'iso-8859-1'
   const decoder = new TextDecoder(encodingLabel, { fatal: false });
   return decoder.decode(view);
 }
 
 export function detectSosiEncodingFromBytes(bytes) {
-  const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const view =
+    bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   const sample = view.subarray(0, Math.min(view.length, 65536));
 
   // Parse header reliably by interpreting bytes as latin1 so we can read ..TEGNSETT.
   const headerLatin1 = bytesToLatin1String(sample);
-  const declared = tryFindDeclaredEncodingInLatin1Header(headerLatin1);
+  const declared =
+    tryFindDeclaredEncodingInLatin1Header(headerLatin1);
 
   if (declared) {
     return {
@@ -97,8 +113,13 @@ function encodeLatin1(text) {
 }
 
 export function decodeSosiArrayBuffer(arrayBuffer) {
-  const info = detectSosiEncodingFromBytes(new Uint8Array(arrayBuffer));
-  const text = decodeWithTextDecoder(new Uint8Array(arrayBuffer), internalToDecoderLabel(info.used));
+  const info = detectSosiEncodingFromBytes(
+    new Uint8Array(arrayBuffer)
+  );
+  const text = decodeWithTextDecoder(
+    new Uint8Array(arrayBuffer),
+    internalToDecoderLabel(info.used)
+  );
   return { text, encoding: info };
 }
 
