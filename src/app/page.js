@@ -1,7 +1,7 @@
 /**
  * @file page.js
  * Main client-side UI for SOSI-Rens.
- * Implements a four-step flow: Upload → Explore → Filter → Download.
+ * Implements a five-step flow: Upload → Explore → Filter → Exclude → Download.
  * Handles file decoding, analysis, filtering, theming, and selection persistence.
  */
 
@@ -525,12 +525,12 @@ function LoadingOverlay({ theme, label }) {
 }
 
 /**
- * Main page component implementing the four-step SOSI-Rens flow.
+ * Main page component implementing the five-step SOSI-Rens flow.
  * Manages file upload, analysis, filtering, and download.
  * @returns {JSX.Element}
  */
 export default function Home() {
-  // Step state: upload | explore | filter | download
+  // Step state: upload | explore | filter | exclude | download
   const [step, setStep] = useState('upload');
   // Active tab for Explore/Filter views
   const [activeTab, setActiveTab] = useState('punkter');
@@ -538,6 +538,7 @@ export default function Home() {
     punkter: false,
     ledninger: false,
   });
+  const [exclusionsVisited, setExclusionsVisited] = useState(false);
   const [downloadFieldMode, setDownloadFieldMode] = useState(null); // 'remove-fields' | 'clear-values'
 
   const [themeKey, setThemeKey] = useState('neutral');
@@ -567,6 +568,7 @@ export default function Home() {
 
   useEffect(() => {
     setFilterVisitedTabs({ punkter: false, ledninger: false });
+    setExclusionsVisited(false);
     setDownloadFieldMode(null);
   }, [file]);
 
@@ -577,6 +579,11 @@ export default function Home() {
       [activeTab]: true,
     }));
   }, [step, activeTab]);
+
+  useEffect(() => {
+    if (step !== 'exclude') return;
+    setExclusionsVisited(true);
+  }, [step]);
 
   useEffect(() => {
     try {
@@ -1220,13 +1227,19 @@ export default function Home() {
     []
   );
 
-  const canProceedToDownloadFromFilter =
+  const canProceedToExclusionsFromFilter =
     filterVisitedTabs.punkter && filterVisitedTabs.ledninger;
 
-  const downloadGateReason =
-    analysis && !canProceedToDownloadFromFilter
+  const canProceedToDownloadFromExclusions =
+    canProceedToExclusionsFromFilter && exclusionsVisited;
+
+  const downloadGateReason = !analysis
+    ? null
+    : !canProceedToExclusionsFromFilter
       ? 'Du må åpne både «Punkter» og «Ledninger» i «Filtrer» før du kan gå til nedlasting.'
-      : null;
+      : !exclusionsVisited
+        ? 'Gå til «Ekskluder» før du kan gå til nedlasting.'
+        : null;
 
   const exploreFieldRows = useMemo(() => {
     if (!tabData) return [];
@@ -1364,16 +1377,37 @@ export default function Home() {
               />
               <StepButton
                 theme={theme}
+                active={step === 'exclude'}
+                disabled={
+                  busy || !analysis || !canProceedToExclusionsFromFilter
+                }
+                disabledReason={
+                  canProceedToExclusionsFromFilter
+                    ? null
+                    : 'Åpne både «Punkter» og «Ledninger» i «Filtrer» først.'
+                }
+                icon={Trash2}
+                label="4. Ekskluder"
+                onClick={() =>
+                  analysis &&
+                  canProceedToExclusionsFromFilter &&
+                  setStep('exclude')
+                }
+              />
+              <StepButton
+                theme={theme}
                 active={step === 'download'}
                 disabled={
-                  busy || !analysis || !canProceedToDownloadFromFilter
+                  busy ||
+                  !analysis ||
+                  !canProceedToDownloadFromExclusions
                 }
                 disabledReason={downloadGateReason}
                 icon={Download}
-                label="4. Last ned"
+                label="5. Last ned"
                 onClick={() =>
                   analysis &&
-                  canProceedToDownloadFromFilter &&
+                  canProceedToDownloadFromExclusions &&
                   setStep('download')
                 }
               />
@@ -1944,16 +1978,143 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-6">
-                    <h3 className="text-sm font-semibold">
-                      Ekskluderte objekter
-                    </h3>
-                    <div className={`mt-1 text-xs ${theme.muted}`}>
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-col items-start gap-1">
+                      <span
+                        className="inline-flex"
+                        title={
+                          canProceedToExclusionsFromFilter
+                            ? ''
+                            : 'Du må åpne både «Punkter» og «Ledninger» før du kan gå videre.'
+                        }
+                      >
+                        <button
+                          type="button"
+                          disabled={!canProceedToExclusionsFromFilter}
+                          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
+                          onClick={() => {
+                            if (!canProceedToExclusionsFromFilter)
+                              return;
+                            setStep('exclude');
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Gå til ekskludering
+                        </button>
+                      </span>
+                      {!canProceedToExclusionsFromFilter ? (
+                        <div className={`text-xs ${theme.muted}`}>
+                          Åpne både «Punkter» og «Ledninger» før du
+                          går videre.
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <details className="relative">
+                      <summary
+                        className={`inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                      >
+                        <Filter className="h-4 w-4" />
+                        Avanserte valg
+                        <ChevronDown className="h-4 w-4" />
+                      </summary>
+                      <div
+                        className={`absolute right-0 bottom-full z-20 mb-2 w-80 overflow-hidden rounded-xl border shadow-lg ${theme.border} ${theme.surface}`}
+                      >
+                        <button
+                          type="button"
+                          className={`flex w-full items-start gap-3 px-4 py-3 text-left ${theme.hoverAccentSoft}`}
+                          onClick={() => ensureDefaultsFromAnalysis()}
+                        >
+                          <RotateCcw className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold">
+                              Tilbakestill til standard (fra fil)
+                            </div>
+                            <div className={`text-xs ${theme.muted}`}>
+                              Bruk feltene/objekttypene som finnes i
+                              den opplastede filen.
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
+                          onClick={exportSettings}
+                        >
+                          <Download className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold">
+                              Eksporter utvalg (JSON)
+                            </div>
+                            <div className={`text-xs ${theme.muted}`}>
+                              Lagre filtervalgene for deling/backup.
+                            </div>
+                          </div>
+                        </button>
+                        <label
+                          className={`flex w-full cursor-pointer items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
+                        >
+                          <FileUp className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold">
+                              Importer utvalg (JSON)
+                            </div>
+                            <div className={`text-xs ${theme.muted}`}>
+                              Last inn tidligere lagrede filtervalg.
+                            </div>
+                          </div>
+                          <input
+                            type="file"
+                            accept="application/json,.json"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) importSettingsFromFile(f);
+                              e.target.value = '';
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
+                          onClick={clearSavedSettings}
+                        >
+                          <Trash2 className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold">
+                              Slett lagrede innstillinger
+                            </div>
+                            <div className={`text-xs ${theme.muted}`}>
+                              Fjerner lagrede valg fra denne
+                              nettleseren.
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {step === 'exclude' && exploreData && available ? (
+              <section className="flex h-full flex-col">
+                <div
+                  className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}
+                >
+                  <div>
+                    <h2 className="text-2xl font-semibold tracking-tight">
+                      Ekskluder objekter
+                    </h2>
+                    <div className={`mt-1 text-sm ${theme.muted}`}>
                       Objekter i listen fjernes fra eksporten, selv om
                       de ellers matcher filtervalgene.
                     </div>
+                  </div>
 
-                    <div className="mt-3 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  <div className="mt-5 min-h-0 flex-1 overflow-hidden">
+                    <div className="grid h-full grid-cols-1 gap-6 overflow-hidden lg:grid-cols-2">
                       {(['punkter', 'ledninger'] || []).map((cat) => {
                         const list =
                           selection?.excludedByCategory?.[cat] || [];
@@ -1966,7 +2127,7 @@ export default function Home() {
                         return (
                           <div
                             key={cat}
-                            className={`rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}
+                            className={`min-h-0 rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div className="text-sm font-semibold">
@@ -2051,7 +2212,7 @@ export default function Home() {
                               </button>
                             </div>
 
-                            <div className="mt-3">
+                            <div className="mt-3 min-h-0 overflow-auto">
                               {list.length === 0 ? (
                                 <div className={`text-xs ${theme.muted}`}>
                                   Ingen ekskluderte objekter.
@@ -2243,121 +2404,23 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex flex-col items-start gap-1">
-                      <span
-                        className="inline-flex"
-                        title={
-                          canProceedToDownloadFromFilter
-                            ? ''
-                            : 'Du må åpne både «Punkter» og «Ledninger» før du kan gå til nedlasting.'
-                        }
-                      >
-                        <button
-                          type="button"
-                          disabled={!canProceedToDownloadFromFilter}
-                          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
-                          onClick={() => {
-                            if (!canProceedToDownloadFromFilter)
-                              return;
-                            setStep('download');
-                          }}
-                        >
-                          <Download className="h-4 w-4" />
-                          Gå til nedlasting
-                        </button>
-                      </span>
-                      {!canProceedToDownloadFromFilter ? (
-                        <div className={`text-xs ${theme.muted}`}>
-                          Åpne både «Punkter» og «Ledninger» før du
-                          går videre.
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <details className="relative">
-                      <summary
-                        className={`inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                      >
-                        <Filter className="h-4 w-4" />
-                        Avanserte valg
-                        <ChevronDown className="h-4 w-4" />
-                      </summary>
-                      <div
-                        className={`absolute right-0 bottom-full z-20 mb-2 w-80 overflow-hidden rounded-xl border shadow-lg ${theme.border} ${theme.surface}`}
-                      >
-                        <button
-                          type="button"
-                          className={`flex w-full items-start gap-3 px-4 py-3 text-left ${theme.hoverAccentSoft}`}
-                          onClick={() => ensureDefaultsFromAnalysis()}
-                        >
-                          <RotateCcw className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Tilbakestill til standard (fra fil)
-                            </div>
-                            <div className={`text-xs ${theme.muted}`}>
-                              Bruk feltene/objekttypene som finnes i
-                              den opplastede filen.
-                            </div>
-                          </div>
-                        </button>
-                        <button
-                          type="button"
-                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
-                          onClick={exportSettings}
-                        >
-                          <Download className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Eksporter utvalg (JSON)
-                            </div>
-                            <div className={`text-xs ${theme.muted}`}>
-                              Lagre filtervalgene for deling/backup.
-                            </div>
-                          </div>
-                        </button>
-                        <label
-                          className={`flex w-full cursor-pointer items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
-                        >
-                          <FileUp className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Importer utvalg (JSON)
-                            </div>
-                            <div className={`text-xs ${theme.muted}`}>
-                              Last inn tidligere lagrede filtervalg.
-                            </div>
-                          </div>
-                          <input
-                            type="file"
-                            accept="application/json,.json"
-                            className="hidden"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) importSettingsFromFile(f);
-                              e.target.value = '';
-                            }}
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
-                          onClick={clearSavedSettings}
-                        >
-                          <Trash2 className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Slett lagrede innstillinger
-                            </div>
-                            <div className={`text-xs ${theme.muted}`}>
-                              Fjerner lagrede valg fra denne
-                              nettleseren.
-                            </div>
-                          </div>
-                        </button>
-                      </div>
-                    </details>
+                  <div className="mt-5 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
+                      onClick={() => setStep('download')}
+                    >
+                      <Download className="h-4 w-4" />
+                      Gå til nedlasting
+                    </button>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                      onClick={() => setStep('filter')}
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Tilbake til filtrering
+                    </button>
                   </div>
                 </div>
               </section>
@@ -2450,10 +2513,10 @@ export default function Home() {
                     <button
                       type="button"
                       className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                      onClick={() => setStep('filter')}
+                      onClick={() => setStep('exclude')}
                     >
                       <ArrowLeft className="h-4 w-4" />
-                      Tilbake til filtrering
+                      Tilbake til ekskludering
                     </button>
                   </div>
                 </div>
