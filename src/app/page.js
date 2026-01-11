@@ -287,6 +287,7 @@ export default function Home() {
     punkter: false,
     ledninger: false,
   });
+  const [downloadFieldMode, setDownloadFieldMode] = useState(null); // 'remove-fields' | 'clear-values'
 
   const [themeKey, setThemeKey] = useState('neutral');
   const theme = THEMES[themeKey] || THEMES.neutral;
@@ -315,6 +316,7 @@ export default function Home() {
 
   useEffect(() => {
     setFilterVisitedTabs({ punkter: false, ledninger: false });
+    setDownloadFieldMode(null);
   }, [file]);
 
   useEffect(() => {
@@ -576,10 +578,19 @@ export default function Home() {
     setFileArrayBuffer(arrayBuffer);
 
     const decoded = decodeSosiArrayBuffer(arrayBuffer);
-    const cleanedText = cleanSosiText(decoded.text, {
-      objTypesByCategory: selection.objTypesByCategory,
-      fieldsByCategory: selection.fieldsByCategory,
-    }).text;
+    const cleanedText = cleanSosiText(
+      decoded.text,
+      {
+        objTypesByCategory: selection.objTypesByCategory,
+        fieldsByCategory: selection.fieldsByCategory,
+      },
+      {
+        fieldMode:
+          downloadFieldMode === 'clear-values'
+            ? 'clear-values'
+            : 'remove-fields',
+      }
+    ).text;
 
     const outBytes = encodeSosiTextToBytes(
       cleanedText,
@@ -622,6 +633,12 @@ export default function Home() {
           objTypesByCategory: selection.objTypesByCategory,
           fieldsByCategory: selection.fieldsByCategory,
         })
+      );
+      fd.set(
+        'fieldMode',
+        downloadFieldMode === 'clear-values'
+          ? 'clear-values'
+          : 'remove-fields'
       );
 
       const res = await fetch('/api/clean', {
@@ -1533,10 +1550,67 @@ export default function Home() {
                     ikke inneholder sensitiv informasjon.
                   </p>
 
+                  <div className="mt-5">
+                    <div className="text-sm font-semibold">
+                      Hvordan skal felter håndteres?
+                    </div>
+                    <div className={`mt-1 text-xs ${theme.muted}`}>
+                      Velg ett alternativ før nedlasting.
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
+                      <label
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${theme.border} ${theme.surfaceMuted} ${theme.hoverAccentSoft}`}
+                      >
+                        <input
+                          type="radio"
+                          name="downloadFieldMode"
+                          checked={
+                            downloadFieldMode === 'remove-fields'
+                          }
+                          onChange={() =>
+                            setDownloadFieldMode('remove-fields')
+                          }
+                        />
+                        <div>
+                          <div className="text-sm font-semibold">
+                            Fjern felter helt
+                          </div>
+                          <div className={`mt-0.5 text-xs ${theme.muted}`}>
+                            Uønskede felter fjernes fra objektene.
+                          </div>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${theme.border} ${theme.surfaceMuted} ${theme.hoverAccentSoft}`}
+                      >
+                        <input
+                          type="radio"
+                          name="downloadFieldMode"
+                          checked={
+                            downloadFieldMode === 'clear-values'
+                          }
+                          onChange={() =>
+                            setDownloadFieldMode('clear-values')
+                          }
+                        />
+                        <div>
+                          <div className="text-sm font-semibold">
+                            Behold felter, fjern verdier
+                          </div>
+                          <div className={`mt-0.5 text-xs ${theme.muted}`}>
+                            Feltlinjene beholdes, men verdier slettes.
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="mt-6 flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      disabled={!file || busy}
+                      disabled={!file || busy || !downloadFieldMode}
                       className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
                       onClick={downloadCleaned}
                     >

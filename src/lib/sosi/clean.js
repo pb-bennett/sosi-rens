@@ -39,11 +39,22 @@ function shouldAlwaysKeepFieldKey(keyUpper) {
   );
 }
 
-function filterFeatureBlock(blockLines, category, selection) {
+function stripAttributeValue(line) {
+  const match = String(line).match(/^(\.{2,})(\S+)(?:\s+.*)?$/);
+  if (!match) return String(line);
+  return `${match[1]}${match[2]}`;
+}
+
+function filterFeatureBlock(blockLines, category, selection, options) {
   const keepFields = (
     selection?.fieldsByCategory?.[category] || []
   ).map((k) => String(k).toUpperCase());
   const keepFieldSet = new Set(keepFields);
+
+  const fieldMode =
+    options?.fieldMode === 'clear-values'
+      ? 'clear-values'
+      : 'remove-fields';
 
   const out = [];
 
@@ -89,6 +100,8 @@ function filterFeatureBlock(blockLines, category, selection) {
 
       if (keepFieldSet.has(key)) {
         out.push(line);
+      } else if (fieldMode === 'clear-values') {
+        out.push(stripAttributeValue(line));
       }
       continue;
     }
@@ -100,7 +113,7 @@ function filterFeatureBlock(blockLines, category, selection) {
   return out;
 }
 
-export function cleanSosiText(sosiText, selection) {
+export function cleanSosiText(sosiText, selection, options) {
   const text = String(sosiText);
   const newline = text.includes('\r\n') ? '\r\n' : '\n';
   const lines = text.split(/\r?\n/);
@@ -157,7 +170,12 @@ export function cleanSosiText(sosiText, selection) {
         return;
       }
       outLines.push(
-        ...filterFeatureBlock(currentBlock, 'punkter', selection)
+        ...filterFeatureBlock(
+          currentBlock,
+          'punkter',
+          selection,
+          options
+        )
       );
       currentBlock = [];
       return;
@@ -172,7 +190,12 @@ export function cleanSosiText(sosiText, selection) {
         return;
       }
       outLines.push(
-        ...filterFeatureBlock(currentBlock, 'ledninger', selection)
+        ...filterFeatureBlock(
+          currentBlock,
+          'ledninger',
+          selection,
+          options
+        )
       );
       currentBlock = [];
       return;

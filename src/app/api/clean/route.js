@@ -14,6 +14,7 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get('file');
     const selectionJson = formData.get('selection');
+    const fieldModeRaw = formData.get('fieldMode');
 
     if (!file) {
       return Response.json(
@@ -41,11 +42,18 @@ export async function POST(request) {
       }
     }
 
+    const fieldMode =
+      String(fieldModeRaw || '') === 'clear-values'
+        ? 'clear-values'
+        : 'remove-fields';
+
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     const decoded = decodeSosiBuffer(buffer);
-    const cleaned = cleanSosiText(decoded.text, selection);
+    const cleaned = cleanSosiText(decoded.text, selection, {
+      fieldMode,
+    });
 
     const outEncoding = decoded.encoding?.used || 'utf8';
     const outBuffer = encodeSosiText(cleaned.text, outEncoding);
