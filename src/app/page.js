@@ -1,3 +1,10 @@
+/**
+ * @file page.js
+ * Main client-side UI for SOSI-Rens.
+ * Implements a four-step flow: Upload → Explore → Filter → Download.
+ * Handles file decoding, analysis, filtering, theming, and selection persistence.
+ */
+
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -22,10 +29,19 @@ import {
   encodeSosiTextToBytes,
 } from '../lib/sosi/browserEncoding.js';
 
+/** localStorage key for persisting user selection (objTypes, fields). */
 const STORAGE_KEY = 'sosi-rens:v0';
+
+/** localStorage key for persisting the selected theme. */
 const THEME_KEY = 'sosi-rens:theme';
+
+/** Max file size (bytes) for which we attempt server-side cleaning via API. */
 const HOSTED_BODY_LIMIT_BYTES = 2_000_000;
 
+/**
+ * Theme definitions (Tailwind class tokens).
+ * Each theme defines colors for backgrounds, text, borders, buttons, etc.
+ */
 const THEMES = {
   light: {
     label: 'Lys',
@@ -83,12 +99,21 @@ const THEMES = {
   },
 };
 
+/**
+ * Aliases for migrating old theme keys to current theme keys.
+ * Allows users with legacy localStorage values to seamlessly update.
+ */
 const THEME_KEY_ALIASES = {
   neutral: 'light',
   githubLight: 'light',
   githubDark: 'dark',
 };
 
+/**
+ * Sort object entries by value descending, then key ascending.
+ * @param {Record<string, number>} obj - Object with numeric values.
+ * @returns {[string, number][]} Sorted entries.
+ */
 function sortEntriesDesc(obj) {
   return Object.entries(obj || {}).sort(
     (a, b) =>
@@ -97,10 +122,20 @@ function sortEntriesDesc(obj) {
   );
 }
 
+/**
+ * Deduplicate and filter falsy values from an array.
+ * @param {any[]} list - Input array.
+ * @returns {any[]} Unique truthy values.
+ */
 function uniq(list) {
   return [...new Set((list || []).filter(Boolean))];
 }
 
+/**
+ * Trigger a browser download for a Blob.
+ * @param {Blob} blob - File content.
+ * @param {string} filename - Suggested filename.
+ */
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -112,6 +147,11 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+/**
+ * Read a File object as JSON.
+ * @param {File} file - File to read.
+ * @returns {Promise<any>} Parsed JSON.
+ */
 function readJsonFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -127,6 +167,12 @@ function readJsonFile(file) {
   });
 }
 
+/**
+ * Iterate over lines in a string without splitting into a large array.
+ * Handles both LF and CRLF line endings.
+ * @param {string} text - Input text.
+ * @param {(line: string) => void} onLine - Callback for each line.
+ */
 function forEachLine(text, onLine) {
   const str = String(text || '');
   let start = 0;
@@ -143,16 +189,31 @@ function forEachLine(text, onLine) {
   }
 }
 
+/**
+ * Check if a line starts a new SOSI feature block.
+ * @param {string} line - Raw SOSI line.
+ * @returns {boolean} True if the line starts a feature.
+ */
 function isFeatureStartLine(line) {
   return /^\.(?!\.)[A-ZÆØÅa-zæøå]+\b/.test(String(line));
 }
 
+/**
+ * Extract the section name from a feature-start line.
+ * @param {string} line - Raw SOSI line.
+ * @returns {string | null} Uppercased section name (e.g. `.PUNKT`).
+ */
 function getSectionName(line) {
   const match = String(line).match(/^\.(?!\.)\s*([A-ZÆØÅa-zæøå]+)/);
   if (!match) return null;
   return `.${String(match[1]).toUpperCase()}`;
 }
 
+/**
+ * Map a section name to a category.
+ * @param {string | null} section - Section name.
+ * @returns {'punkter' | 'ledninger' | 'unknown'} Category.
+ */
 function categorizeSection(section) {
   if (!section) return 'unknown';
   if (section === '.KURVE') return 'ledninger';
@@ -160,6 +221,14 @@ function categorizeSection(section) {
   return 'unknown';
 }
 
+/**
+ * Compute value frequency distribution for a specific field in a category.
+ * Used by the Explore pivot tables to show value counts.
+ * @param {string} sosiText - Full SOSI text.
+ * @param {string} fieldKeyUpper - Uppercased field key.
+ * @param {'punkter' | 'ledninger'} category - Category to filter by.
+ * @returns {[string, number][]} Sorted [value, count] pairs.
+ */
 function computeValueFrequencyForField(
   sosiText,
   fieldKeyUpper,
@@ -199,6 +268,19 @@ function computeValueFrequencyForField(
   );
 }
 
+/**
+ * Step navigation button used in the header.
+ * Displays an icon + label, handles active/disabled states, and shows tooltip when disabled.
+ * @param {Object} props
+ * @param {Object} props.theme - Current theme tokens.
+ * @param {boolean} props.active - Whether this step is the current step.
+ * @param {boolean} props.disabled - Whether the button is disabled.
+ * @param {string} [props.disabledReason] - Tooltip text when disabled.
+ * @param {React.ComponentType} props.icon - Lucide icon component.
+ * @param {string} props.label - Button label.
+ * @param {() => void} props.onClick - Click handler.
+ * @returns {JSX.Element}
+ */
 function StepButton({
   theme,
   active,
@@ -235,6 +317,14 @@ function StepButton({
   return button;
 }
 
+/**
+ * Tab switcher for Punkter/Ledninger.
+ * @param {Object} props
+ * @param {Object} props.theme - Current theme tokens.
+ * @param {'punkter' | 'ledninger'} props.value - Active tab.
+ * @param {(tab: 'punkter' | 'ledninger') => void} props.onChange - Tab change handler.
+ * @returns {JSX.Element}
+ */
 function Tabs({ theme, value, onChange }) {
   return (
     <div
@@ -267,6 +357,13 @@ function Tabs({ theme, value, onChange }) {
   );
 }
 
+/**
+ * Full-screen loading overlay with spinner and message.
+ * @param {Object} props
+ * @param {Object} props.theme - Current theme tokens.
+ * @param {string} [props.label] - Loading message.
+ * @returns {JSX.Element}
+ */
 function LoadingOverlay({ theme, label }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
@@ -291,9 +388,16 @@ function LoadingOverlay({ theme, label }) {
   );
 }
 
+/**
+ * Main page component implementing the four-step SOSI-Rens flow.
+ * Manages file upload, analysis, filtering, and download.
+ * @returns {JSX.Element}
+ */
 export default function Home() {
-  const [step, setStep] = useState('upload'); // upload | explore | filter | download
-  const [activeTab, setActiveTab] = useState('punkter'); // punkter | ledninger
+  // Step state: upload | explore | filter | download
+  const [step, setStep] = useState('upload');
+  // Active tab for Explore/Filter views
+  const [activeTab, setActiveTab] = useState('punkter');
   const [filterVisitedTabs, setFilterVisitedTabs] = useState({
     punkter: false,
     ledninger: false,
