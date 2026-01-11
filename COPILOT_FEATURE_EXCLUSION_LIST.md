@@ -20,9 +20,9 @@ Analysis source: `REF_FILES/EXAMPLE_SOSI/20260108_VA_eksport-kommunalt(ingen fil
 ### Where identifiers live in the SOSI structure
 
 - The relevant identifiers in this export are **triple-dot attributes** inside the `..EGS_PUNKT` / `..EGS_LEDNING` groups:
-	- `...SID <number>` appears in both points and lines.
-	- `...PSID <number>` appears in some point features.
-	- `...LSID <number>` appears in many point features, and also in some line features.
+  - `...SID <number>` appears in both points and lines.
+  - `...PSID <number>` appears in some point features.
+  - `...LSID <number>` appears in many point features, and also in some line features.
 
 This means the exclusion logic must look inside feature blocks for `...SID` / `...PSID` / `...LSID` (not `..SID`).
 
@@ -37,12 +37,12 @@ Counts below are occurrences of lines in the example file (not necessarily uniqu
 Breakdown by section:
 
 - In `.PUNKT`:
-	- `SID`: 20,437
-	- `PSID`: 2,296
-	- `LSID`: 13,508
+  - `SID`: 20,437
+  - `PSID`: 2,296
+  - `LSID`: 13,508
 - In `.KURVE`:
-	- `SID`: 13,326
-	- `LSID`: 533
+  - `SID`: 13,326
+  - `LSID`: 533
 
 ### Ambiguity between Punkter and Ledninger
 
@@ -67,9 +67,9 @@ Add exclusions to the persisted selection payload:
 
 - `excludedByCategory: { punkter: ExcludedEntry[], ledninger: ExcludedEntry[] }`
 - `ExcludedEntry`:
-	- `id`: string (the numeric value, stored as string)
-	- `idType`: `'SID' | 'PSID' | 'LSID'` (explicit)
-	- `comment`: string (optional)
+  - `id`: string (the numeric value, stored as string)
+  - `idType`: `'SID' | 'PSID' | 'LSID'` (explicit)
+  - `comment`: string (optional)
 
 This keeps it explicit and avoids guessing later.
 
@@ -77,9 +77,9 @@ This keeps it explicit and avoids guessing later.
 
 - Extend `cleanSosiText()` to drop entire feature blocks **before** field filtering when a block matches an exclusion entry.
 - For each feature block, extract identifiers from all lines matching:
-	- `...SID <value>`
-	- `...PSID <value>`
-	- `...LSID <value>`
+  - `...SID <value>`
+  - `...PSID <value>`
+  - `...LSID <value>`
 - If any extracted `(idType, value)` matches an exclusion in the block’s category, skip the whole block.
 
 ### UX / “very user friendly” approach
@@ -88,24 +88,24 @@ To reduce user confusion (because Gemini search can show multiple hits):
 
 - UI keeps **two lists**: Punkter and Ledninger.
 - When user pastes a number into a list, the app tries to resolve it against the loaded SOSI text for that category:
-	- If it matches exactly one of `SID/PSID/LSID` in that category, store it with the resolved `idType`.
-	- If it matches multiple (or none), ask the user to choose `SID/PSID/LSID` (or show an error).
+  - If it matches exactly one of `SID/PSID/LSID` in that category, store it with the resolved `idType`.
+  - If it matches multiple (or none), ask the user to choose `SID/PSID/LSID` (or show an error).
 - Display metadata for each entry:
-	- Punkter: `OBJTYPE` (and optionally `P_TEMA`).
-	- Ledninger: `OBJTYPE`, plus `DIMENSJON` and `MATERIAL` when present.
+  - Punkter: `OBJTYPE` (and optionally `P_TEMA`).
+  - Ledninger: `OBJTYPE`, plus `DIMENSJON` and `MATERIAL` when present.
 
 Implementation detail: build an in-memory index from the SOSI text (category + idType + id → { objType, dimensjon, material }) to support fast lookups while typing. This is similar in spirit to how Explore already builds “pivot” caches.
 
 ### Questions for your feedback
 
-1. In Gemini VA / Portal+, when you copy an “object ID” for **ledninger**, is it usually `SID` or `LSID`?
-2. For a point object (e.g. ventiler), do you expect Gemini to reference `PSID`, `SID`, or `LSID`?
-3. If the same ID appears multiple times (e.g. `PSID` can repeat), should exclusion remove **all** matching features, or only the first match?
-4. Should the exclusion feature support pasting **many IDs at once** (newline-separated), or only one-at-a-time?
+1. In Gemini VA / Portal+, when you copy an “object ID” for **ledninger**, is it usually `SID` or `LSID`? `I think it is the SID`
+2. For a point object (e.g. ventiler), do you expect Gemini to reference `PSID`, `SID`, or `LSID`? `I think we will only be looking up SID for all objects, we just need to have the user differentiate between if it is point or line`
+3. If the same ID appears multiple times (e.g. `PSID` can repeat), should exclusion remove **all** matching features, or only the first match? `All matching can be displayed to the user, the user then selects which to exclude. We can search through what is left after filtering, no need to show objects already filtered out. The no result can say that no result found in the current filtered data.`
+4. Should the exclusion feature support pasting **many IDs at once** (newline-separated), or only one-at-a-time? `One at a time is fine for now.`
 5. When an ID is entered but not found in the SOSI file, what should happen?
-	 - Reject with an error, or
-	 - Allow it anyway (in case the file changes later), but mark it as “not found”.
-6. Do you want the “Ekskluderte objekter” section to be in **Filter** only, or also visible in **Download** as a final check?
+   - Reject with an error, or
+   - Allow it anyway (in case the file changes later), but mark it as “not found”. `Reject with an error is best. See above, that the user can choose which to exclude from the found results, or that there is no result found in the current filtered data.`
+6. Do you want the “Ekskluderte objekter” section to be in **Filter** only, or also visible in **Download** as a final check? `Filter only is fine.`
 
 ### UI Changes
 
@@ -114,3 +114,6 @@ Implementation detail: build an in-memory index from the SOSI text (category + i
 3. List of objects for each of Punkt and Ledning, as the ID number can refer to both types.
 4. For each excluded ID provide the type of object, with dimensjion and material if ledning.
 5. Each entry in the exclusion list should have an edit and delete button.
+6. Add a comment option for each excluded object.
+
+## REMEMBER TO COMMENT CODE AS YOU ENTER IT; AND UPDATE COMMENTS AS CHANGES ARE MADE. README CAN BE UPDATED AT THE END OF THE FEATURE IMPLEMENTATION.

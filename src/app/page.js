@@ -189,6 +189,142 @@ function forEachLine(text, onLine) {
   }
 }
 
+function escapeRegExp(str) {
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeExcludedByCategory(excludedByCategory) {
+  const base = {
+    punkter: [],
+    ledninger: [],
+  };
+  const src = excludedByCategory && typeof excludedByCategory === 'object'
+    ? excludedByCategory
+    : null;
+
+  for (const category of ['punkter', 'ledninger']) {
+    const list = Array.isArray(src?.[category]) ? src[category] : [];
+    base[category] = list
+      .map((e) => {
+        const id = String(e?.id ?? '').trim();
+        const idType = String(e?.idType ?? 'SID').toUpperCase();
+        const comment = String(e?.comment ?? '').trim();
+        const meta = e?.meta && typeof e.meta === 'object' ? e.meta : null;
+        if (!id) return null;
+        if (!['SID', 'PSID', 'LSID'].includes(idType)) return null;
+        return { id, idType, comment, meta };
+      })
+      .filter(Boolean);
+  }
+
+  return base;
+}
+
+function buildExcludedKey(entry) {
+  return `${String(entry?.idType || '').toUpperCase()}:${String(
+    entry?.id || ''
+  ).trim()}`;
+}
+
+function getCategoryLabel(category) {
+  return category === 'ledninger' ? 'Ledninger' : 'Punkter';
+}
+
+function lookupExclusionMeta(sosiText, category, idType, id) {
+  const wantedCategory = String(category);
+  const wantedType = String(idType).toUpperCase();
+  const wantedId = String(id).trim();
+
+  if (!sosiText || !wantedId) return null;
+  if (!['SID', 'PSID', 'LSID'].includes(wantedType)) return null;
+
+  const idLineRe = new RegExp(
+    `^\\.\\.\\.${escapeRegExp(wantedType)}\\s+${escapeRegExp(
+      wantedId
+    )}\\s*$`
+  );
+
+  let currentSection = null;
+  let currentCategory = 'unknown';
+  let currentObjType = null;
+  let currentTema = null;
+  let currentMaterial = null;
+  let currentDimensjon = null;
+  let matchInThisBlock = false;
+
+  function resetForBlock() {
+    currentObjType = null;
+    currentTema = null;
+    currentMaterial = null;
+    currentDimensjon = null;
+    matchInThisBlock = false;
+  }
+
+  function finalizeIfMatch() {
+    if (!matchInThisBlock) return null;
+    if (currentCategory !== wantedCategory) return null;
+    return {
+      objType: currentObjType || null,
+      tema: currentTema || null,
+      material: currentMaterial || null,
+      dimensjon: currentDimensjon || null,
+    };
+  }
+
+  resetForBlock();
+
+  forEachLine(sosiText, (lineRaw) => {
+    const line = String(lineRaw || '');
+    if (!line) return;
+
+    if (isFeatureStartLine(line)) {
+      const resolved = finalizeIfMatch();
+      if (resolved) throw resolved;
+      currentSection = getSectionName(line);
+      currentCategory = categorizeSection(currentSection);
+      resetForBlock();
+      return;
+    }
+
+    if (line.startsWith('..OBJTYPE')) {
+      const objType = line.replace('..OBJTYPE', '').trim();
+      if (objType) currentObjType = objType;
+      return;
+    }
+
+    if (line.startsWith('...P_TEMA')) {
+      const value = line.replace('...P_TEMA', '').trim();
+      if (value) currentTema = value;
+      return;
+    }
+
+    if (line.startsWith('...L_TEMA')) {
+      const value = line.replace('...L_TEMA', '').trim();
+      if (value) currentTema = value;
+      return;
+    }
+
+    if (line.startsWith('...MATERIAL')) {
+      const value = line.replace('...MATERIAL', '').trim();
+      if (value) currentMaterial = value;
+      return;
+    }
+
+    if (line.startsWith('...DIMENSJON')) {
+      const value = line.replace('...DIMENSJON', '').trim();
+      if (value) currentDimensjon = value;
+      return;
+    }
+
+    if (idLineRe.test(line.trim())) {
+      matchInThisBlock = true;
+      return;
+    }
+  });
+
+  return finalizeIfMatch();
+}
+
 /**
  * Check if a line starts a new SOSI feature block.
  * @param {string} line - Raw SOSI line.
@@ -518,6 +654,7 @@ export default function Home() {
   const [selection, setSelection] = useState({
     objTypesByCategory: { punkter: [], ledninger: [] },
     fieldsByCategory: { punkter: [], ledninger: [] },
+    excludedByCategory: { punkter: [], ledninger: [] },
     lastFileName: null,
   });
 
@@ -526,7 +663,13 @@ export default function Home() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      setSelection((prev) => ({ ...prev, ...parsed }));
+      setSelection((prev) => ({
+        ...prev,
+        ...parsed,
+        excludedByCategory: normalizeExcludedByCategory(
+          parsed?.excludedByCategory ?? prev.excludedByCategory
+        ),
+      }));
     } catch {
       // ignore
     }
@@ -660,6 +803,9 @@ export default function Home() {
           ? prev.fieldsByCategory.ledninger
           : available.ledninger.fields,
       };
+      next.excludedByCategory = normalizeExcludedByCategory(
+        prev.excludedByCategory
+      );
       return next;
     });
   }
@@ -704,6 +850,7 @@ export default function Home() {
       {
         objTypesByCategory: selection.objTypesByCategory,
         fieldsByCategory: selection.fieldsByCategory,
+        excludedByCategory: selection.excludedByCategory,
       },
       {
         fieldMode:
@@ -753,6 +900,7 @@ export default function Home() {
         JSON.stringify({
           objTypesByCategory: selection.objTypesByCategory,
           fieldsByCategory: selection.fieldsByCategory,
+          excludedByCategory: selection.excludedByCategory,
         })
       );
       fd.set(
@@ -794,6 +942,7 @@ export default function Home() {
     const payload = {
       objTypesByCategory: selection.objTypesByCategory,
       fieldsByCategory: selection.fieldsByCategory,
+      excludedByCategory: selection.excludedByCategory,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
@@ -811,6 +960,9 @@ export default function Home() {
           imported.objTypesByCategory || prev.objTypesByCategory,
         fieldsByCategory:
           imported.fieldsByCategory || prev.fieldsByCategory,
+        excludedByCategory: normalizeExcludedByCategory(
+          imported.excludedByCategory ?? prev.excludedByCategory
+        ),
       }));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -826,9 +978,235 @@ export default function Home() {
     setSelection({
       objTypesByCategory: { punkter: [], ledninger: [] },
       fieldsByCategory: { punkter: [], ledninger: [] },
+      excludedByCategory: { punkter: [], ledninger: [] },
       lastFileName: null,
     });
     if (available) ensureDefaultsFromAnalysis();
+  }
+
+  const [excludedDraftByCategory, setExcludedDraftByCategory] =
+    useState({
+      punkter: { idType: 'SID', id: '', comment: '' },
+      ledninger: { idType: 'SID', id: '', comment: '' },
+    });
+
+  const [editingExcluded, setEditingExcluded] = useState(null);
+  const [editingExcludedDraft, setEditingExcludedDraft] =
+    useState(null);
+
+  async function addExcludedEntry(category) {
+    const cat = String(category);
+    const draft = excludedDraftByCategory?.[cat] || {
+      idType: 'SID',
+      id: '',
+      comment: '',
+    };
+    const idType = String(draft.idType || 'SID').toUpperCase();
+    const id = String(draft.id || '').trim();
+    const comment = String(draft.comment || '').trim();
+
+    if (!['SID', 'PSID', 'LSID'].includes(idType)) {
+      setError('Ugyldig ID-type.');
+      return;
+    }
+
+    if (!id) {
+      setError('Skriv inn et ID-nummer.');
+      return;
+    }
+
+    if (!/^[0-9]+$/.test(id)) {
+      setError('ID må være et tall.');
+      return;
+    }
+
+    const entry = { idType, id, comment, meta: null };
+    const key = buildExcludedKey(entry);
+
+    const existing =
+      selection?.excludedByCategory?.[cat] || [];
+    if (existing.some((e) => buildExcludedKey(e) === key)) {
+      setError('Dette ID-et er allerede ekskludert.');
+      return;
+    }
+
+    setError(null);
+    setBusy(true);
+    setBusyLabel('Legger til ekskludert objekt…');
+
+    await new Promise((r) => setTimeout(r, 0));
+
+    const meta = sosiText
+      ? (() => {
+          try {
+            return lookupExclusionMeta(sosiText, cat, idType, id);
+          } catch (resolved) {
+            return resolved;
+          }
+        })()
+      : null;
+
+    if (!sosiText) {
+      setError('Last inn en SOSI-fil før du legger til ekskluderinger.');
+      setBusy(false);
+      setBusyLabel('');
+      return;
+    }
+
+    if (meta instanceof Error) {
+      setError(meta.message);
+      setBusy(false);
+      setBusyLabel('');
+      return;
+    }
+
+    if (meta === null) {
+      setError(
+        `Fant ikke ${idType} ${id} i «${getCategoryLabel(cat)}» i denne filen.`
+      );
+      setBusy(false);
+      setBusyLabel('');
+      return;
+    }
+
+    setSelection((prev) => {
+      const nextExcluded = normalizeExcludedByCategory(
+        prev.excludedByCategory
+      );
+      nextExcluded[cat] = [
+        ...nextExcluded[cat],
+        { ...entry, meta },
+      ];
+      return { ...prev, excludedByCategory: nextExcluded };
+    });
+
+    setExcludedDraftByCategory((prev) => ({
+      ...prev,
+      [cat]: { ...prev[cat], id: '', comment: '' },
+    }));
+
+    setBusy(false);
+    setBusyLabel('');
+  }
+
+  function removeExcludedEntry(category, index) {
+    const cat = String(category);
+    setSelection((prev) => {
+      const nextExcluded = normalizeExcludedByCategory(
+        prev.excludedByCategory
+      );
+      nextExcluded[cat] = (nextExcluded[cat] || []).filter(
+        (_, i) => i !== index
+      );
+      return { ...prev, excludedByCategory: nextExcluded };
+    });
+  }
+
+  function startEditExcludedEntry(category, index) {
+    const cat = String(category);
+    const list = selection?.excludedByCategory?.[cat] || [];
+    const entry = list[index];
+    if (!entry) return;
+    setEditingExcluded({ category: cat, index });
+    setEditingExcludedDraft({
+      idType: String(entry.idType || 'SID').toUpperCase(),
+      id: String(entry.id || '').trim(),
+      comment: String(entry.comment || '').trim(),
+    });
+  }
+
+  function cancelEditExcludedEntry() {
+    setEditingExcluded(null);
+    setEditingExcludedDraft(null);
+  }
+
+  async function saveEditExcludedEntry() {
+    if (!editingExcluded) return;
+    const cat = String(editingExcluded.category);
+    const index = Number(editingExcluded.index);
+    const draft = editingExcludedDraft || {};
+
+    const idType = String(draft.idType || 'SID').toUpperCase();
+    const id = String(draft.id || '').trim();
+    const comment = String(draft.comment || '').trim();
+
+    if (!['SID', 'PSID', 'LSID'].includes(idType)) {
+      setError('Ugyldig ID-type.');
+      return;
+    }
+    if (!id) {
+      setError('Skriv inn et ID-nummer.');
+      return;
+    }
+    if (!/^[0-9]+$/.test(id)) {
+      setError('ID må være et tall.');
+      return;
+    }
+
+    const existingList =
+      selection?.excludedByCategory?.[cat] || [];
+    const nextKey = buildExcludedKey({ idType, id });
+    const hasDuplicate = existingList.some(
+      (e, i) => i !== index && buildExcludedKey(e) === nextKey
+    );
+    if (hasDuplicate) {
+      setError('Dette ID-et er allerede ekskludert.');
+      return;
+    }
+
+    setError(null);
+    setBusy(true);
+    setBusyLabel('Oppdaterer ekskludert objekt…');
+    await new Promise((r) => setTimeout(r, 0));
+
+    const meta = sosiText
+      ? (() => {
+          try {
+            return lookupExclusionMeta(sosiText, cat, idType, id);
+          } catch (resolved) {
+            return resolved;
+          }
+        })()
+      : null;
+
+    if (!sosiText) {
+      setError('Last inn en SOSI-fil før du redigerer ekskluderinger.');
+      setBusy(false);
+      setBusyLabel('');
+      return;
+    }
+
+    if (meta instanceof Error) {
+      setError(meta.message);
+      setBusy(false);
+      setBusyLabel('');
+      return;
+    }
+
+    if (meta === null) {
+      setError(
+        `Fant ikke ${idType} ${id} i «${getCategoryLabel(cat)}» i denne filen.`
+      );
+      setBusy(false);
+      setBusyLabel('');
+      return;
+    }
+
+    setSelection((prev) => {
+      const nextExcluded = normalizeExcludedByCategory(
+        prev.excludedByCategory
+      );
+      const nextList = [...(nextExcluded[cat] || [])];
+      const nextEntry = { idType, id, comment, meta };
+
+      nextList[index] = nextEntry;
+      nextExcluded[cat] = nextList;
+      return { ...prev, excludedByCategory: nextExcluded };
+    });
+
+    cancelEditExcludedEntry();
+    setBusy(false);
+    setBusyLabel('');
   }
 
   const tabData = exploreData ? exploreData[activeTab] : null;
@@ -1563,6 +1941,305 @@ export default function Home() {
                           })}
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="text-sm font-semibold">
+                      Ekskluderte objekter
+                    </h3>
+                    <div className={`mt-1 text-xs ${theme.muted}`}>
+                      Objekter i listen fjernes fra eksporten, selv om
+                      de ellers matcher filtervalgene.
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                      {(['punkter', 'ledninger'] || []).map((cat) => {
+                        const list =
+                          selection?.excludedByCategory?.[cat] || [];
+                        const draft =
+                          excludedDraftByCategory?.[cat] || {
+                            idType: 'SID',
+                            id: '',
+                            comment: '',
+                          };
+                        return (
+                          <div
+                            key={cat}
+                            className={`rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="text-sm font-semibold">
+                                {getCategoryLabel(cat)}
+                              </div>
+                              <div className={`text-xs ${theme.muted}`}>
+                                {list.length} ekskludert
+                              </div>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap items-end gap-2">
+                              <label className="flex flex-col">
+                                <span className={`text-xs ${theme.muted}`}>
+                                  Type
+                                </span>
+                                <select
+                                  className={`mt-1 rounded-md border px-2 py-1 text-sm font-semibold outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                                  value={draft.idType}
+                                  onChange={(e) =>
+                                    setExcludedDraftByCategory((prev) => ({
+                                      ...prev,
+                                      [cat]: {
+                                        ...prev[cat],
+                                        idType: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                >
+                                  <option value="SID">SID</option>
+                                  <option value="PSID">PSID</option>
+                                  <option value="LSID">LSID</option>
+                                </select>
+                              </label>
+
+                              <label className="flex min-w-40 flex-1 flex-col">
+                                <span className={`text-xs ${theme.muted}`}>
+                                  ID
+                                </span>
+                                <input
+                                  className={`mt-1 rounded-md border px-2 py-1 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                                  inputMode="numeric"
+                                  placeholder="f.eks. 1234"
+                                  value={draft.id}
+                                  onChange={(e) =>
+                                    setExcludedDraftByCategory((prev) => ({
+                                      ...prev,
+                                      [cat]: {
+                                        ...prev[cat],
+                                        id: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                />
+                              </label>
+
+                              <label className="flex min-w-48 flex-1 flex-col">
+                                <span className={`text-xs ${theme.muted}`}>
+                                  Kommentar (valgfri)
+                                </span>
+                                <input
+                                  className={`mt-1 rounded-md border px-2 py-1 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                                  placeholder="f.eks. kritisk"
+                                  value={draft.comment}
+                                  onChange={(e) =>
+                                    setExcludedDraftByCategory((prev) => ({
+                                      ...prev,
+                                      [cat]: {
+                                        ...prev[cat],
+                                        comment: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                />
+                              </label>
+
+                              <button
+                                type="button"
+                                className={`rounded-md border px-3 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                                onClick={() => addExcludedEntry(cat)}
+                              >
+                                Legg til
+                              </button>
+                            </div>
+
+                            <div className="mt-3">
+                              {list.length === 0 ? (
+                                <div className={`text-xs ${theme.muted}`}>
+                                  Ingen ekskluderte objekter.
+                                </div>
+                              ) : (
+                                <div
+                                  className={`overflow-hidden rounded-lg border ${theme.border}`}
+                                >
+                                  {list.map((entry, idx) => {
+                                    const isEditing =
+                                      editingExcluded?.category === cat &&
+                                      editingExcluded?.index === idx;
+                                    const meta = entry?.meta || null;
+                                    const metaParts = [];
+                                    if (meta?.objType)
+                                      metaParts.push(meta.objType);
+                                    if (cat === 'ledninger') {
+                                      if (meta?.dimensjon)
+                                        metaParts.push(
+                                          `\u00d8 ${meta.dimensjon}`
+                                        );
+                                      if (meta?.material)
+                                        metaParts.push(meta.material);
+                                    }
+                                    if (cat === 'punkter') {
+                                      if (meta?.tema)
+                                        metaParts.push(meta.tema);
+                                    }
+
+                                    return (
+                                      <div
+                                        key={`${cat}:${idx}:${entry.idType}:${entry.id}`}
+                                        className={`border-t px-3 py-2 first:border-t-0 ${theme.border}`}
+                                      >
+                                        {isEditing ? (
+                                          <div className="flex flex-wrap items-end gap-2">
+                                            <label className="flex flex-col">
+                                              <span
+                                                className={`text-xs ${theme.muted}`}
+                                              >
+                                                Type
+                                              </span>
+                                              <select
+                                                className={`mt-1 rounded-md border px-2 py-1 text-sm font-semibold outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                                                value={
+                                                  editingExcludedDraft?.idType ||
+                                                  'SID'
+                                                }
+                                                onChange={(e) =>
+                                                  setEditingExcludedDraft(
+                                                    (prev) => ({
+                                                      ...(prev || {}),
+                                                      idType:
+                                                        e.target.value,
+                                                    })
+                                                  )
+                                                }
+                                              >
+                                                <option value="SID">SID</option>
+                                                <option value="PSID">PSID</option>
+                                                <option value="LSID">LSID</option>
+                                              </select>
+                                            </label>
+
+                                            <label className="flex min-w-40 flex-1 flex-col">
+                                              <span
+                                                className={`text-xs ${theme.muted}`}
+                                              >
+                                                ID
+                                              </span>
+                                              <input
+                                                className={`mt-1 rounded-md border px-2 py-1 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                                                inputMode="numeric"
+                                                value={
+                                                  editingExcludedDraft?.id ||
+                                                  ''
+                                                }
+                                                onChange={(e) =>
+                                                  setEditingExcludedDraft(
+                                                    (prev) => ({
+                                                      ...(prev || {}),
+                                                      id: e.target.value,
+                                                    })
+                                                  )
+                                                }
+                                              />
+                                            </label>
+
+                                            <label className="flex min-w-48 flex-1 flex-col">
+                                              <span
+                                                className={`text-xs ${theme.muted}`}
+                                              >
+                                                Kommentar
+                                              </span>
+                                              <input
+                                                className={`mt-1 rounded-md border px-2 py-1 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                                                value={
+                                                  editingExcludedDraft?.comment ||
+                                                  ''
+                                                }
+                                                onChange={(e) =>
+                                                  setEditingExcludedDraft(
+                                                    (prev) => ({
+                                                      ...(prev || {}),
+                                                      comment:
+                                                        e.target.value,
+                                                    })
+                                                  )
+                                                }
+                                              />
+                                            </label>
+
+                                            <div className="flex gap-2">
+                                              <button
+                                                type="button"
+                                                className={`rounded-md border px-3 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                                                onClick={saveEditExcludedEntry}
+                                              >
+                                                Lagre
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className={`rounded-md border px-3 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                                                onClick={cancelEditExcludedEntry}
+                                              >
+                                                Avbryt
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="flex flex-wrap items-start justify-between gap-2">
+                                            <div className="min-w-0">
+                                              <div className="text-sm font-semibold">
+                                                {entry.idType} {entry.id}
+                                              </div>
+                                              <div
+                                                className={`mt-0.5 text-xs ${theme.muted}`}
+                                              >
+                                                {metaParts.length > 0
+                                                  ? metaParts.join(' \u00b7 ')
+                                                  : 'Ikke funnet i filen'}
+                                              </div>
+                                              {entry.comment ? (
+                                                <div
+                                                  className={`mt-0.5 text-xs ${theme.muted}`}
+                                                >
+                                                  Kommentar: {entry.comment}
+                                                </div>
+                                              ) : null}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                type="button"
+                                                className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                                                onClick={() =>
+                                                  startEditExcludedEntry(
+                                                    cat,
+                                                    idx
+                                                  )
+                                                }
+                                              >
+                                                Rediger
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                                                onClick={() =>
+                                                  removeExcludedEntry(
+                                                    cat,
+                                                    idx
+                                                  )
+                                                }
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                                Fjern
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 

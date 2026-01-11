@@ -64,6 +64,49 @@ function extractKeyFromAttributeLine(line) {
 }
 
 /**
+ * Extract identifier values (SID/PSID/LSID) from a feature block.
+ * Identifiers in the Gemini VA exports used by this app are typically stored as
+ * triple-dot attributes inside EGS groups (e.g. `...SID 123`).
+ * @param {string[]} blockLines - Lines of a feature block.
+ * @returns {{ idType: 'SID' | 'PSID' | 'LSID', value: string }[]} Extracted IDs.
+ */
+function extractIdsFromBlock(blockLines) {
+  const out = [];
+  for (const rawLine of blockLines) {
+    const line = String(rawLine);
+    const match = line.match(/^\.\.\.(SID|PSID|LSID)\s+(\S+)/i);
+    if (!match) continue;
+    const idType = String(match[1]).toUpperCase();
+    const value = String(match[2]).trim();
+    if (!value) continue;
+    if (idType === 'SID' || idType === 'PSID' || idType === 'LSID') {
+      out.push({ idType, value });
+    }
+  }
+  return out;
+}
+
+/**
+ * Build a set of excluded IDs for a category.
+ * @param {Object} selection - Selection object.
+ * @param {'punkter' | 'ledninger'} category - Category.
+ * @returns {Set<string>} Set of keys like `SID:123`.
+ */
+function buildExcludedSet(selection, category) {
+  const list = selection?.excludedByCategory?.[category] || [];
+  const set = new Set();
+  for (const entry of list) {
+    const idType = String(entry?.idType || '').toUpperCase();
+    const id = String(entry?.id || '').trim();
+    if (!id) continue;
+    if (idType === 'SID' || idType === 'PSID' || idType === 'LSID') {
+      set.add(`${idType}:${id}`);
+    }
+  }
+  return set;
+}
+
+/**
  * Determine if a field key must always be kept (structural / mandatory).
  * @param {string} keyUpper - Uppercased attribute key.
  * @returns {boolean} True if the key is mandatory.
@@ -191,6 +234,11 @@ export function cleanSosiText(sosiText, selection, options) {
     ),
   };
 
+  const excludedByCategory = {
+    punkter: buildExcludedSet(selection, 'punkter'),
+    ledninger: buildExcludedSet(selection, 'ledninger'),
+  };
+
   const outLines = [];
   let currentBlock = [];
   let currentSection = null;
@@ -223,6 +271,21 @@ export function cleanSosiText(sosiText, selection, options) {
       outLines.push(...currentBlock);
       currentBlock = [];
       return;
+    }
+
+    // Exclusion list takes precedence: skip matching features entirely.
+    if (category === 'punkter' || category === 'ledninger') {
+      const excludedSet = excludedByCategory[category];
+      if (excludedSet && excludedSet.size > 0) {
+        const ids = extractIdsFromBlock(currentBlock);
+        const shouldExclude = ids.some((id) =>
+          excludedSet.has(`${id.idType}:${id.value}`)
+        );
+        if (shouldExclude) {
+          currentBlock = [];
+          return;
+        }
+      }
     }
 
     if (category === 'punkter') {
