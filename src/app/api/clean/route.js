@@ -1,11 +1,24 @@
+/**
+ * @file route.js (clean)
+ * API route for cleaning (filtering) a SOSI file.
+ * Accepts a multipart form upload with file, selection JSON, and optional fieldMode.
+ * Returns the cleaned SOSI file as a downloadable binary attachment.
+ */
+
 import {
   decodeSosiBuffer,
   encodeSosiText,
 } from '../../../lib/sosi/encoding.js';
 import { cleanSosiText } from '../../../lib/sosi/clean.js';
 
+/** Use Node.js runtime for Buffer and iconv support. */
 export const runtime = 'nodejs';
 
+/**
+ * Handle POST requests to clean a SOSI file.
+ * @param {Request} request - Incoming request with multipart form data.
+ * @returns {Promise<Response>} Binary response (cleaned file) or JSON error.
+ */
 export async function POST(request) {
   try {
     const version = process.env.VERCEL_GIT_COMMIT_SHA
