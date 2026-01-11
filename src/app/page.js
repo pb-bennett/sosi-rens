@@ -23,7 +23,10 @@ import {
   Upload,
 } from 'lucide-react';
 import { analyzeSosiText } from '../lib/sosi/analyze.js';
-import { cleanSosiText } from '../lib/sosi/clean.js';
+import {
+  cleanSosiText,
+  extractExcludedSosiText,
+} from '../lib/sosi/clean.js';
 import {
   decodeSosiArrayBuffer,
   encodeSosiTextToBytes,
@@ -198,9 +201,10 @@ function normalizeExcludedByCategory(excludedByCategory) {
     punkter: [],
     ledninger: [],
   };
-  const src = excludedByCategory && typeof excludedByCategory === 'object'
-    ? excludedByCategory
-    : null;
+  const src =
+    excludedByCategory && typeof excludedByCategory === 'object'
+      ? excludedByCategory
+      : null;
 
   for (const category of ['punkter', 'ledninger']) {
     const list = Array.isArray(src?.[category]) ? src[category] : [];
@@ -209,7 +213,8 @@ function normalizeExcludedByCategory(excludedByCategory) {
         const id = String(e?.id ?? '').trim();
         const idType = String(e?.idType ?? 'SID').toUpperCase();
         const comment = String(e?.comment ?? '').trim();
-        const meta = e?.meta && typeof e.meta === 'object' ? e.meta : null;
+        const meta =
+          e?.meta && typeof e.meta === 'object' ? e.meta : null;
         if (!id) return null;
         if (!['SID', 'PSID', 'LSID'].includes(idType)) return null;
         return { id, idType, comment, meta };
@@ -883,6 +888,97 @@ export default function Home() {
     downloadBlob(blob, cleanedName);
   }
 
+  async function downloadExcludedOnlyClient() {
+    if (!file) return;
+    setProcessingMode('browser');
+    const arrayBuffer = fileArrayBuffer || (await file.arrayBuffer());
+    setFileArrayBuffer(arrayBuffer);
+
+    const decoded = decodeSosiArrayBuffer(arrayBuffer);
+    const excludedText = extractExcludedSosiText(decoded.text, {
+      excludedByCategory: selection.excludedByCategory,
+    }).text;
+
+    const outBytes = encodeSosiTextToBytes(
+      excludedText,
+      decoded.encoding?.used || 'utf8'
+    );
+    const blob = new Blob([outBytes], {
+      type: 'application/octet-stream',
+    });
+
+    const originalName = file.name || 'fil.sos';
+    const name = originalName.replace(
+      /(\.[^.]+)?$/,
+      '-ekskluderte$1'
+    );
+    downloadBlob(blob, name);
+  }
+
+  async function downloadExcludedOnly() {
+    if (!file) return;
+    const hasAnyExclusions =
+      (selection?.excludedByCategory?.punkter?.length || 0) +
+        (selection?.excludedByCategory?.ledninger?.length || 0) >
+      0;
+    if (!hasAnyExclusions) {
+      setError('Ingen ekskluderte objekter å eksportere.');
+      return;
+    }
+
+    setError(null);
+    setBusy(true);
+    setBusyLabel('Genererer fil med ekskluderte objekter…');
+    try {
+      if (backendInfo?.env === 'vercel') {
+        await downloadExcludedOnlyClient();
+        return;
+      }
+
+      if ((file?.size || 0) > HOSTED_BODY_LIMIT_BYTES) {
+        await downloadExcludedOnlyClient();
+        return;
+      }
+
+      setProcessingMode('api');
+      const fd = new FormData();
+      fd.set('file', file);
+      fd.set(
+        'selection',
+        JSON.stringify({
+          excludedByCategory: selection.excludedByCategory,
+        })
+      );
+      fd.set('mode', 'excluded-only');
+
+      const res = await fetch('/api/clean', {
+        method: 'POST',
+        body: fd,
+      });
+
+      if (res.status === 413) {
+        await downloadExcludedOnlyClient();
+        return;
+      }
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || 'Kunne ikke generere filen.');
+      }
+
+      const blob = await res.blob();
+      const header = res.headers.get('Content-Disposition') || '';
+      const match = header.match(/filename="([^"]+)"/);
+      const name = match?.[1] || 'ekskluderte.sos';
+      downloadBlob(blob, name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+      setBusyLabel('');
+    }
+  }
+
   async function downloadCleaned() {
     if (!file) return;
     setError(null);
@@ -1056,8 +1152,7 @@ export default function Home() {
     const entry = { idType, id, comment, meta: null };
     const key = buildExcludedKey(entry);
 
-    const existing =
-      selection?.excludedByCategory?.[cat] || [];
+    const existing = selection?.excludedByCategory?.[cat] || [];
     if (existing.some((e) => buildExcludedKey(e) === key)) {
       setError('Dette ID-et er allerede ekskludert.');
       return;
@@ -1080,7 +1175,9 @@ export default function Home() {
       : null;
 
     if (!sosiText) {
-      setError('Last inn en SOSI-fil før du legger til ekskluderinger.');
+      setError(
+        'Last inn en SOSI-fil før du legger til ekskluderinger.'
+      );
       setBusy(false);
       setBusyLabel('');
       return;
@@ -1095,7 +1192,9 @@ export default function Home() {
 
     if (meta === null) {
       setError(
-        `Fant ikke ${idType} ${id} i «${getCategoryLabel(cat)}» i denne filen.`
+        `Fant ikke ${idType} ${id} i «${getCategoryLabel(
+          cat
+        )}» i denne filen.`
       );
       setBusy(false);
       setBusyLabel('');
@@ -1106,10 +1205,7 @@ export default function Home() {
       const nextExcluded = normalizeExcludedByCategory(
         prev.excludedByCategory
       );
-      nextExcluded[cat] = [
-        ...nextExcluded[cat],
-        { ...entry, meta },
-      ];
+      nextExcluded[cat] = [...nextExcluded[cat], { ...entry, meta }];
       return { ...prev, excludedByCategory: nextExcluded };
     });
 
@@ -1176,8 +1272,7 @@ export default function Home() {
       return;
     }
 
-    const existingList =
-      selection?.excludedByCategory?.[cat] || [];
+    const existingList = selection?.excludedByCategory?.[cat] || [];
     const nextKey = buildExcludedKey({ idType, id });
     const hasDuplicate = existingList.some(
       (e, i) => i !== index && buildExcludedKey(e) === nextKey
@@ -1203,7 +1298,9 @@ export default function Home() {
       : null;
 
     if (!sosiText) {
-      setError('Last inn en SOSI-fil før du redigerer ekskluderinger.');
+      setError(
+        'Last inn en SOSI-fil før du redigerer ekskluderinger.'
+      );
       setBusy(false);
       setBusyLabel('');
       return;
@@ -1218,7 +1315,9 @@ export default function Home() {
 
     if (meta === null) {
       setError(
-        `Fant ikke ${idType} ${id} i «${getCategoryLabel(cat)}» i denne filen.`
+        `Fant ikke ${idType} ${id} i «${getCategoryLabel(
+          cat
+        )}» i denne filen.`
       );
       setBusy(false);
       setBusyLabel('');
@@ -1262,10 +1361,10 @@ export default function Home() {
   const downloadGateReason = !analysis
     ? null
     : !canProceedToExclusionsFromFilter
-      ? 'Du må åpne både «Punkter» og «Ledninger» i «Filtrer» før du kan gå til nedlasting.'
-      : !exclusionsVisited
-        ? 'Gå til «Ekskluder» før du kan gå til nedlasting.'
-        : null;
+    ? 'Du må åpne både «Punkter» og «Ledninger» i «Filtrer» før du kan gå til nedlasting.'
+    : !exclusionsVisited
+    ? 'Gå til «Ekskluder» før du kan gå til nedlasting.'
+    : null;
 
   const exploreFieldRows = useMemo(() => {
     if (!tabData) return [];
@@ -1405,7 +1504,9 @@ export default function Home() {
                 theme={theme}
                 active={step === 'exclude'}
                 disabled={
-                  busy || !analysis || !canProceedToExclusionsFromFilter
+                  busy ||
+                  !analysis ||
+                  !canProceedToExclusionsFromFilter
                 }
                 disabledReason={
                   canProceedToExclusionsFromFilter
@@ -2140,6 +2241,25 @@ export default function Home() {
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <button
                         type="button"
+                        disabled={
+                          busy ||
+                          !file ||
+                          ((selection?.excludedByCategory?.punkter
+                            ?.length ||
+                            0) +
+                            (selection?.excludedByCategory?.ledninger
+                              ?.length ||
+                              0) ===
+                            0)
+                        }
+                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
+                        onClick={downloadExcludedOnly}
+                      >
+                        <Download className="h-4 w-4" />
+                        Last ned ekskluderte (SOSI)
+                      </button>
+                      <button
+                        type="button"
                         className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
                         onClick={exportExclusionsOnly}
                       >
@@ -2170,12 +2290,13 @@ export default function Home() {
                       {(['punkter', 'ledninger'] || []).map((cat) => {
                         const list =
                           selection?.excludedByCategory?.[cat] || [];
-                        const draft =
-                          excludedDraftByCategory?.[cat] || {
-                            idType: 'SID',
-                            id: '',
-                            comment: '',
-                          };
+                        const draft = excludedDraftByCategory?.[
+                          cat
+                        ] || {
+                          idType: 'SID',
+                          id: '',
+                          comment: '',
+                        };
                         return (
                           <div
                             key={cat}
@@ -2185,27 +2306,33 @@ export default function Home() {
                               <div className="text-sm font-semibold">
                                 {getCategoryLabel(cat)}
                               </div>
-                              <div className={`text-xs ${theme.muted}`}>
+                              <div
+                                className={`text-xs ${theme.muted}`}
+                              >
                                 {list.length} ekskludert
                               </div>
                             </div>
 
                             <div className="mt-3 flex flex-wrap items-end gap-2">
                               <label className="flex flex-col">
-                                <span className={`text-xs ${theme.muted}`}>
+                                <span
+                                  className={`text-xs ${theme.muted}`}
+                                >
                                   Type
                                 </span>
                                 <select
                                   className={`mt-1 rounded-md border px-2 py-1 text-sm font-semibold outline-none ${theme.surface} ${theme.text} ${theme.border}`}
                                   value={draft.idType}
                                   onChange={(e) =>
-                                    setExcludedDraftByCategory((prev) => ({
-                                      ...prev,
-                                      [cat]: {
-                                        ...prev[cat],
-                                        idType: e.target.value,
-                                      },
-                                    }))
+                                    setExcludedDraftByCategory(
+                                      (prev) => ({
+                                        ...prev,
+                                        [cat]: {
+                                          ...prev[cat],
+                                          idType: e.target.value,
+                                        },
+                                      })
+                                    )
                                   }
                                 >
                                   <option value="SID">SID</option>
@@ -2215,7 +2342,9 @@ export default function Home() {
                               </label>
 
                               <label className="flex min-w-40 flex-1 flex-col">
-                                <span className={`text-xs ${theme.muted}`}>
+                                <span
+                                  className={`text-xs ${theme.muted}`}
+                                >
                                   ID
                                 </span>
                                 <input
@@ -2224,19 +2353,23 @@ export default function Home() {
                                   placeholder="f.eks. 1234"
                                   value={draft.id}
                                   onChange={(e) =>
-                                    setExcludedDraftByCategory((prev) => ({
-                                      ...prev,
-                                      [cat]: {
-                                        ...prev[cat],
-                                        id: e.target.value,
-                                      },
-                                    }))
+                                    setExcludedDraftByCategory(
+                                      (prev) => ({
+                                        ...prev,
+                                        [cat]: {
+                                          ...prev[cat],
+                                          id: e.target.value,
+                                        },
+                                      })
+                                    )
                                   }
                                 />
                               </label>
 
                               <label className="flex min-w-48 flex-1 flex-col">
-                                <span className={`text-xs ${theme.muted}`}>
+                                <span
+                                  className={`text-xs ${theme.muted}`}
+                                >
                                   Kommentar (valgfri)
                                 </span>
                                 <input
@@ -2244,13 +2377,15 @@ export default function Home() {
                                   placeholder="f.eks. kritisk"
                                   value={draft.comment}
                                   onChange={(e) =>
-                                    setExcludedDraftByCategory((prev) => ({
-                                      ...prev,
-                                      [cat]: {
-                                        ...prev[cat],
-                                        comment: e.target.value,
-                                      },
-                                    }))
+                                    setExcludedDraftByCategory(
+                                      (prev) => ({
+                                        ...prev,
+                                        [cat]: {
+                                          ...prev[cat],
+                                          comment: e.target.value,
+                                        },
+                                      })
+                                    )
                                   }
                                 />
                               </label>
@@ -2266,7 +2401,9 @@ export default function Home() {
 
                             <div className="mt-3 min-h-0 overflow-auto">
                               {list.length === 0 ? (
-                                <div className={`text-xs ${theme.muted}`}>
+                                <div
+                                  className={`text-xs ${theme.muted}`}
+                                >
                                   Ingen ekskluderte objekter.
                                 </div>
                               ) : (
@@ -2275,7 +2412,8 @@ export default function Home() {
                                 >
                                   {list.map((entry, idx) => {
                                     const isEditing =
-                                      editingExcluded?.category === cat &&
+                                      editingExcluded?.category ===
+                                        cat &&
                                       editingExcluded?.index === idx;
                                     const meta = entry?.meta || null;
                                     const metaParts = [];
@@ -2318,14 +2456,21 @@ export default function Home() {
                                                     (prev) => ({
                                                       ...(prev || {}),
                                                       idType:
-                                                        e.target.value,
+                                                        e.target
+                                                          .value,
                                                     })
                                                   )
                                                 }
                                               >
-                                                <option value="SID">SID</option>
-                                                <option value="PSID">PSID</option>
-                                                <option value="LSID">LSID</option>
+                                                <option value="SID">
+                                                  SID
+                                                </option>
+                                                <option value="PSID">
+                                                  PSID
+                                                </option>
+                                                <option value="LSID">
+                                                  LSID
+                                                </option>
                                               </select>
                                             </label>
 
@@ -2346,7 +2491,8 @@ export default function Home() {
                                                   setEditingExcludedDraft(
                                                     (prev) => ({
                                                       ...(prev || {}),
-                                                      id: e.target.value,
+                                                      id: e.target
+                                                        .value,
                                                     })
                                                   )
                                                 }
@@ -2370,7 +2516,8 @@ export default function Home() {
                                                     (prev) => ({
                                                       ...(prev || {}),
                                                       comment:
-                                                        e.target.value,
+                                                        e.target
+                                                          .value,
                                                     })
                                                   )
                                                 }
@@ -2381,14 +2528,18 @@ export default function Home() {
                                               <button
                                                 type="button"
                                                 className={`rounded-md border px-3 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                                                onClick={saveEditExcludedEntry}
+                                                onClick={
+                                                  saveEditExcludedEntry
+                                                }
                                               >
                                                 Lagre
                                               </button>
                                               <button
                                                 type="button"
                                                 className={`rounded-md border px-3 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                                                onClick={cancelEditExcludedEntry}
+                                                onClick={
+                                                  cancelEditExcludedEntry
+                                                }
                                               >
                                                 Avbryt
                                               </button>
@@ -2398,20 +2549,24 @@ export default function Home() {
                                           <div className="flex flex-wrap items-start justify-between gap-2">
                                             <div className="min-w-0">
                                               <div className="text-sm font-semibold">
-                                                {entry.idType} {entry.id}
+                                                {entry.idType}{' '}
+                                                {entry.id}
                                               </div>
                                               <div
                                                 className={`mt-0.5 text-xs ${theme.muted}`}
                                               >
                                                 {metaParts.length > 0
-                                                  ? metaParts.join(' \u00b7 ')
+                                                  ? metaParts.join(
+                                                      ' \u00b7 '
+                                                    )
                                                   : 'Ikke funnet i filen'}
                                               </div>
                                               {entry.comment ? (
                                                 <div
                                                   className={`mt-0.5 text-xs ${theme.muted}`}
                                                 >
-                                                  Kommentar: {entry.comment}
+                                                  Kommentar:{' '}
+                                                  {entry.comment}
                                                 </div>
                                               ) : null}
                                             </div>

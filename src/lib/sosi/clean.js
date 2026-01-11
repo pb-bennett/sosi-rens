@@ -359,3 +359,91 @@ export function cleanSosiText(sosiText, selection, options) {
     text: outLines.join(newline),
   };
 }
+
+/**
+ * Extract a SOSI containing only the excluded objects.
+ * Preserves non-feature sections (e.g. .HODE, .SLUTT) verbatim.
+ * Intended for review/auditing of what will be removed from the main export.
+ * @param {string} sosiText - Full SOSI file content.
+ * @param {Object} selection - Selection containing excludedByCategory.
+ * @returns {{ text: string }} SOSI text with only excluded objects.
+ */
+export function extractExcludedSosiText(sosiText, selection) {
+  const text = String(sosiText);
+  const newline = text.includes('\r\n') ? '\r\n' : '\n';
+  const lines = text.split(/\r?\n/);
+
+  const excludedByCategory = {
+    punkter: buildExcludedSet(selection, 'punkter'),
+    ledninger: buildExcludedSet(selection, 'ledninger'),
+  };
+
+  const outLines = [];
+  let currentBlock = [];
+  let currentSection = null;
+
+  function flushBlock() {
+    if (currentBlock.length === 0) return;
+
+    const section = currentSection;
+    const category = categorizeSection(section);
+
+    // Preserve non-feature sections (e.g. .HODE, .SLUTT) verbatim.
+    if (category === 'unknown') {
+      outLines.push(...currentBlock);
+      currentBlock = [];
+      return;
+    }
+
+    // If it's not a feature block (no section), just pass-through.
+    if (!section) {
+      outLines.push(...currentBlock);
+      currentBlock = [];
+      return;
+    }
+
+    if (category === 'punkter' || category === 'ledninger') {
+      const excludedSet = excludedByCategory[category];
+      if (!excludedSet || excludedSet.size === 0) {
+        currentBlock = [];
+        return;
+      }
+
+      const ids = extractIdsFromBlock(currentBlock);
+      const shouldKeep = ids.some((id) =>
+        excludedSet.has(`${id.idType}:${id.value}`)
+      );
+      if (shouldKeep) outLines.push(...currentBlock);
+      currentBlock = [];
+      return;
+    }
+
+    // Unknown category: keep.
+    outLines.push(...currentBlock);
+    currentBlock = [];
+  }
+
+  for (const rawLine of lines) {
+    const line = String(rawLine || '');
+
+    if (isFeatureStartLine(line)) {
+      flushBlock();
+      currentSection = getSectionName(line);
+      currentBlock = [line];
+      continue;
+    }
+
+    if (currentBlock.length > 0) {
+      currentBlock.push(line);
+      continue;
+    }
+
+    outLines.push(line);
+  }
+
+  flushBlock();
+
+  return {
+    text: outLines.join(newline),
+  };
+}
