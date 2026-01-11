@@ -1,13 +1,36 @@
+/**
+ * @file clean.js
+ * Filters (cleans) SOSI text by keeping only selected object types and fields.
+ * Supports two field-handling modes:
+ *   - 'remove-fields': drop unselected attribute lines entirely.
+ *   - 'clear-values': keep attribute keys but strip their values (for compatibility).
+ */
+
+/**
+ * Detect if a line starts a new feature block.
+ * @param {string} line - Raw SOSI line.
+ * @returns {boolean} True if the line starts a feature.
+ */
 function isFeatureStartLine(line) {
   return /^\.(?!\.)[A-ZÆØÅa-zæøå]+\b/.test(line);
 }
 
+/**
+ * Extract the section name from a feature-start line.
+ * @param {string} line - A feature-start line.
+ * @returns {string | null} Uppercased section name (e.g. `.PUNKT`), or null.
+ */
 function getSectionName(line) {
   const match = line.match(/^\.(?!\.)\s*([A-ZÆØÅa-zæøå]+)/);
   if (!match) return null;
   return `.${String(match[1]).toUpperCase()}`;
 }
 
+/**
+ * Map a section name to the app's category.
+ * @param {string | null} section - Section name.
+ * @returns {'punkter' | 'ledninger' | 'unknown'} Category string.
+ */
 function categorizeSection(section) {
   if (!section) return 'unknown';
   if (section === '.KURVE') return 'ledninger';
@@ -15,6 +38,11 @@ function categorizeSection(section) {
   return 'unknown';
 }
 
+/**
+ * Find the OBJTYPE value inside a feature block.
+ * @param {string[]} blockLines - Lines of the feature block.
+ * @returns {string | null} Object type value, or null if not found.
+ */
 function extractObjTypeFromBlock(blockLines) {
   for (const line of blockLines) {
     if (String(line).startsWith('..OBJTYPE')) {
@@ -25,13 +53,23 @@ function extractObjTypeFromBlock(blockLines) {
   return null;
 }
 
+/**
+ * Extract the attribute key from an attribute line.
+ * @param {string} line - Raw SOSI line.
+ * @returns {string | null} Uppercased attribute key, or null.
+ */
 function extractKeyFromAttributeLine(line) {
   const match = String(line).match(/^\.{2,}(\S+)/);
   return match ? String(match[1]).toUpperCase() : null;
 }
 
+/**
+ * Determine if a field key must always be kept (structural / mandatory).
+ * @param {string} keyUpper - Uppercased attribute key.
+ * @returns {boolean} True if the key is mandatory.
+ */
 function shouldAlwaysKeepFieldKey(keyUpper) {
-  // Keep core structure + geometry groups.
+  // Core structural keys and geometry groups should never be removed.
   return (
     keyUpper === 'OBJTYPE' ||
     keyUpper === 'EGS_PUNKT' ||
@@ -39,12 +77,26 @@ function shouldAlwaysKeepFieldKey(keyUpper) {
   );
 }
 
+/**
+ * Remove the value portion of an attribute line, keeping the key.
+ * Used by 'clear-values' mode to preserve field presence without data.
+ * @param {string} line - Attribute line (e.g. `..DYBDE 1.5`).
+ * @returns {string} Attribute line with only the key (e.g. `..DYBDE`).
+ */
 function stripAttributeValue(line) {
   const match = String(line).match(/^(\.{2,})(\S+)(?:\s+.*)?$/);
   if (!match) return String(line);
   return `${match[1]}${match[2]}`;
 }
 
+/**
+ * Filter attribute lines in a feature block based on field selection.
+ * @param {string[]} blockLines - Lines of the feature block.
+ * @param {'punkter' | 'ledninger'} category - Category of the block.
+ * @param {Object} selection - User selection (fieldsByCategory, objTypesByCategory).
+ * @param {Object} [options] - Cleaning options (fieldMode: 'remove-fields' | 'clear-values').
+ * @returns {string[]} Filtered lines for the block.
+ */
 function filterFeatureBlock(
   blockLines,
   category,
@@ -118,6 +170,13 @@ function filterFeatureBlock(
   return out;
 }
 
+/**
+ * Clean (filter) SOSI text by removing unwanted object types and fields.
+ * @param {string} sosiText - Full SOSI file content.
+ * @param {Object} selection - Object types and fields to keep, by category.
+ * @param {Object} [options] - Options (fieldMode: 'remove-fields' | 'clear-values').
+ * @returns {{ text: string }} Cleaned SOSI text.
+ */
 export function cleanSosiText(sosiText, selection, options) {
   const text = String(sosiText);
   const newline = text.includes('\r\n') ? '\r\n' : '\n';
