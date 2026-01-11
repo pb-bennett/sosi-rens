@@ -1,0 +1,4766 @@
+{
+  "input": {
+    "sosiPath": "REF_FILES/EXAMPLE_SOSI/20260108_VA_eksport-kommunalt(ingen filter).sos",
+    "fieldsPath": "src/data/fields.json",
+    "generatedAt": "2026-01-10T14:08:14.001Z"
+  },
+  "temaReference": {
+    "punkt": {
+      "fieldKey": "Tema_punkt",
+      "count": 72
+    },
+    "ledninger": {
+      "fieldKey": "Tema_led",
+      "count": 73
+    }
+  },
+  "results": {
+    "punkter": {
+      "featureCount": 36942,
+      "withObjtype": 36942,
+      "withPTema": 26467,
+      "withLTema": 0,
+      "anomalies": {
+        "lTemaPresent": 0
+      },
+      "missingTemaByObjtype": {
+        "totalMissing": 10475,
+        "topObjtypes": [
+          {
+            "key": "VADRIFTSDATA",
+            "count": 10475
+          }
+        ]
+      },
+      "top": {
+        "objtype": [
+          {
+            "key": "VADRIFTSDATA",
+            "count": 10475
+          },
+          {
+            "key": "KUM",
+            "count": 8126
+          },
+          {
+            "key": "PÅKOPLINGSPUNKT",
+            "count": 5640
+          },
+          {
+            "key": "STENGEVENTIL",
+            "count": 2924
+          },
+          {
+            "key": "GRENPUNKT",
+            "count": 2498
+          },
+          {
+            "key": "SLUK",
+            "count": 2255
+          },
+          {
+            "key": "BRANNVENTIL",
+            "count": 1313
+          },
+          {
+            "key": "TRASEPUNKTLEDN",
+            "count": 824
+          },
+          {
+            "key": "VASYMBOL",
+            "count": 701
+          },
+          {
+            "key": "UTVISER",
+            "count": 437
+          },
+          {
+            "key": "UTSLIPP",
+            "count": 314
+          },
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 228
+          },
+          {
+            "key": "LUFTEVENTIL",
+            "count": 211
+          },
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 199
+          },
+          {
+            "key": "KRAN",
+            "count": 162
+          },
+          {
+            "key": "SANDFANGSKUM",
+            "count": 138
+          },
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 114
+          },
+          {
+            "key": "OVERLØP",
+            "count": 97
+          },
+          {
+            "key": "PUMPESTASJON",
+            "count": 95
+          },
+          {
+            "key": "INNTAK",
+            "count": 92
+          },
+          {
+            "key": "GATEGUTT",
+            "count": 34
+          },
+          {
+            "key": "HYDRANT",
+            "count": 17
+          },
+          {
+            "key": "TANKVA",
+            "count": 12
+          },
+          {
+            "key": "VENTILPUNKT",
+            "count": 11
+          },
+          {
+            "key": "FORDRØYNINGSBASSENG",
+            "count": 9
+          },
+          {
+            "key": "REDUKSJONSVENTIL",
+            "count": 6
+          },
+          {
+            "key": "REDUKSJON",
+            "count": 3
+          },
+          {
+            "key": "BASSENG",
+            "count": 2
+          },
+          {
+            "key": "SEPTIKTANK",
+            "count": 1
+          },
+          {
+            "key": "OLJEUTSKILLER",
+            "count": 1
+          },
+          {
+            "key": "RENSEANLEGG",
+            "count": 1
+          },
+          {
+            "key": "BRØNN",
+            "count": 1
+          },
+          {
+            "key": "SLAMAVSKILLER",
+            "count": 1
+          }
+        ],
+        "pTema": [
+          {
+            "key": "KUM",
+            "count": 8126
+          },
+          {
+            "key": "SVA",
+            "count": 2918
+          },
+          {
+            "key": "GRN",
+            "count": 2498
+          },
+          {
+            "key": "ANB",
+            "count": 2425
+          },
+          {
+            "key": "STK",
+            "count": 2329
+          },
+          {
+            "key": "SLU",
+            "count": 1384
+          },
+          {
+            "key": "BVA",
+            "count": 1168
+          },
+          {
+            "key": "SLS",
+            "count": 869
+          },
+          {
+            "key": "STO",
+            "count": 845
+          },
+          {
+            "key": "DIV",
+            "count": 824
+          },
+          {
+            "key": "FALLP",
+            "count": 701
+          },
+          {
+            "key": "UTS",
+            "count": 314
+          },
+          {
+            "key": "UTA",
+            "count": 294
+          },
+          {
+            "key": "KRN",
+            "count": 162
+          },
+          {
+            "key": "SAN",
+            "count": 138
+          },
+          {
+            "key": "LVB",
+            "count": 136
+          },
+          {
+            "key": "UTB",
+            "count": 135
+          },
+          {
+            "key": "BVC",
+            "count": 132
+          },
+          {
+            "key": "OVL",
+            "count": 97
+          },
+          {
+            "key": "MM",
+            "count": 82
+          },
+          {
+            "key": "PSP",
+            "count": 66
+          },
+          {
+            "key": "LVA",
+            "count": 59
+          },
+          {
+            "key": "INB",
+            "count": 56
+          },
+          {
+            "key": "IG",
+            "count": 56
+          },
+          {
+            "key": "HP_",
+            "count": 51
+          },
+          {
+            "key": "GRØKONSTR",
+            "count": 39
+          },
+          {
+            "key": "STV",
+            "count": 35
+          },
+          {
+            "key": "GUT",
+            "count": 34
+          },
+          {
+            "key": "INR",
+            "count": 32
+          },
+          {
+            "key": "FORAKONSTR",
+            "count": 29
+          },
+          {
+            "key": "EPO",
+            "count": 29
+          },
+          {
+            "key": "EVB",
+            "count": 28
+          },
+          {
+            "key": "FIK",
+            "count": 22
+          },
+          {
+            "key": "HYD",
+            "count": 17
+          },
+          {
+            "key": "STR",
+            "count": 17
+          },
+          {
+            "key": "EVC",
+            "count": 17
+          },
+          {
+            "key": "HP2",
+            "count": 17
+          },
+          {
+            "key": "LVC",
+            "count": 16
+          },
+          {
+            "key": "PAF",
+            "count": 15
+          },
+          {
+            "key": "BV",
+            "count": 13
+          },
+          {
+            "key": "TNK",
+            "count": 12
+          },
+          {
+            "key": "VANNPOST",
+            "count": 11
+          },
+          {
+            "key": "KV",
+            "count": 11
+          },
+          {
+            "key": "SP",
+            "count": 11
+          },
+          {
+            "key": "ELS",
+            "count": 11
+          },
+          {
+            "key": "SKJ",
+            "count": 9
+          },
+          {
+            "key": "PST",
+            "count": 9
+          },
+          {
+            "key": "BFD",
+            "count": 9
+          },
+          {
+            "key": "LOK",
+            "count": 9
+          },
+          {
+            "key": "UTC",
+            "count": 8
+          }
+        ],
+        "lTema": []
+      },
+      "objtypeToTemaTop": {
+        "KUM": [
+          {
+            "key": "KUM",
+            "count": 8126
+          }
+        ],
+        "OVERLØP": [
+          {
+            "key": "OVL",
+            "count": 97
+          }
+        ],
+        "GRENPUNKT": [
+          {
+            "key": "GRN",
+            "count": 2498
+          }
+        ],
+        "SLUK": [
+          {
+            "key": "SLU",
+            "count": 1384
+          },
+          {
+            "key": "SLS",
+            "count": 869
+          },
+          {
+            "key": "SLG",
+            "count": 2
+          }
+        ],
+        "TRASEPUNKTLEDN": [
+          {
+            "key": "DIV",
+            "count": 824
+          }
+        ],
+        "HYDRANT": [
+          {
+            "key": "HYD",
+            "count": 17
+          }
+        ],
+        "GATEGUTT": [
+          {
+            "key": "GUT",
+            "count": 34
+          }
+        ],
+        "SANDFANGSKUM": [
+          {
+            "key": "SAN",
+            "count": 138
+          }
+        ],
+        "KRAN": [
+          {
+            "key": "KRN",
+            "count": 162
+          }
+        ],
+        "UTSLIPP": [
+          {
+            "key": "UTS",
+            "count": 314
+          }
+        ],
+        "INNTAK": [
+          {
+            "key": "INB",
+            "count": 56
+          },
+          {
+            "key": "INR",
+            "count": 32
+          },
+          {
+            "key": "INT",
+            "count": 4
+          }
+        ],
+        "SEPTIKTANK": [
+          {
+            "key": "SEP",
+            "count": 1
+          }
+        ],
+        "ANNETPUNKTVA": [
+          {
+            "key": "GRØKONSTR",
+            "count": 39
+          },
+          {
+            "key": "FORAKONSTR",
+            "count": 29
+          },
+          {
+            "key": "STR",
+            "count": 17
+          },
+          {
+            "key": "VANNPOST",
+            "count": 11
+          },
+          {
+            "key": "TØMSTBOBIL",
+            "count": 6
+          },
+          {
+            "key": "SKJ",
+            "count": 4
+          },
+          {
+            "key": "OVG",
+            "count": 3
+          },
+          {
+            "key": "KMR",
+            "count": 2
+          },
+          {
+            "key": "SAST",
+            "count": 2
+          },
+          {
+            "key": "DRO",
+            "count": 1
+          }
+        ],
+        "PUMPESTASJON": [
+          {
+            "key": "PSP",
+            "count": 66
+          },
+          {
+            "key": "PAF",
+            "count": 15
+          },
+          {
+            "key": "PST",
+            "count": 9
+          },
+          {
+            "key": "POV",
+            "count": 5
+          }
+        ],
+        "PÅKOPLINGSPUNKT": [
+          {
+            "key": "ANB",
+            "count": 2425
+          },
+          {
+            "key": "STK",
+            "count": 2329
+          },
+          {
+            "key": "STO",
+            "count": 845
+          },
+          {
+            "key": "STV",
+            "count": 35
+          },
+          {
+            "key": "ANK",
+            "count": 6
+          }
+        ],
+        "TANKVA": [
+          {
+            "key": "TNK",
+            "count": 12
+          }
+        ],
+        "OLJEUTSKILLER": [
+          {
+            "key": "OIL",
+            "count": 1
+          }
+        ],
+        "FORDRØYNINGSBASSENG": [
+          {
+            "key": "BFD",
+            "count": 9
+          }
+        ],
+        "RENSEANLEGG": [
+          {
+            "key": "RSP",
+            "count": 1
+          }
+        ],
+        "REDUKSJON": [
+          {
+            "key": "RED",
+            "count": 3
+          }
+        ],
+        "BRØNN": [
+          {
+            "key": "BRN",
+            "count": 1
+          }
+        ],
+        "BASSENG": [
+          {
+            "key": "BAS",
+            "count": 2
+          }
+        ],
+        "SLAMAVSKILLER": [
+          {
+            "key": "SLA",
+            "count": 1
+          }
+        ],
+        "BRANNVENTIL": [
+          {
+            "key": "BVA",
+            "count": 1168
+          },
+          {
+            "key": "BVC",
+            "count": 132
+          },
+          {
+            "key": "BV",
+            "count": 13
+          }
+        ],
+        "UTVISER": [
+          {
+            "key": "UTA",
+            "count": 294
+          },
+          {
+            "key": "UTB",
+            "count": 135
+          },
+          {
+            "key": "UTC",
+            "count": 8
+          }
+        ],
+        "LUFTEVENTIL": [
+          {
+            "key": "LVB",
+            "count": 136
+          },
+          {
+            "key": "LVA",
+            "count": 59
+          },
+          {
+            "key": "LVC",
+            "count": 16
+          }
+        ],
+        "ANNETUTSTYRVA": [
+          {
+            "key": "MM",
+            "count": 82
+          },
+          {
+            "key": "EVB",
+            "count": 28
+          },
+          {
+            "key": "EVC",
+            "count": 17
+          },
+          {
+            "key": "KV",
+            "count": 11
+          },
+          {
+            "key": "LOK",
+            "count": 9
+          },
+          {
+            "key": "SVK",
+            "count": 8
+          },
+          {
+            "key": "VP",
+            "count": 7
+          },
+          {
+            "key": "MENGDREG",
+            "count": 7
+          },
+          {
+            "key": "UTF",
+            "count": 6
+          },
+          {
+            "key": "SV",
+            "count": 6
+          },
+          {
+            "key": "MR",
+            "count": 5
+          },
+          {
+            "key": "NOR",
+            "count": 5
+          }
+        ],
+        "VENTILPUNKT": [
+          {
+            "key": "SP",
+            "count": 11
+          }
+        ],
+        "STENGEVENTIL": [
+          {
+            "key": "SVA",
+            "count": 2918
+          },
+          {
+            "key": "SVB",
+            "count": 4
+          },
+          {
+            "key": "SVG",
+            "count": 2
+          }
+        ],
+        "REDUKSJONSVENTIL": [
+          {
+            "key": "RV",
+            "count": 6
+          }
+        ],
+        "VASYMBOL": [
+          {
+            "key": "FALLP",
+            "count": 701
+          }
+        ],
+        "HJELPEPUNKTVA": [
+          {
+            "key": "IG",
+            "count": 56
+          },
+          {
+            "key": "HP_",
+            "count": 51
+          },
+          {
+            "key": "EPO",
+            "count": 29
+          },
+          {
+            "key": "FIK",
+            "count": 22
+          },
+          {
+            "key": "HP2",
+            "count": 17
+          },
+          {
+            "key": "ELS",
+            "count": 11
+          },
+          {
+            "key": "SKJ",
+            "count": 5
+          },
+          {
+            "key": "ISO",
+            "count": 4
+          },
+          {
+            "key": "IM",
+            "count": 1
+          },
+          {
+            "key": "EPG",
+            "count": 1
+          },
+          {
+            "key": "EPE",
+            "count": 1
+          },
+          {
+            "key": "LTV",
+            "count": 1
+          }
+        ]
+      },
+      "temaToObjtypeTop": {
+        "KUM": [
+          {
+            "key": "KUM",
+            "count": 8126
+          }
+        ],
+        "OVL": [
+          {
+            "key": "OVERLØP",
+            "count": 97
+          }
+        ],
+        "GRN": [
+          {
+            "key": "GRENPUNKT",
+            "count": 2498
+          }
+        ],
+        "SLS": [
+          {
+            "key": "SLUK",
+            "count": 869
+          }
+        ],
+        "SLU": [
+          {
+            "key": "SLUK",
+            "count": 1384
+          }
+        ],
+        "DIV": [
+          {
+            "key": "TRASEPUNKTLEDN",
+            "count": 824
+          }
+        ],
+        "HYD": [
+          {
+            "key": "HYDRANT",
+            "count": 17
+          }
+        ],
+        "GUT": [
+          {
+            "key": "GATEGUTT",
+            "count": 34
+          }
+        ],
+        "SAN": [
+          {
+            "key": "SANDFANGSKUM",
+            "count": 138
+          }
+        ],
+        "KRN": [
+          {
+            "key": "KRAN",
+            "count": 162
+          }
+        ],
+        "UTS": [
+          {
+            "key": "UTSLIPP",
+            "count": 314
+          }
+        ],
+        "INR": [
+          {
+            "key": "INNTAK",
+            "count": 32
+          }
+        ],
+        "SEP": [
+          {
+            "key": "SEPTIKTANK",
+            "count": 1
+          }
+        ],
+        "TØMSTBOBIL": [
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 6
+          }
+        ],
+        "STR": [
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 17
+          }
+        ],
+        "INB": [
+          {
+            "key": "INNTAK",
+            "count": 56
+          }
+        ],
+        "INT": [
+          {
+            "key": "INNTAK",
+            "count": 4
+          }
+        ],
+        "PSP": [
+          {
+            "key": "PUMPESTASJON",
+            "count": 66
+          }
+        ],
+        "PAF": [
+          {
+            "key": "PUMPESTASJON",
+            "count": 15
+          }
+        ],
+        "STO": [
+          {
+            "key": "PÅKOPLINGSPUNKT",
+            "count": 845
+          }
+        ],
+        "TNK": [
+          {
+            "key": "TANKVA",
+            "count": 12
+          }
+        ],
+        "FORAKONSTR": [
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 29
+          }
+        ],
+        "GRØKONSTR": [
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 39
+          }
+        ],
+        "SKJ": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 5
+          },
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 4
+          }
+        ],
+        "OIL": [
+          {
+            "key": "OLJEUTSKILLER",
+            "count": 1
+          }
+        ],
+        "PST": [
+          {
+            "key": "PUMPESTASJON",
+            "count": 9
+          }
+        ],
+        "POV": [
+          {
+            "key": "PUMPESTASJON",
+            "count": 5
+          }
+        ],
+        "VANNPOST": [
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 11
+          }
+        ],
+        "STK": [
+          {
+            "key": "PÅKOPLINGSPUNKT",
+            "count": 2329
+          }
+        ],
+        "BFD": [
+          {
+            "key": "FORDRØYNINGSBASSENG",
+            "count": 9
+          }
+        ],
+        "KMR": [
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 2
+          }
+        ],
+        "RSP": [
+          {
+            "key": "RENSEANLEGG",
+            "count": 1
+          }
+        ],
+        "OVG": [
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 3
+          }
+        ],
+        "RED": [
+          {
+            "key": "REDUKSJON",
+            "count": 3
+          }
+        ],
+        "BRN": [
+          {
+            "key": "BRØNN",
+            "count": 1
+          }
+        ],
+        "BAS": [
+          {
+            "key": "BASSENG",
+            "count": 2
+          }
+        ],
+        "SLG": [
+          {
+            "key": "SLUK",
+            "count": 2
+          }
+        ],
+        "DRO": [
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 1
+          }
+        ],
+        "SLA": [
+          {
+            "key": "SLAMAVSKILLER",
+            "count": 1
+          }
+        ],
+        "BVA": [
+          {
+            "key": "BRANNVENTIL",
+            "count": 1168
+          }
+        ],
+        "UTB": [
+          {
+            "key": "UTVISER",
+            "count": 135
+          }
+        ],
+        "UTA": [
+          {
+            "key": "UTVISER",
+            "count": 294
+          }
+        ],
+        "LVA": [
+          {
+            "key": "LUFTEVENTIL",
+            "count": 59
+          }
+        ],
+        "LVB": [
+          {
+            "key": "LUFTEVENTIL",
+            "count": 136
+          }
+        ],
+        "KV": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 11
+          }
+        ],
+        "MM": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 82
+          }
+        ],
+        "SP": [
+          {
+            "key": "VENTILPUNKT",
+            "count": 11
+          }
+        ],
+        "BVC": [
+          {
+            "key": "BRANNVENTIL",
+            "count": 132
+          }
+        ],
+        "NTV": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 4
+          }
+        ],
+        "MR": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 5
+          }
+        ],
+        "LVC": [
+          {
+            "key": "LUFTEVENTIL",
+            "count": 16
+          }
+        ],
+        "LOK": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 9
+          }
+        ],
+        "UTC": [
+          {
+            "key": "UTVISER",
+            "count": 8
+          }
+        ],
+        "BV": [
+          {
+            "key": "BRANNVENTIL",
+            "count": 13
+          }
+        ],
+        "VP": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 7
+          }
+        ],
+        "UTF": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 6
+          }
+        ],
+        "SPA": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 1
+          }
+        ],
+        "NOR": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 5
+          }
+        ],
+        "NRR": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 5
+          }
+        ],
+        "UTK": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 2
+          }
+        ],
+        "LV": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 2
+          }
+        ],
+        "LO": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 1
+          }
+        ],
+        "VM": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 1
+          }
+        ],
+        "NTH": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 1
+          }
+        ],
+        "SVA": [
+          {
+            "key": "STENGEVENTIL",
+            "count": 2918
+          }
+        ],
+        "SV": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 6
+          }
+        ],
+        "RV": [
+          {
+            "key": "REDUKSJONSVENTIL",
+            "count": 6
+          }
+        ],
+        "EVB": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 28
+          }
+        ],
+        "LLO": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 1
+          }
+        ],
+        "MENGDREG": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 7
+          }
+        ],
+        "SVK": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 8
+          }
+        ],
+        "EVC": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 17
+          }
+        ],
+        "SVSTOPP": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 3
+          }
+        ],
+        "EVA": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 5
+          }
+        ],
+        "SVS": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 2
+          }
+        ],
+        "SVB": [
+          {
+            "key": "STENGEVENTIL",
+            "count": 4
+          }
+        ],
+        "SVG": [
+          {
+            "key": "STENGEVENTIL",
+            "count": 2
+          }
+        ],
+        "SCM": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 1
+          }
+        ],
+        "EVO": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 2
+          }
+        ],
+        "OVLKANT": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 1
+          }
+        ],
+        "MEL": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 4
+          }
+        ],
+        "PLUG": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "count": 1
+          }
+        ],
+        "FALLP": [
+          {
+            "key": "VASYMBOL",
+            "count": 701
+          }
+        ],
+        "ANB": [
+          {
+            "key": "PÅKOPLINGSPUNKT",
+            "count": 2425
+          }
+        ],
+        "STV": [
+          {
+            "key": "PÅKOPLINGSPUNKT",
+            "count": 35
+          }
+        ],
+        "ANK": [
+          {
+            "key": "PÅKOPLINGSPUNKT",
+            "count": 6
+          }
+        ],
+        "SAST": [
+          {
+            "key": "ANNETPUNKTVA",
+            "count": 2
+          }
+        ],
+        "ELS": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 11
+          }
+        ],
+        "EPO": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 29
+          }
+        ],
+        "HP_": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 51
+          }
+        ],
+        "HP2": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 17
+          }
+        ],
+        "IG": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 56
+          }
+        ],
+        "ISO": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 4
+          }
+        ],
+        "IM": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 1
+          }
+        ],
+        "FIK": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 22
+          }
+        ],
+        "EPG": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 1
+          }
+        ],
+        "EPE": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 1
+          }
+        ],
+        "LTV": [
+          {
+            "key": "HJELPEPUNKTVA",
+            "count": 1
+          }
+        ]
+      },
+      "diversity": {
+        "objtypeToTema": [
+          {
+            "key": "ANNETUTSTYRVA",
+            "total": 228,
+            "distinct": 29,
+            "dominant": {
+              "key": "MM",
+              "count": 82,
+              "share": 0.35964912280701755
+            },
+            "top": [
+              {
+                "key": "MM",
+                "count": 82
+              },
+              {
+                "key": "EVB",
+                "count": 28
+              },
+              {
+                "key": "EVC",
+                "count": 17
+              },
+              {
+                "key": "KV",
+                "count": 11
+              },
+              {
+                "key": "LOK",
+                "count": 9
+              }
+            ]
+          },
+          {
+            "key": "HJELPEPUNKTVA",
+            "total": 199,
+            "distinct": 12,
+            "dominant": {
+              "key": "IG",
+              "count": 56,
+              "share": 0.2814070351758794
+            },
+            "top": [
+              {
+                "key": "IG",
+                "count": 56
+              },
+              {
+                "key": "HP_",
+                "count": 51
+              },
+              {
+                "key": "EPO",
+                "count": 29
+              },
+              {
+                "key": "FIK",
+                "count": 22
+              },
+              {
+                "key": "HP2",
+                "count": 17
+              }
+            ]
+          },
+          {
+            "key": "ANNETPUNKTVA",
+            "total": 114,
+            "distinct": 10,
+            "dominant": {
+              "key": "GRØKONSTR",
+              "count": 39,
+              "share": 0.34210526315789475
+            },
+            "top": [
+              {
+                "key": "GRØKONSTR",
+                "count": 39
+              },
+              {
+                "key": "FORAKONSTR",
+                "count": 29
+              },
+              {
+                "key": "STR",
+                "count": 17
+              },
+              {
+                "key": "VANNPOST",
+                "count": 11
+              },
+              {
+                "key": "TØMSTBOBIL",
+                "count": 6
+              }
+            ]
+          },
+          {
+            "key": "PÅKOPLINGSPUNKT",
+            "total": 5640,
+            "distinct": 5,
+            "dominant": {
+              "key": "ANB",
+              "count": 2425,
+              "share": 0.4299645390070922
+            },
+            "top": [
+              {
+                "key": "ANB",
+                "count": 2425
+              },
+              {
+                "key": "STK",
+                "count": 2329
+              },
+              {
+                "key": "STO",
+                "count": 845
+              },
+              {
+                "key": "STV",
+                "count": 35
+              },
+              {
+                "key": "ANK",
+                "count": 6
+              }
+            ]
+          },
+          {
+            "key": "PUMPESTASJON",
+            "total": 95,
+            "distinct": 4,
+            "dominant": {
+              "key": "PSP",
+              "count": 66,
+              "share": 0.6947368421052632
+            },
+            "top": [
+              {
+                "key": "PSP",
+                "count": 66
+              },
+              {
+                "key": "PAF",
+                "count": 15
+              },
+              {
+                "key": "PST",
+                "count": 9
+              },
+              {
+                "key": "POV",
+                "count": 5
+              }
+            ]
+          },
+          {
+            "key": "STENGEVENTIL",
+            "total": 2924,
+            "distinct": 3,
+            "dominant": {
+              "key": "SVA",
+              "count": 2918,
+              "share": 0.9979480164158687
+            },
+            "top": [
+              {
+                "key": "SVA",
+                "count": 2918
+              },
+              {
+                "key": "SVB",
+                "count": 4
+              },
+              {
+                "key": "SVG",
+                "count": 2
+              }
+            ]
+          },
+          {
+            "key": "SLUK",
+            "total": 2255,
+            "distinct": 3,
+            "dominant": {
+              "key": "SLU",
+              "count": 1384,
+              "share": 0.6137472283813747
+            },
+            "top": [
+              {
+                "key": "SLU",
+                "count": 1384
+              },
+              {
+                "key": "SLS",
+                "count": 869
+              },
+              {
+                "key": "SLG",
+                "count": 2
+              }
+            ]
+          },
+          {
+            "key": "BRANNVENTIL",
+            "total": 1313,
+            "distinct": 3,
+            "dominant": {
+              "key": "BVA",
+              "count": 1168,
+              "share": 0.8895658796648895
+            },
+            "top": [
+              {
+                "key": "BVA",
+                "count": 1168
+              },
+              {
+                "key": "BVC",
+                "count": 132
+              },
+              {
+                "key": "BV",
+                "count": 13
+              }
+            ]
+          },
+          {
+            "key": "UTVISER",
+            "total": 437,
+            "distinct": 3,
+            "dominant": {
+              "key": "UTA",
+              "count": 294,
+              "share": 0.6727688787185355
+            },
+            "top": [
+              {
+                "key": "UTA",
+                "count": 294
+              },
+              {
+                "key": "UTB",
+                "count": 135
+              },
+              {
+                "key": "UTC",
+                "count": 8
+              }
+            ]
+          },
+          {
+            "key": "LUFTEVENTIL",
+            "total": 211,
+            "distinct": 3,
+            "dominant": {
+              "key": "LVB",
+              "count": 136,
+              "share": 0.6445497630331753
+            },
+            "top": [
+              {
+                "key": "LVB",
+                "count": 136
+              },
+              {
+                "key": "LVA",
+                "count": 59
+              },
+              {
+                "key": "LVC",
+                "count": 16
+              }
+            ]
+          },
+          {
+            "key": "INNTAK",
+            "total": 92,
+            "distinct": 3,
+            "dominant": {
+              "key": "INB",
+              "count": 56,
+              "share": 0.6086956521739131
+            },
+            "top": [
+              {
+                "key": "INB",
+                "count": 56
+              },
+              {
+                "key": "INR",
+                "count": 32
+              },
+              {
+                "key": "INT",
+                "count": 4
+              }
+            ]
+          },
+          {
+            "key": "KUM",
+            "total": 8126,
+            "distinct": 1,
+            "dominant": {
+              "key": "KUM",
+              "count": 8126,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "KUM",
+                "count": 8126
+              }
+            ]
+          },
+          {
+            "key": "GRENPUNKT",
+            "total": 2498,
+            "distinct": 1,
+            "dominant": {
+              "key": "GRN",
+              "count": 2498,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "GRN",
+                "count": 2498
+              }
+            ]
+          },
+          {
+            "key": "TRASEPUNKTLEDN",
+            "total": 824,
+            "distinct": 1,
+            "dominant": {
+              "key": "DIV",
+              "count": 824,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "DIV",
+                "count": 824
+              }
+            ]
+          },
+          {
+            "key": "VASYMBOL",
+            "total": 701,
+            "distinct": 1,
+            "dominant": {
+              "key": "FALLP",
+              "count": 701,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "FALLP",
+                "count": 701
+              }
+            ]
+          },
+          {
+            "key": "UTSLIPP",
+            "total": 314,
+            "distinct": 1,
+            "dominant": {
+              "key": "UTS",
+              "count": 314,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "UTS",
+                "count": 314
+              }
+            ]
+          },
+          {
+            "key": "KRAN",
+            "total": 162,
+            "distinct": 1,
+            "dominant": {
+              "key": "KRN",
+              "count": 162,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "KRN",
+                "count": 162
+              }
+            ]
+          },
+          {
+            "key": "SANDFANGSKUM",
+            "total": 138,
+            "distinct": 1,
+            "dominant": {
+              "key": "SAN",
+              "count": 138,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SAN",
+                "count": 138
+              }
+            ]
+          },
+          {
+            "key": "OVERLØP",
+            "total": 97,
+            "distinct": 1,
+            "dominant": {
+              "key": "OVL",
+              "count": 97,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "OVL",
+                "count": 97
+              }
+            ]
+          },
+          {
+            "key": "GATEGUTT",
+            "total": 34,
+            "distinct": 1,
+            "dominant": {
+              "key": "GUT",
+              "count": 34,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "GUT",
+                "count": 34
+              }
+            ]
+          },
+          {
+            "key": "HYDRANT",
+            "total": 17,
+            "distinct": 1,
+            "dominant": {
+              "key": "HYD",
+              "count": 17,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HYD",
+                "count": 17
+              }
+            ]
+          },
+          {
+            "key": "TANKVA",
+            "total": 12,
+            "distinct": 1,
+            "dominant": {
+              "key": "TNK",
+              "count": 12,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "TNK",
+                "count": 12
+              }
+            ]
+          },
+          {
+            "key": "VENTILPUNKT",
+            "total": 11,
+            "distinct": 1,
+            "dominant": {
+              "key": "SP",
+              "count": 11,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SP",
+                "count": 11
+              }
+            ]
+          },
+          {
+            "key": "FORDRØYNINGSBASSENG",
+            "total": 9,
+            "distinct": 1,
+            "dominant": {
+              "key": "BFD",
+              "count": 9,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "BFD",
+                "count": 9
+              }
+            ]
+          },
+          {
+            "key": "REDUKSJONSVENTIL",
+            "total": 6,
+            "distinct": 1,
+            "dominant": {
+              "key": "RV",
+              "count": 6,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "RV",
+                "count": 6
+              }
+            ]
+          },
+          {
+            "key": "REDUKSJON",
+            "total": 3,
+            "distinct": 1,
+            "dominant": {
+              "key": "RED",
+              "count": 3,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "RED",
+                "count": 3
+              }
+            ]
+          },
+          {
+            "key": "BASSENG",
+            "total": 2,
+            "distinct": 1,
+            "dominant": {
+              "key": "BAS",
+              "count": 2,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "BAS",
+                "count": 2
+              }
+            ]
+          },
+          {
+            "key": "BRØNN",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "BRN",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "BRN",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "OLJEUTSKILLER",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "OIL",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "OIL",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "RENSEANLEGG",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "RSP",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "RSP",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "SEPTIKTANK",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "SEP",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SEP",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "SLAMAVSKILLER",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "SLA",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SLA",
+                "count": 1
+              }
+            ]
+          }
+        ],
+        "temaToObjtype": [
+          {
+            "key": "SKJ",
+            "total": 9,
+            "distinct": 2,
+            "dominant": {
+              "key": "HJELPEPUNKTVA",
+              "count": 5,
+              "share": 0.5555555555555556
+            },
+            "top": [
+              {
+                "key": "HJELPEPUNKTVA",
+                "count": 5
+              },
+              {
+                "key": "ANNETPUNKTVA",
+                "count": 4
+              }
+            ]
+          },
+          {
+            "key": "KUM",
+            "total": 8126,
+            "distinct": 1,
+            "dominant": {
+              "key": "KUM",
+              "count": 8126,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "KUM",
+                "count": 8126
+              }
+            ]
+          },
+          {
+            "key": "SVA",
+            "total": 2918,
+            "distinct": 1,
+            "dominant": {
+              "key": "STENGEVENTIL",
+              "count": 2918,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "STENGEVENTIL",
+                "count": 2918
+              }
+            ]
+          },
+          {
+            "key": "GRN",
+            "total": 2498,
+            "distinct": 1,
+            "dominant": {
+              "key": "GRENPUNKT",
+              "count": 2498,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "GRENPUNKT",
+                "count": 2498
+              }
+            ]
+          },
+          {
+            "key": "ANB",
+            "total": 2425,
+            "distinct": 1,
+            "dominant": {
+              "key": "PÅKOPLINGSPUNKT",
+              "count": 2425,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "PÅKOPLINGSPUNKT",
+                "count": 2425
+              }
+            ]
+          },
+          {
+            "key": "STK",
+            "total": 2329,
+            "distinct": 1,
+            "dominant": {
+              "key": "PÅKOPLINGSPUNKT",
+              "count": 2329,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "PÅKOPLINGSPUNKT",
+                "count": 2329
+              }
+            ]
+          },
+          {
+            "key": "SLU",
+            "total": 1384,
+            "distinct": 1,
+            "dominant": {
+              "key": "SLUK",
+              "count": 1384,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SLUK",
+                "count": 1384
+              }
+            ]
+          },
+          {
+            "key": "BVA",
+            "total": 1168,
+            "distinct": 1,
+            "dominant": {
+              "key": "BRANNVENTIL",
+              "count": 1168,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "BRANNVENTIL",
+                "count": 1168
+              }
+            ]
+          },
+          {
+            "key": "SLS",
+            "total": 869,
+            "distinct": 1,
+            "dominant": {
+              "key": "SLUK",
+              "count": 869,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SLUK",
+                "count": 869
+              }
+            ]
+          },
+          {
+            "key": "STO",
+            "total": 845,
+            "distinct": 1,
+            "dominant": {
+              "key": "PÅKOPLINGSPUNKT",
+              "count": 845,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "PÅKOPLINGSPUNKT",
+                "count": 845
+              }
+            ]
+          },
+          {
+            "key": "DIV",
+            "total": 824,
+            "distinct": 1,
+            "dominant": {
+              "key": "TRASEPUNKTLEDN",
+              "count": 824,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "TRASEPUNKTLEDN",
+                "count": 824
+              }
+            ]
+          },
+          {
+            "key": "FALLP",
+            "total": 701,
+            "distinct": 1,
+            "dominant": {
+              "key": "VASYMBOL",
+              "count": 701,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "VASYMBOL",
+                "count": 701
+              }
+            ]
+          },
+          {
+            "key": "UTS",
+            "total": 314,
+            "distinct": 1,
+            "dominant": {
+              "key": "UTSLIPP",
+              "count": 314,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "UTSLIPP",
+                "count": 314
+              }
+            ]
+          },
+          {
+            "key": "UTA",
+            "total": 294,
+            "distinct": 1,
+            "dominant": {
+              "key": "UTVISER",
+              "count": 294,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "UTVISER",
+                "count": 294
+              }
+            ]
+          },
+          {
+            "key": "KRN",
+            "total": 162,
+            "distinct": 1,
+            "dominant": {
+              "key": "KRAN",
+              "count": 162,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "KRAN",
+                "count": 162
+              }
+            ]
+          },
+          {
+            "key": "SAN",
+            "total": 138,
+            "distinct": 1,
+            "dominant": {
+              "key": "SANDFANGSKUM",
+              "count": 138,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SANDFANGSKUM",
+                "count": 138
+              }
+            ]
+          },
+          {
+            "key": "LVB",
+            "total": 136,
+            "distinct": 1,
+            "dominant": {
+              "key": "LUFTEVENTIL",
+              "count": 136,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "LUFTEVENTIL",
+                "count": 136
+              }
+            ]
+          },
+          {
+            "key": "UTB",
+            "total": 135,
+            "distinct": 1,
+            "dominant": {
+              "key": "UTVISER",
+              "count": 135,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "UTVISER",
+                "count": 135
+              }
+            ]
+          },
+          {
+            "key": "BVC",
+            "total": 132,
+            "distinct": 1,
+            "dominant": {
+              "key": "BRANNVENTIL",
+              "count": 132,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "BRANNVENTIL",
+                "count": 132
+              }
+            ]
+          },
+          {
+            "key": "OVL",
+            "total": 97,
+            "distinct": 1,
+            "dominant": {
+              "key": "OVERLØP",
+              "count": 97,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "OVERLØP",
+                "count": 97
+              }
+            ]
+          },
+          {
+            "key": "MM",
+            "total": 82,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETUTSTYRVA",
+              "count": 82,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETUTSTYRVA",
+                "count": 82
+              }
+            ]
+          },
+          {
+            "key": "PSP",
+            "total": 66,
+            "distinct": 1,
+            "dominant": {
+              "key": "PUMPESTASJON",
+              "count": 66,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "PUMPESTASJON",
+                "count": 66
+              }
+            ]
+          },
+          {
+            "key": "LVA",
+            "total": 59,
+            "distinct": 1,
+            "dominant": {
+              "key": "LUFTEVENTIL",
+              "count": 59,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "LUFTEVENTIL",
+                "count": 59
+              }
+            ]
+          },
+          {
+            "key": "IG",
+            "total": 56,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPEPUNKTVA",
+              "count": 56,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPEPUNKTVA",
+                "count": 56
+              }
+            ]
+          },
+          {
+            "key": "INB",
+            "total": 56,
+            "distinct": 1,
+            "dominant": {
+              "key": "INNTAK",
+              "count": 56,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "INNTAK",
+                "count": 56
+              }
+            ]
+          },
+          {
+            "key": "HP_",
+            "total": 51,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPEPUNKTVA",
+              "count": 51,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPEPUNKTVA",
+                "count": 51
+              }
+            ]
+          },
+          {
+            "key": "GRØKONSTR",
+            "total": 39,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETPUNKTVA",
+              "count": 39,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETPUNKTVA",
+                "count": 39
+              }
+            ]
+          },
+          {
+            "key": "STV",
+            "total": 35,
+            "distinct": 1,
+            "dominant": {
+              "key": "PÅKOPLINGSPUNKT",
+              "count": 35,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "PÅKOPLINGSPUNKT",
+                "count": 35
+              }
+            ]
+          },
+          {
+            "key": "GUT",
+            "total": 34,
+            "distinct": 1,
+            "dominant": {
+              "key": "GATEGUTT",
+              "count": 34,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "GATEGUTT",
+                "count": 34
+              }
+            ]
+          },
+          {
+            "key": "INR",
+            "total": 32,
+            "distinct": 1,
+            "dominant": {
+              "key": "INNTAK",
+              "count": 32,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "INNTAK",
+                "count": 32
+              }
+            ]
+          },
+          {
+            "key": "EPO",
+            "total": 29,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPEPUNKTVA",
+              "count": 29,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPEPUNKTVA",
+                "count": 29
+              }
+            ]
+          },
+          {
+            "key": "FORAKONSTR",
+            "total": 29,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETPUNKTVA",
+              "count": 29,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETPUNKTVA",
+                "count": 29
+              }
+            ]
+          },
+          {
+            "key": "EVB",
+            "total": 28,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETUTSTYRVA",
+              "count": 28,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETUTSTYRVA",
+                "count": 28
+              }
+            ]
+          },
+          {
+            "key": "FIK",
+            "total": 22,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPEPUNKTVA",
+              "count": 22,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPEPUNKTVA",
+                "count": 22
+              }
+            ]
+          },
+          {
+            "key": "EVC",
+            "total": 17,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETUTSTYRVA",
+              "count": 17,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETUTSTYRVA",
+                "count": 17
+              }
+            ]
+          },
+          {
+            "key": "HP2",
+            "total": 17,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPEPUNKTVA",
+              "count": 17,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPEPUNKTVA",
+                "count": 17
+              }
+            ]
+          },
+          {
+            "key": "HYD",
+            "total": 17,
+            "distinct": 1,
+            "dominant": {
+              "key": "HYDRANT",
+              "count": 17,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HYDRANT",
+                "count": 17
+              }
+            ]
+          },
+          {
+            "key": "STR",
+            "total": 17,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETPUNKTVA",
+              "count": 17,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETPUNKTVA",
+                "count": 17
+              }
+            ]
+          },
+          {
+            "key": "LVC",
+            "total": 16,
+            "distinct": 1,
+            "dominant": {
+              "key": "LUFTEVENTIL",
+              "count": 16,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "LUFTEVENTIL",
+                "count": 16
+              }
+            ]
+          },
+          {
+            "key": "PAF",
+            "total": 15,
+            "distinct": 1,
+            "dominant": {
+              "key": "PUMPESTASJON",
+              "count": 15,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "PUMPESTASJON",
+                "count": 15
+              }
+            ]
+          },
+          {
+            "key": "BV",
+            "total": 13,
+            "distinct": 1,
+            "dominant": {
+              "key": "BRANNVENTIL",
+              "count": 13,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "BRANNVENTIL",
+                "count": 13
+              }
+            ]
+          },
+          {
+            "key": "TNK",
+            "total": 12,
+            "distinct": 1,
+            "dominant": {
+              "key": "TANKVA",
+              "count": 12,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "TANKVA",
+                "count": 12
+              }
+            ]
+          },
+          {
+            "key": "ELS",
+            "total": 11,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPEPUNKTVA",
+              "count": 11,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPEPUNKTVA",
+                "count": 11
+              }
+            ]
+          },
+          {
+            "key": "KV",
+            "total": 11,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETUTSTYRVA",
+              "count": 11,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETUTSTYRVA",
+                "count": 11
+              }
+            ]
+          },
+          {
+            "key": "SP",
+            "total": 11,
+            "distinct": 1,
+            "dominant": {
+              "key": "VENTILPUNKT",
+              "count": 11,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "VENTILPUNKT",
+                "count": 11
+              }
+            ]
+          },
+          {
+            "key": "VANNPOST",
+            "total": 11,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETPUNKTVA",
+              "count": 11,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETPUNKTVA",
+                "count": 11
+              }
+            ]
+          },
+          {
+            "key": "BFD",
+            "total": 9,
+            "distinct": 1,
+            "dominant": {
+              "key": "FORDRØYNINGSBASSENG",
+              "count": 9,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "FORDRØYNINGSBASSENG",
+                "count": 9
+              }
+            ]
+          },
+          {
+            "key": "LOK",
+            "total": 9,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETUTSTYRVA",
+              "count": 9,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETUTSTYRVA",
+                "count": 9
+              }
+            ]
+          },
+          {
+            "key": "PST",
+            "total": 9,
+            "distinct": 1,
+            "dominant": {
+              "key": "PUMPESTASJON",
+              "count": 9,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "PUMPESTASJON",
+                "count": 9
+              }
+            ]
+          },
+          {
+            "key": "SVK",
+            "total": 8,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNETUTSTYRVA",
+              "count": 8,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNETUTSTYRVA",
+                "count": 8
+              }
+            ]
+          }
+        ]
+      },
+      "fullCounts": {
+        "objtype": {
+          "KUM": 8126,
+          "OVERLØP": 97,
+          "GRENPUNKT": 2498,
+          "SLUK": 2255,
+          "TRASEPUNKTLEDN": 824,
+          "HYDRANT": 17,
+          "GATEGUTT": 34,
+          "SANDFANGSKUM": 138,
+          "KRAN": 162,
+          "UTSLIPP": 314,
+          "INNTAK": 92,
+          "SEPTIKTANK": 1,
+          "ANNETPUNKTVA": 114,
+          "PUMPESTASJON": 95,
+          "PÅKOPLINGSPUNKT": 5640,
+          "TANKVA": 12,
+          "OLJEUTSKILLER": 1,
+          "FORDRØYNINGSBASSENG": 9,
+          "RENSEANLEGG": 1,
+          "REDUKSJON": 3,
+          "BRØNN": 1,
+          "BASSENG": 2,
+          "SLAMAVSKILLER": 1,
+          "BRANNVENTIL": 1313,
+          "UTVISER": 437,
+          "LUFTEVENTIL": 211,
+          "ANNETUTSTYRVA": 228,
+          "VENTILPUNKT": 11,
+          "STENGEVENTIL": 2924,
+          "REDUKSJONSVENTIL": 6,
+          "VADRIFTSDATA": 10475,
+          "VASYMBOL": 701,
+          "HJELPEPUNKTVA": 199
+        },
+        "pTema": {
+          "KUM": 8126,
+          "OVL": 97,
+          "GRN": 2498,
+          "SLS": 869,
+          "SLU": 1384,
+          "DIV": 824,
+          "HYD": 17,
+          "GUT": 34,
+          "SAN": 138,
+          "KRN": 162,
+          "UTS": 314,
+          "INR": 32,
+          "SEP": 1,
+          "TØMSTBOBIL": 6,
+          "STR": 17,
+          "INB": 56,
+          "INT": 4,
+          "PSP": 66,
+          "PAF": 15,
+          "STO": 845,
+          "TNK": 12,
+          "FORAKONSTR": 29,
+          "GRØKONSTR": 39,
+          "SKJ": 9,
+          "OIL": 1,
+          "PST": 9,
+          "POV": 5,
+          "VANNPOST": 11,
+          "STK": 2329,
+          "BFD": 9,
+          "KMR": 2,
+          "RSP": 1,
+          "OVG": 3,
+          "RED": 3,
+          "BRN": 1,
+          "BAS": 2,
+          "SLG": 2,
+          "DRO": 1,
+          "SLA": 1,
+          "BVA": 1168,
+          "UTB": 135,
+          "UTA": 294,
+          "LVA": 59,
+          "LVB": 136,
+          "KV": 11,
+          "MM": 82,
+          "SP": 11,
+          "BVC": 132,
+          "NTV": 4,
+          "MR": 5,
+          "LVC": 16,
+          "LOK": 9,
+          "UTC": 8,
+          "BV": 13,
+          "VP": 7,
+          "UTF": 6,
+          "SPA": 1,
+          "NOR": 5,
+          "NRR": 5,
+          "UTK": 2,
+          "LV": 2,
+          "LO": 1,
+          "VM": 1,
+          "NTH": 1,
+          "SVA": 2918,
+          "SV": 6,
+          "RV": 6,
+          "EVB": 28,
+          "LLO": 1,
+          "MENGDREG": 7,
+          "SVK": 8,
+          "EVC": 17,
+          "SVSTOPP": 3,
+          "EVA": 5,
+          "SVS": 2,
+          "SVB": 4,
+          "SVG": 2,
+          "SCM": 1,
+          "EVO": 2,
+          "OVLKANT": 1,
+          "MEL": 4,
+          "PLUG": 1,
+          "FALLP": 701,
+          "ANB": 2425,
+          "STV": 35,
+          "ANK": 6,
+          "SAST": 2,
+          "ELS": 11,
+          "EPO": 29,
+          "HP_": 51,
+          "HP2": 17,
+          "IG": 56,
+          "ISO": 4,
+          "IM": 1,
+          "FIK": 22,
+          "EPG": 1,
+          "EPE": 1,
+          "LTV": 1
+        },
+        "lTema": {}
+      },
+      "temaReference": {
+        "allowedCount": 72,
+        "unknownInFile": [
+          "ANK",
+          "BV",
+          "BVA",
+          "BVC",
+          "ELS",
+          "EPE",
+          "EPG",
+          "EPO",
+          "EVA",
+          "EVB",
+          "EVC",
+          "EVO",
+          "FALLP",
+          "FIK",
+          "FORAKONSTR",
+          "HP2",
+          "HP_",
+          "IG",
+          "IM",
+          "ISO",
+          "KV",
+          "LLO",
+          "LO",
+          "LTV",
+          "LV",
+          "LVA",
+          "LVB",
+          "LVC",
+          "MEL",
+          "MENGDREG",
+          "MM",
+          "MR",
+          "NOR",
+          "NRR",
+          "NTH",
+          "NTV",
+          "OVG",
+          "OVLKANT",
+          "PLUG",
+          "RV",
+          "SAST",
+          "SCM",
+          "SKJ",
+          "SP",
+          "SPA",
+          "STK",
+          "STO",
+          "STV",
+          "SV",
+          "SVA",
+          "SVG",
+          "SVK",
+          "SVS",
+          "SVSTOPP",
+          "UTA",
+          "UTB",
+          "UTC",
+          "UTF",
+          "UTK",
+          "VM",
+          "VP"
+        ],
+        "missingFromFile": [
+          "BERGROM",
+          "FET",
+          "FNT",
+          "FORAKONST",
+          "GVT",
+          "HFO",
+          "KNP",
+          "KOELSKAP",
+          "KOGLYSMAS",
+          "KONSTROMRIS",
+          "KOTREKUM",
+          "KUMi",
+          "MAS",
+          "MKS",
+          "MKV",
+          "PMK",
+          "PMKAF",
+          "PMKOV",
+          "PMKSP",
+          "PMKVL",
+          "PSTVL",
+          "PSU",
+          "RES",
+          "ROV",
+          "RVA",
+          "SANI",
+          "SLAMKIOSK",
+          "SLI",
+          "SPR",
+          "SUMP",
+          "TOP",
+          "TØKSTVL",
+          "VKI",
+          "VPK",
+          "VST"
+        ]
+      }
+    },
+    "ledninger": {
+      "featureCount": 13859,
+      "withObjtype": 13859,
+      "withPTema": 0,
+      "withLTema": 13859,
+      "anomalies": {
+        "pTemaPresent": 0
+      },
+      "missingTemaByObjtype": {
+        "totalMissing": 0,
+        "topObjtypes": []
+      },
+      "top": {
+        "objtype": [
+          {
+            "key": "OVERVANNSLEDNING",
+            "count": 5370
+          },
+          {
+            "key": "SPILLVANNSLEDNING",
+            "count": 3808
+          },
+          {
+            "key": "VANNLEDNING",
+            "count": 2864
+          },
+          {
+            "key": "AVLØPFELLES",
+            "count": 1144
+          },
+          {
+            "key": "TREKKRØR",
+            "count": 322
+          },
+          {
+            "key": "SIGNALKABELTRASE",
+            "count": 135
+          },
+          {
+            "key": "DRENSLEDNING",
+            "count": 103
+          },
+          {
+            "key": "HJELPELINJEVA",
+            "count": 78
+          },
+          {
+            "key": "ANNENLEDNINGVA",
+            "count": 10
+          },
+          {
+            "key": "LUFTLEDNINGLSP",
+            "count": 9
+          },
+          {
+            "key": "JORDKABELLSP",
+            "count": 9
+          },
+          {
+            "key": "SPUNTVEGGER",
+            "count": 5
+          },
+          {
+            "key": "LEDNTRASESEKSJON",
+            "count": 1
+          },
+          {
+            "key": "KANALGRØFT",
+            "count": 1
+          }
+        ],
+        "pTema": [],
+        "lTema": [
+          {
+            "key": "OV",
+            "count": 5344
+          },
+          {
+            "key": "SP",
+            "count": 3443
+          },
+          {
+            "key": "VL",
+            "count": 2864
+          },
+          {
+            "key": "AF",
+            "count": 981
+          },
+          {
+            "key": "SPP",
+            "count": 240
+          },
+          {
+            "key": "HU",
+            "count": 210
+          },
+          {
+            "key": "AFO",
+            "count": 163
+          },
+          {
+            "key": "HK",
+            "count": 134
+          },
+          {
+            "key": "SPO",
+            "count": 125
+          },
+          {
+            "key": "DR",
+            "count": 103
+          },
+          {
+            "key": "HM",
+            "count": 102
+          },
+          {
+            "key": "HL",
+            "count": 22
+          },
+          {
+            "key": "SK",
+            "count": 15
+          },
+          {
+            "key": "SPUNT",
+            "count": 14
+          },
+          {
+            "key": "OVP",
+            "count": 9
+          },
+          {
+            "key": "LETRE",
+            "count": 9
+          },
+          {
+            "key": "EJ",
+            "count": 9
+          },
+          {
+            "key": "OVF",
+            "count": 8
+          },
+          {
+            "key": "OVO",
+            "count": 8
+          },
+          {
+            "key": "HV",
+            "count": 8
+          },
+          {
+            "key": "ER",
+            "count": 8
+          },
+          {
+            "key": "SPLU",
+            "count": 7
+          },
+          {
+            "key": "LESPUNT",
+            "count": 5
+          },
+          {
+            "key": "I2",
+            "count": 3
+          },
+          {
+            "key": "LEVARVL",
+            "count": 3
+          },
+          {
+            "key": "VR",
+            "count": 3
+          },
+          {
+            "key": "LV",
+            "count": 3
+          },
+          {
+            "key": "LVSP",
+            "count": 3
+          },
+          {
+            "key": "LEVARGAMSP",
+            "count": 2
+          },
+          {
+            "key": "LEVARSP",
+            "count": 2
+          },
+          {
+            "key": "VV",
+            "count": 1
+          },
+          {
+            "key": "OVT",
+            "count": 1
+          },
+          {
+            "key": "LEBO",
+            "count": 1
+          },
+          {
+            "key": "LEKAXX500",
+            "count": 1
+          },
+          {
+            "key": "LEELKABRØR",
+            "count": 1
+          },
+          {
+            "key": "LETREMKAB",
+            "count": 1
+          },
+          {
+            "key": "LESIGNKAB",
+            "count": 1
+          },
+          {
+            "key": "HT",
+            "count": 1
+          },
+          {
+            "key": "LVVL",
+            "count": 1
+          }
+        ]
+      },
+      "objtypeToTemaTop": {
+        "VANNLEDNING": [
+          {
+            "key": "VL",
+            "count": 2864
+          }
+        ],
+        "AVLØPFELLES": [
+          {
+            "key": "AF",
+            "count": 981
+          },
+          {
+            "key": "AFO",
+            "count": 163
+          }
+        ],
+        "OVERVANNSLEDNING": [
+          {
+            "key": "OV",
+            "count": 5344
+          },
+          {
+            "key": "OVP",
+            "count": 9
+          },
+          {
+            "key": "OVF",
+            "count": 8
+          },
+          {
+            "key": "OVO",
+            "count": 8
+          },
+          {
+            "key": "OVT",
+            "count": 1
+          }
+        ],
+        "SPILLVANNSLEDNING": [
+          {
+            "key": "SP",
+            "count": 3443
+          },
+          {
+            "key": "SPP",
+            "count": 240
+          },
+          {
+            "key": "SPO",
+            "count": 125
+          }
+        ],
+        "DRENSLEDNING": [
+          {
+            "key": "DR",
+            "count": 103
+          }
+        ],
+        "HJELPELINJEVA": [
+          {
+            "key": "HL",
+            "count": 22
+          },
+          {
+            "key": "SK",
+            "count": 15
+          },
+          {
+            "key": "SPUNT",
+            "count": 14
+          },
+          {
+            "key": "HV",
+            "count": 8
+          },
+          {
+            "key": "LEVARVL",
+            "count": 3
+          },
+          {
+            "key": "VR",
+            "count": 3
+          },
+          {
+            "key": "LV",
+            "count": 3
+          },
+          {
+            "key": "LVSP",
+            "count": 3
+          },
+          {
+            "key": "LEVARGAMSP",
+            "count": 2
+          },
+          {
+            "key": "LEVARSP",
+            "count": 2
+          },
+          {
+            "key": "VV",
+            "count": 1
+          },
+          {
+            "key": "HT",
+            "count": 1
+          }
+        ],
+        "ANNENLEDNINGVA": [
+          {
+            "key": "SPLU",
+            "count": 7
+          },
+          {
+            "key": "I2",
+            "count": 3
+          }
+        ],
+        "TREKKRØR": [
+          {
+            "key": "HU",
+            "count": 210
+          },
+          {
+            "key": "HM",
+            "count": 102
+          },
+          {
+            "key": "LETRE",
+            "count": 9
+          },
+          {
+            "key": "LETREMKAB",
+            "count": 1
+          }
+        ],
+        "LEDNTRASESEKSJON": [
+          {
+            "key": "LEBO",
+            "count": 1
+          }
+        ],
+        "KANALGRØFT": [
+          {
+            "key": "LEKAXX500",
+            "count": 1
+          }
+        ],
+        "LUFTLEDNINGLSP": [
+          {
+            "key": "ER",
+            "count": 8
+          },
+          {
+            "key": "LEELKABRØR",
+            "count": 1
+          }
+        ],
+        "SIGNALKABELTRASE": [
+          {
+            "key": "HK",
+            "count": 134
+          },
+          {
+            "key": "LESIGNKAB",
+            "count": 1
+          }
+        ],
+        "SPUNTVEGGER": [
+          {
+            "key": "LESPUNT",
+            "count": 5
+          }
+        ],
+        "JORDKABELLSP": [
+          {
+            "key": "EJ",
+            "count": 9
+          }
+        ]
+      },
+      "temaToObjtypeTop": {
+        "VL": [
+          {
+            "key": "VANNLEDNING",
+            "count": 2864
+          }
+        ],
+        "AF": [
+          {
+            "key": "AVLØPFELLES",
+            "count": 981
+          }
+        ],
+        "OV": [
+          {
+            "key": "OVERVANNSLEDNING",
+            "count": 5344
+          }
+        ],
+        "SPP": [
+          {
+            "key": "SPILLVANNSLEDNING",
+            "count": 240
+          }
+        ],
+        "SP": [
+          {
+            "key": "SPILLVANNSLEDNING",
+            "count": 3443
+          }
+        ],
+        "AFO": [
+          {
+            "key": "AVLØPFELLES",
+            "count": 163
+          }
+        ],
+        "DR": [
+          {
+            "key": "DRENSLEDNING",
+            "count": 103
+          }
+        ],
+        "SPO": [
+          {
+            "key": "SPILLVANNSLEDNING",
+            "count": 125
+          }
+        ],
+        "OVP": [
+          {
+            "key": "OVERVANNSLEDNING",
+            "count": 9
+          }
+        ],
+        "VV": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 1
+          }
+        ],
+        "OVF": [
+          {
+            "key": "OVERVANNSLEDNING",
+            "count": 8
+          }
+        ],
+        "SPLU": [
+          {
+            "key": "ANNENLEDNINGVA",
+            "count": 7
+          }
+        ],
+        "OVO": [
+          {
+            "key": "OVERVANNSLEDNING",
+            "count": 8
+          }
+        ],
+        "OVT": [
+          {
+            "key": "OVERVANNSLEDNING",
+            "count": 1
+          }
+        ],
+        "I2": [
+          {
+            "key": "ANNENLEDNINGVA",
+            "count": 3
+          }
+        ],
+        "LEVARGAMSP": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 2
+          }
+        ],
+        "LETRE": [
+          {
+            "key": "TREKKRØR",
+            "count": 9
+          }
+        ],
+        "LEBO": [
+          {
+            "key": "LEDNTRASESEKSJON",
+            "count": 1
+          }
+        ],
+        "LEVARSP": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 2
+          }
+        ],
+        "LEVARVL": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 3
+          }
+        ],
+        "LEKAXX500": [
+          {
+            "key": "KANALGRØFT",
+            "count": 1
+          }
+        ],
+        "LEELKABRØR": [
+          {
+            "key": "LUFTLEDNINGLSP",
+            "count": 1
+          }
+        ],
+        "LETREMKAB": [
+          {
+            "key": "TREKKRØR",
+            "count": 1
+          }
+        ],
+        "LESIGNKAB": [
+          {
+            "key": "SIGNALKABELTRASE",
+            "count": 1
+          }
+        ],
+        "LESPUNT": [
+          {
+            "key": "SPUNTVEGGER",
+            "count": 5
+          }
+        ],
+        "HM": [
+          {
+            "key": "TREKKRØR",
+            "count": 102
+          }
+        ],
+        "HU": [
+          {
+            "key": "TREKKRØR",
+            "count": 210
+          }
+        ],
+        "HL": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 22
+          }
+        ],
+        "HV": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 8
+          }
+        ],
+        "HK": [
+          {
+            "key": "SIGNALKABELTRASE",
+            "count": 134
+          }
+        ],
+        "SK": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 15
+          }
+        ],
+        "HT": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 1
+          }
+        ],
+        "VR": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 3
+          }
+        ],
+        "EJ": [
+          {
+            "key": "JORDKABELLSP",
+            "count": 9
+          }
+        ],
+        "SPUNT": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 14
+          }
+        ],
+        "ER": [
+          {
+            "key": "LUFTLEDNINGLSP",
+            "count": 8
+          }
+        ],
+        "LV": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 3
+          }
+        ],
+        "LVVL": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 1
+          }
+        ],
+        "LVSP": [
+          {
+            "key": "HJELPELINJEVA",
+            "count": 3
+          }
+        ]
+      },
+      "diversity": {
+        "objtypeToTema": [
+          {
+            "key": "HJELPELINJEVA",
+            "total": 78,
+            "distinct": 13,
+            "dominant": {
+              "key": "HL",
+              "count": 22,
+              "share": 0.28205128205128205
+            },
+            "top": [
+              {
+                "key": "HL",
+                "count": 22
+              },
+              {
+                "key": "SK",
+                "count": 15
+              },
+              {
+                "key": "SPUNT",
+                "count": 14
+              },
+              {
+                "key": "HV",
+                "count": 8
+              },
+              {
+                "key": "LEVARVL",
+                "count": 3
+              }
+            ]
+          },
+          {
+            "key": "OVERVANNSLEDNING",
+            "total": 5370,
+            "distinct": 5,
+            "dominant": {
+              "key": "OV",
+              "count": 5344,
+              "share": 0.9951582867783985
+            },
+            "top": [
+              {
+                "key": "OV",
+                "count": 5344
+              },
+              {
+                "key": "OVP",
+                "count": 9
+              },
+              {
+                "key": "OVF",
+                "count": 8
+              },
+              {
+                "key": "OVO",
+                "count": 8
+              },
+              {
+                "key": "OVT",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "TREKKRØR",
+            "total": 322,
+            "distinct": 4,
+            "dominant": {
+              "key": "HU",
+              "count": 210,
+              "share": 0.6521739130434783
+            },
+            "top": [
+              {
+                "key": "HU",
+                "count": 210
+              },
+              {
+                "key": "HM",
+                "count": 102
+              },
+              {
+                "key": "LETRE",
+                "count": 9
+              },
+              {
+                "key": "LETREMKAB",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "SPILLVANNSLEDNING",
+            "total": 3808,
+            "distinct": 3,
+            "dominant": {
+              "key": "SP",
+              "count": 3443,
+              "share": 0.9041491596638656
+            },
+            "top": [
+              {
+                "key": "SP",
+                "count": 3443
+              },
+              {
+                "key": "SPP",
+                "count": 240
+              },
+              {
+                "key": "SPO",
+                "count": 125
+              }
+            ]
+          },
+          {
+            "key": "AVLØPFELLES",
+            "total": 1144,
+            "distinct": 2,
+            "dominant": {
+              "key": "AF",
+              "count": 981,
+              "share": 0.8575174825174825
+            },
+            "top": [
+              {
+                "key": "AF",
+                "count": 981
+              },
+              {
+                "key": "AFO",
+                "count": 163
+              }
+            ]
+          },
+          {
+            "key": "SIGNALKABELTRASE",
+            "total": 135,
+            "distinct": 2,
+            "dominant": {
+              "key": "HK",
+              "count": 134,
+              "share": 0.9925925925925926
+            },
+            "top": [
+              {
+                "key": "HK",
+                "count": 134
+              },
+              {
+                "key": "LESIGNKAB",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "ANNENLEDNINGVA",
+            "total": 10,
+            "distinct": 2,
+            "dominant": {
+              "key": "SPLU",
+              "count": 7,
+              "share": 0.7
+            },
+            "top": [
+              {
+                "key": "SPLU",
+                "count": 7
+              },
+              {
+                "key": "I2",
+                "count": 3
+              }
+            ]
+          },
+          {
+            "key": "LUFTLEDNINGLSP",
+            "total": 9,
+            "distinct": 2,
+            "dominant": {
+              "key": "ER",
+              "count": 8,
+              "share": 0.8888888888888888
+            },
+            "top": [
+              {
+                "key": "ER",
+                "count": 8
+              },
+              {
+                "key": "LEELKABRØR",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "VANNLEDNING",
+            "total": 2864,
+            "distinct": 1,
+            "dominant": {
+              "key": "VL",
+              "count": 2864,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "VL",
+                "count": 2864
+              }
+            ]
+          },
+          {
+            "key": "DRENSLEDNING",
+            "total": 103,
+            "distinct": 1,
+            "dominant": {
+              "key": "DR",
+              "count": 103,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "DR",
+                "count": 103
+              }
+            ]
+          },
+          {
+            "key": "JORDKABELLSP",
+            "total": 9,
+            "distinct": 1,
+            "dominant": {
+              "key": "EJ",
+              "count": 9,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "EJ",
+                "count": 9
+              }
+            ]
+          },
+          {
+            "key": "SPUNTVEGGER",
+            "total": 5,
+            "distinct": 1,
+            "dominant": {
+              "key": "LESPUNT",
+              "count": 5,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "LESPUNT",
+                "count": 5
+              }
+            ]
+          },
+          {
+            "key": "KANALGRØFT",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "LEKAXX500",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "LEKAXX500",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "LEDNTRASESEKSJON",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "LEBO",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "LEBO",
+                "count": 1
+              }
+            ]
+          }
+        ],
+        "temaToObjtype": [
+          {
+            "key": "OV",
+            "total": 5344,
+            "distinct": 1,
+            "dominant": {
+              "key": "OVERVANNSLEDNING",
+              "count": 5344,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "OVERVANNSLEDNING",
+                "count": 5344
+              }
+            ]
+          },
+          {
+            "key": "SP",
+            "total": 3443,
+            "distinct": 1,
+            "dominant": {
+              "key": "SPILLVANNSLEDNING",
+              "count": 3443,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SPILLVANNSLEDNING",
+                "count": 3443
+              }
+            ]
+          },
+          {
+            "key": "VL",
+            "total": 2864,
+            "distinct": 1,
+            "dominant": {
+              "key": "VANNLEDNING",
+              "count": 2864,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "VANNLEDNING",
+                "count": 2864
+              }
+            ]
+          },
+          {
+            "key": "AF",
+            "total": 981,
+            "distinct": 1,
+            "dominant": {
+              "key": "AVLØPFELLES",
+              "count": 981,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "AVLØPFELLES",
+                "count": 981
+              }
+            ]
+          },
+          {
+            "key": "SPP",
+            "total": 240,
+            "distinct": 1,
+            "dominant": {
+              "key": "SPILLVANNSLEDNING",
+              "count": 240,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SPILLVANNSLEDNING",
+                "count": 240
+              }
+            ]
+          },
+          {
+            "key": "HU",
+            "total": 210,
+            "distinct": 1,
+            "dominant": {
+              "key": "TREKKRØR",
+              "count": 210,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "TREKKRØR",
+                "count": 210
+              }
+            ]
+          },
+          {
+            "key": "AFO",
+            "total": 163,
+            "distinct": 1,
+            "dominant": {
+              "key": "AVLØPFELLES",
+              "count": 163,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "AVLØPFELLES",
+                "count": 163
+              }
+            ]
+          },
+          {
+            "key": "HK",
+            "total": 134,
+            "distinct": 1,
+            "dominant": {
+              "key": "SIGNALKABELTRASE",
+              "count": 134,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SIGNALKABELTRASE",
+                "count": 134
+              }
+            ]
+          },
+          {
+            "key": "SPO",
+            "total": 125,
+            "distinct": 1,
+            "dominant": {
+              "key": "SPILLVANNSLEDNING",
+              "count": 125,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SPILLVANNSLEDNING",
+                "count": 125
+              }
+            ]
+          },
+          {
+            "key": "DR",
+            "total": 103,
+            "distinct": 1,
+            "dominant": {
+              "key": "DRENSLEDNING",
+              "count": 103,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "DRENSLEDNING",
+                "count": 103
+              }
+            ]
+          },
+          {
+            "key": "HM",
+            "total": 102,
+            "distinct": 1,
+            "dominant": {
+              "key": "TREKKRØR",
+              "count": 102,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "TREKKRØR",
+                "count": 102
+              }
+            ]
+          },
+          {
+            "key": "HL",
+            "total": 22,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 22,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 22
+              }
+            ]
+          },
+          {
+            "key": "SK",
+            "total": 15,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 15,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 15
+              }
+            ]
+          },
+          {
+            "key": "SPUNT",
+            "total": 14,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 14,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 14
+              }
+            ]
+          },
+          {
+            "key": "EJ",
+            "total": 9,
+            "distinct": 1,
+            "dominant": {
+              "key": "JORDKABELLSP",
+              "count": 9,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "JORDKABELLSP",
+                "count": 9
+              }
+            ]
+          },
+          {
+            "key": "LETRE",
+            "total": 9,
+            "distinct": 1,
+            "dominant": {
+              "key": "TREKKRØR",
+              "count": 9,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "TREKKRØR",
+                "count": 9
+              }
+            ]
+          },
+          {
+            "key": "OVP",
+            "total": 9,
+            "distinct": 1,
+            "dominant": {
+              "key": "OVERVANNSLEDNING",
+              "count": 9,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "OVERVANNSLEDNING",
+                "count": 9
+              }
+            ]
+          },
+          {
+            "key": "ER",
+            "total": 8,
+            "distinct": 1,
+            "dominant": {
+              "key": "LUFTLEDNINGLSP",
+              "count": 8,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "LUFTLEDNINGLSP",
+                "count": 8
+              }
+            ]
+          },
+          {
+            "key": "HV",
+            "total": 8,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 8,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 8
+              }
+            ]
+          },
+          {
+            "key": "OVF",
+            "total": 8,
+            "distinct": 1,
+            "dominant": {
+              "key": "OVERVANNSLEDNING",
+              "count": 8,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "OVERVANNSLEDNING",
+                "count": 8
+              }
+            ]
+          },
+          {
+            "key": "OVO",
+            "total": 8,
+            "distinct": 1,
+            "dominant": {
+              "key": "OVERVANNSLEDNING",
+              "count": 8,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "OVERVANNSLEDNING",
+                "count": 8
+              }
+            ]
+          },
+          {
+            "key": "SPLU",
+            "total": 7,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNENLEDNINGVA",
+              "count": 7,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNENLEDNINGVA",
+                "count": 7
+              }
+            ]
+          },
+          {
+            "key": "LESPUNT",
+            "total": 5,
+            "distinct": 1,
+            "dominant": {
+              "key": "SPUNTVEGGER",
+              "count": 5,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SPUNTVEGGER",
+                "count": 5
+              }
+            ]
+          },
+          {
+            "key": "I2",
+            "total": 3,
+            "distinct": 1,
+            "dominant": {
+              "key": "ANNENLEDNINGVA",
+              "count": 3,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "ANNENLEDNINGVA",
+                "count": 3
+              }
+            ]
+          },
+          {
+            "key": "LEVARVL",
+            "total": 3,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 3,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 3
+              }
+            ]
+          },
+          {
+            "key": "LV",
+            "total": 3,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 3,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 3
+              }
+            ]
+          },
+          {
+            "key": "LVSP",
+            "total": 3,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 3,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 3
+              }
+            ]
+          },
+          {
+            "key": "VR",
+            "total": 3,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 3,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 3
+              }
+            ]
+          },
+          {
+            "key": "LEVARGAMSP",
+            "total": 2,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 2,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 2
+              }
+            ]
+          },
+          {
+            "key": "LEVARSP",
+            "total": 2,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 2,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 2
+              }
+            ]
+          },
+          {
+            "key": "HT",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "LEBO",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "LEDNTRASESEKSJON",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "LEDNTRASESEKSJON",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "LEELKABRØR",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "LUFTLEDNINGLSP",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "LUFTLEDNINGLSP",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "LEKAXX500",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "KANALGRØFT",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "KANALGRØFT",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "LESIGNKAB",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "SIGNALKABELTRASE",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "SIGNALKABELTRASE",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "LETREMKAB",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "TREKKRØR",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "TREKKRØR",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "LVVL",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "OVT",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "OVERVANNSLEDNING",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "OVERVANNSLEDNING",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "key": "VV",
+            "total": 1,
+            "distinct": 1,
+            "dominant": {
+              "key": "HJELPELINJEVA",
+              "count": 1,
+              "share": 1
+            },
+            "top": [
+              {
+                "key": "HJELPELINJEVA",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      },
+      "fullCounts": {
+        "objtype": {
+          "VANNLEDNING": 2864,
+          "AVLØPFELLES": 1144,
+          "OVERVANNSLEDNING": 5370,
+          "SPILLVANNSLEDNING": 3808,
+          "DRENSLEDNING": 103,
+          "HJELPELINJEVA": 78,
+          "ANNENLEDNINGVA": 10,
+          "TREKKRØR": 322,
+          "LEDNTRASESEKSJON": 1,
+          "KANALGRØFT": 1,
+          "LUFTLEDNINGLSP": 9,
+          "SIGNALKABELTRASE": 135,
+          "SPUNTVEGGER": 5,
+          "JORDKABELLSP": 9
+        },
+        "pTema": {},
+        "lTema": {
+          "VL": 2864,
+          "AF": 981,
+          "OV": 5344,
+          "SPP": 240,
+          "SP": 3443,
+          "AFO": 163,
+          "DR": 103,
+          "SPO": 125,
+          "OVP": 9,
+          "VV": 1,
+          "OVF": 8,
+          "SPLU": 7,
+          "OVO": 8,
+          "OVT": 1,
+          "I2": 3,
+          "LEVARGAMSP": 2,
+          "LETRE": 9,
+          "LEBO": 1,
+          "LEVARSP": 2,
+          "LEVARVL": 3,
+          "LEKAXX500": 1,
+          "LEELKABRØR": 1,
+          "LETREMKAB": 1,
+          "LESIGNKAB": 1,
+          "LESPUNT": 5,
+          "HM": 102,
+          "HU": 210,
+          "HL": 22,
+          "HV": 8,
+          "HK": 134,
+          "SK": 15,
+          "HT": 1,
+          "VR": 3,
+          "EJ": 9,
+          "SPUNT": 14,
+          "ER": 8,
+          "LV": 3,
+          "LVVL": 1,
+          "LVSP": 3
+        }
+      },
+      "temaReference": {
+        "allowedCount": 73,
+        "unknownInFile": [
+          "EJ",
+          "ER",
+          "HK",
+          "HL",
+          "HM",
+          "HT",
+          "HU",
+          "HV",
+          "I2",
+          "LEELKABRØR",
+          "LEKAXX500",
+          "LEVARGAMSP",
+          "LEVARSP",
+          "LEVARVL",
+          "LV",
+          "LVSP",
+          "LVVL",
+          "SK",
+          "SPUNT",
+          "VR",
+          "VV"
+        ],
+        "missingFromFile": [
+          "12",
+          "120",
+          "121",
+          "12D",
+          "12P",
+          "AFD",
+          "AFK",
+          "AFLU",
+          "AFP",
+          "AFS",
+          "AFT",
+          "I2S",
+          "I3",
+          "LEBRO",
+          "LEBUNT",
+          "LEGLYSKAB",
+          "LEGRØ",
+          "LEKA",
+          "LEKU",
+          "LELYTKAB",
+          "LEOPIKANAL",
+          "LESLISS",
+          "LESTIKKB",
+          "LESTØTMUR",
+          "LETRA",
+          "LETREUKAB",
+          "LETRYKLUFT",
+          "LETU",
+          "LETUADK",
+          "LEVANNBVARM",
+          "LEVAR",
+          "OVI",
+          "OVK",
+          "OVKU",
+          "OVR",
+          "OVS",
+          "OVU",
+          "SPD",
+          "SPGRÅ",
+          "SPI",
+          "SPK",
+          "SPS",
+          "SPT",
+          "VLI",
+          "VLK",
+          "VLLU",
+          "VLP",
+          "VLSPR",
+          "VLT",
+          "VLU",
+          "XF",
+          "XG",
+          "XGP",
+          "XGS",
+          "XK"
+        ]
+      }
+    }
+  }
+}

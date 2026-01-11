@@ -32,12 +32,34 @@ function extractKeyFromAttributeLine(line) {
 
 function shouldAlwaysKeepFieldKey(keyUpper) {
   // Keep core structure + geometry groups.
-  return keyUpper === 'OBJTYPE' || keyUpper === 'EGS_PUNKT' || keyUpper === 'EGS_LEDNING';
+  return (
+    keyUpper === 'OBJTYPE' ||
+    keyUpper === 'EGS_PUNKT' ||
+    keyUpper === 'EGS_LEDNING'
+  );
 }
 
-function filterFeatureBlock(blockLines, category, selection) {
-  const keepFields = (selection?.fieldsByCategory?.[category] || []).map((k) => String(k).toUpperCase());
+function stripAttributeValue(line) {
+  const match = String(line).match(/^(\.{2,})(\S+)(?:\s+.*)?$/);
+  if (!match) return String(line);
+  return `${match[1]}${match[2]}`;
+}
+
+function filterFeatureBlock(
+  blockLines,
+  category,
+  selection,
+  options
+) {
+  const keepFields = (
+    selection?.fieldsByCategory?.[category] || []
+  ).map((k) => String(k).toUpperCase());
   const keepFieldSet = new Set(keepFields);
+
+  const fieldMode =
+    options?.fieldMode === 'clear-values'
+      ? 'clear-values'
+      : 'remove-fields';
 
   const out = [];
 
@@ -83,6 +105,8 @@ function filterFeatureBlock(blockLines, category, selection) {
 
       if (keepFieldSet.has(key)) {
         out.push(line);
+      } else if (fieldMode === 'clear-values') {
+        out.push(stripAttributeValue(line));
       }
       continue;
     }
@@ -94,14 +118,18 @@ function filterFeatureBlock(blockLines, category, selection) {
   return out;
 }
 
-export function cleanSosiText(sosiText, selection) {
+export function cleanSosiText(sosiText, selection, options) {
   const text = String(sosiText);
   const newline = text.includes('\r\n') ? '\r\n' : '\n';
   const lines = text.split(/\r?\n/);
 
   const keepObjTypesByCategory = {
-    punkter: new Set((selection?.objTypesByCategory?.punkter || []).map(String)),
-    ledninger: new Set((selection?.objTypesByCategory?.ledninger || []).map(String)),
+    punkter: new Set(
+      (selection?.objTypesByCategory?.punkter || []).map(String)
+    ),
+    ledninger: new Set(
+      (selection?.objTypesByCategory?.ledninger || []).map(String)
+    ),
   };
 
   const outLines = [];
@@ -139,21 +167,41 @@ export function cleanSosiText(sosiText, selection) {
     }
 
     if (category === 'punkter') {
-      if (keepObjTypesByCategory.punkter.size > 0 && !keepObjTypesByCategory.punkter.has(objType)) {
+      if (
+        keepObjTypesByCategory.punkter.size > 0 &&
+        !keepObjTypesByCategory.punkter.has(objType)
+      ) {
         currentBlock = [];
         return;
       }
-      outLines.push(...filterFeatureBlock(currentBlock, 'punkter', selection));
+      outLines.push(
+        ...filterFeatureBlock(
+          currentBlock,
+          'punkter',
+          selection,
+          options
+        )
+      );
       currentBlock = [];
       return;
     }
 
     if (category === 'ledninger') {
-      if (keepObjTypesByCategory.ledninger.size > 0 && !keepObjTypesByCategory.ledninger.has(objType)) {
+      if (
+        keepObjTypesByCategory.ledninger.size > 0 &&
+        !keepObjTypesByCategory.ledninger.has(objType)
+      ) {
         currentBlock = [];
         return;
       }
-      outLines.push(...filterFeatureBlock(currentBlock, 'ledninger', selection));
+      outLines.push(
+        ...filterFeatureBlock(
+          currentBlock,
+          'ledninger',
+          selection,
+          options
+        )
+      );
       currentBlock = [];
       return;
     }
