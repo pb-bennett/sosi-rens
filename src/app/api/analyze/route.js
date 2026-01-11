@@ -1,8 +1,21 @@
+/**
+ * @file route.js (analyze)
+ * API route for analyzing a SOSI file.
+ * Accepts a multipart form upload, decodes the file, runs analysis,
+ * and returns JSON with file info, encoding info, and analysis results.
+ */
+
 import { decodeSosiBuffer } from '../../../lib/sosi/encoding.js';
 import { analyzeSosiText } from '../../../lib/sosi/analyze.js';
 
+/** Use Node.js runtime for Buffer and iconv support. */
 export const runtime = 'nodejs';
 
+/**
+ * Handle POST requests to analyze a SOSI file.
+ * @param {Request} request - Incoming request with multipart form data.
+ * @returns {Promise<Response>} JSON response with analysis or error.
+ */
 export async function POST(request) {
   try {
     const version = process.env.VERCEL_GIT_COMMIT_SHA
