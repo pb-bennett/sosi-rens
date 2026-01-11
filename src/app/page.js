@@ -283,6 +283,10 @@ function LoadingOverlay({ theme, label }) {
 export default function Home() {
   const [step, setStep] = useState('upload'); // upload | explore | filter | download
   const [activeTab, setActiveTab] = useState('punkter'); // punkter | ledninger
+  const [filterVisitedTabs, setFilterVisitedTabs] = useState({
+    punkter: false,
+    ledninger: false,
+  });
 
   const [themeKey, setThemeKey] = useState('neutral');
   const theme = THEMES[themeKey] || THEMES.neutral;
@@ -308,6 +312,18 @@ export default function Home() {
     punkter: {},
     ledninger: {},
   });
+
+  useEffect(() => {
+    setFilterVisitedTabs({ punkter: false, ledninger: false });
+  }, [file]);
+
+  useEffect(() => {
+    if (step !== 'filter') return;
+    setFilterVisitedTabs((prev) => ({
+      ...prev,
+      [activeTab]: true,
+    }));
+  }, [step, activeTab]);
 
   useEffect(() => {
     try {
@@ -687,6 +703,9 @@ export default function Home() {
     () => new Set(['OBJTYPE', 'EGS_PUNKT', 'EGS_LEDNING']),
     []
   );
+
+  const canProceedToDownloadFromFilter =
+    filterVisitedTabs.punkter && filterVisitedTabs.ledninger;
 
   const exploreFieldRows = useMemo(() => {
     if (!tabData) return [];
@@ -1392,14 +1411,26 @@ export default function Home() {
                   </div>
 
                   <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
-                      onClick={() => setStep('download')}
-                    >
-                      <Download className="h-4 w-4" />
-                      Gå til nedlasting
-                    </button>
+                    <div className="flex flex-col items-start gap-1">
+                      <button
+                        type="button"
+                        disabled={!canProceedToDownloadFromFilter}
+                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
+                        onClick={() => {
+                          if (!canProceedToDownloadFromFilter) return;
+                          setStep('download');
+                        }}
+                      >
+                        <Download className="h-4 w-4" />
+                        Gå til nedlasting
+                      </button>
+                      {!canProceedToDownloadFromFilter ? (
+                        <div className={`text-xs ${theme.muted}`}>
+                          Åpne både «Punkter» og «Ledninger» før du går
+                          videre.
+                        </div>
+                      ) : null}
+                    </div>
 
                     <details className="relative">
                       <summary
