@@ -45,7 +45,12 @@ function stripAttributeValue(line) {
   return `${match[1]}${match[2]}`;
 }
 
-function filterFeatureBlock(blockLines, category, selection, options) {
+function filterFeatureBlock(
+  blockLines,
+  category,
+  selection,
+  options
+) {
   const keepFields = (
     selection?.fieldsByCategory?.[category] || []
   ).map((k) => String(k).toUpperCase());

@@ -27,66 +27,66 @@ const THEME_KEY = 'sosi-rens:theme';
 const HOSTED_BODY_LIMIT_BYTES = 2_000_000;
 
 const THEMES = {
-  neutral: {
-    label: 'Nøytral',
-    appBg: 'bg-zinc-50',
-    headerBg: 'bg-white/80 backdrop-blur',
-    surface: 'bg-white',
-    surfaceMuted: 'bg-zinc-50',
-    border: 'border-zinc-200',
-    text: 'text-zinc-950',
-    muted: 'text-zinc-600',
-    primary: 'bg-zinc-900 hover:bg-zinc-800',
-    primarySoft: 'bg-zinc-100 hover:bg-zinc-200',
-    primaryRing: 'focus-visible:ring-zinc-400',
-    hoverSurfaceMuted: 'hover:bg-zinc-50',
-    tabList: 'bg-zinc-100',
-    tabActive: 'bg-white text-zinc-950 shadow-sm',
-    tabInactive: 'text-zinc-700 hover:text-zinc-950',
-    accentBar: 'bg-zinc-900',
-    accentSoft: 'bg-zinc-50',
-    hoverAccentSoft: 'hover:bg-zinc-50',
-  },
-  ocean: {
-    label: 'Hav',
+  light: {
+    label: 'Lys',
     appBg: 'bg-slate-50',
     headerBg: 'bg-white/80 backdrop-blur',
     surface: 'bg-white',
-    surfaceMuted: 'bg-indigo-50/50',
+    surfaceMuted: 'bg-slate-50',
     border: 'border-slate-200',
     text: 'text-slate-950',
     muted: 'text-slate-600',
-    primary: 'bg-indigo-600 hover:bg-indigo-700',
-    primarySoft: 'bg-indigo-50 hover:bg-indigo-100',
-    primaryRing: 'focus-visible:ring-indigo-400',
-    hoverSurfaceMuted: 'hover:bg-indigo-50/50',
-    tabList: 'bg-indigo-50',
-    tabActive: 'bg-indigo-600 text-white shadow-sm',
-    tabInactive: 'text-indigo-900/80 hover:text-indigo-950',
-    accentBar: 'bg-indigo-600',
-    accentSoft: 'bg-indigo-50',
-    hoverAccentSoft: 'hover:bg-indigo-50',
-  },
-  forest: {
-    label: 'Skog',
-    appBg: 'bg-zinc-50',
-    headerBg: 'bg-white/80 backdrop-blur',
-    surface: 'bg-white',
-    surfaceMuted: 'bg-emerald-50/50',
-    border: 'border-zinc-200',
-    text: 'text-zinc-950',
-    muted: 'text-zinc-600',
-    primary: 'bg-emerald-600 hover:bg-emerald-700',
+    logo: '',
+    primary: 'bg-emerald-700 hover:bg-emerald-800',
     primarySoft: 'bg-emerald-50 hover:bg-emerald-100',
     primaryRing: 'focus-visible:ring-emerald-400',
-    hoverSurfaceMuted: 'hover:bg-emerald-50/50',
-    tabList: 'bg-emerald-50',
-    tabActive: 'bg-emerald-600 text-white shadow-sm',
-    tabInactive: 'text-emerald-900/80 hover:text-emerald-950',
-    accentBar: 'bg-emerald-600',
-    accentSoft: 'bg-emerald-50',
-    hoverAccentSoft: 'hover:bg-emerald-50',
+    hoverSurfaceMuted: 'hover:bg-slate-50',
+    tabList: 'bg-slate-100',
+    tabActive: 'bg-white text-slate-950 shadow-sm',
+    tabInactive: 'text-slate-700 hover:text-slate-950',
+    accentBar: 'bg-blue-600',
+    accentSoft: 'bg-blue-50',
+    hoverAccentSoft: 'hover:bg-blue-50',
+    dangerBorder: 'border-red-200',
+    dangerBg: 'bg-red-50',
+    dangerText: 'text-red-800',
+    warningBorder: 'border-amber-200',
+    warningBg: 'bg-amber-50',
+    warningText: 'text-amber-900',
   },
+  dark: {
+    label: 'Mørk',
+    appBg: 'bg-zinc-900',
+    headerBg: 'bg-zinc-900/70 backdrop-blur',
+    surface: 'bg-zinc-800',
+    surfaceMuted: 'bg-zinc-800/60',
+    border: 'border-zinc-700',
+    text: 'text-zinc-50',
+    muted: 'text-zinc-400',
+    logo: 'invert brightness-110',
+    primary: 'bg-emerald-600 hover:bg-emerald-500',
+    primarySoft: 'bg-zinc-800 hover:bg-zinc-700',
+    primaryRing: 'focus-visible:ring-emerald-400',
+    hoverSurfaceMuted: 'hover:bg-zinc-800',
+    tabList: 'bg-zinc-800',
+    tabActive: 'bg-zinc-900 text-zinc-50 shadow-sm',
+    tabInactive: 'text-zinc-300 hover:text-zinc-50',
+    accentBar: 'bg-blue-500',
+    accentSoft: 'bg-blue-500/10',
+    hoverAccentSoft: 'hover:bg-blue-500/10',
+    dangerBorder: 'border-red-900/40',
+    dangerBg: 'bg-red-950/30',
+    dangerText: 'text-red-200',
+    warningBorder: 'border-amber-900/40',
+    warningBg: 'bg-amber-950/30',
+    warningText: 'text-amber-200',
+  },
+};
+
+const THEME_KEY_ALIASES = {
+  neutral: 'light',
+  githubLight: 'light',
+  githubDark: 'dark',
 };
 
 function sortEntriesDesc(obj) {
@@ -203,11 +203,12 @@ function StepButton({
   theme,
   active,
   disabled,
+  disabledReason,
   icon: Icon,
   label,
   onClick,
 }) {
-  return (
+  const button = (
     <button
       className={`group inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
         active
@@ -222,6 +223,16 @@ function StepButton({
       <span>{label}</span>
     </button>
   );
+
+  if (disabled && disabledReason) {
+    return (
+      <span className="inline-flex" title={disabledReason}>
+        {button}
+      </span>
+    );
+  }
+
+  return button;
 }
 
 function Tabs({ theme, value, onChange }) {
@@ -290,7 +301,7 @@ export default function Home() {
   const [downloadFieldMode, setDownloadFieldMode] = useState(null); // 'remove-fields' | 'clear-values'
 
   const [themeKey, setThemeKey] = useState('neutral');
-  const theme = THEMES[themeKey] || THEMES.neutral;
+  const theme = THEMES[themeKey] || THEMES.light;
 
   const [file, setFile] = useState(null);
   const [fileArrayBuffer, setFileArrayBuffer] = useState(null);
@@ -330,7 +341,13 @@ export default function Home() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(THEME_KEY);
-      if (saved && THEMES[saved]) setThemeKey(saved);
+      const normalized = (saved && THEME_KEY_ALIASES[saved]) || saved;
+      if (normalized && THEMES[normalized]) {
+        setThemeKey(normalized);
+        if (saved !== normalized) {
+          localStorage.setItem(THEME_KEY, normalized);
+        }
+      }
     } catch {
       // ignore
     }
@@ -724,6 +741,11 @@ export default function Home() {
   const canProceedToDownloadFromFilter =
     filterVisitedTabs.punkter && filterVisitedTabs.ledninger;
 
+  const downloadGateReason =
+    analysis && !canProceedToDownloadFromFilter
+      ? 'Du må åpne både «Punkter» og «Ledninger» i «Filtrer» før du kan gå til nedlasting.'
+      : null;
+
   const exploreFieldRows = useMemo(() => {
     if (!tabData) return [];
     const base = tabData.fields.map(([k, v]) => ({
@@ -804,21 +826,12 @@ export default function Home() {
                   <img
                     src="/sosi-rens-logo.svg"
                     alt="SOSI-Rens"
-                    className="h-8 w-auto"
+                    className={`h-8 w-auto ${theme.logo}`}
                   />
-                ) : null}
-                {step === 'upload' ? (
-                  <div>
-                    <h1 className="text-xl font-semibold tracking-tight">
-                      SOSI-Rens
-                    </h1>
-                    <div className={`text-sm ${theme.muted}`}>
-                      Last opp → utforsk → filtrer → last ned
-                    </div>
-                  </div>
                 ) : (
-                  <h1 className="sr-only">SOSI-Rens</h1>
+                  <div className="h-8 w-28" aria-hidden="true" />
                 )}
+                <h1 className="sr-only">SOSI-Rens</h1>
               </div>
 
               <div className="flex items-center gap-3">
@@ -828,7 +841,7 @@ export default function Home() {
                   <Palette className="h-4 w-4" />
                   <span className={theme.muted}>Tema</span>
                   <select
-                    className={`ml-1 bg-transparent text-sm font-semibold outline-none ${theme.text}`}
+                    className={`ml-1 rounded-md border px-2 py-1 text-sm font-semibold outline-none ${theme.surface} ${theme.text} ${theme.border}`}
                     value={themeKey}
                     onChange={(e) => setThemeKey(e.target.value)}
                   >
@@ -870,37 +883,59 @@ export default function Home() {
               <StepButton
                 theme={theme}
                 active={step === 'download'}
-                disabled={busy || !analysis}
+                disabled={
+                  busy || !analysis || !canProceedToDownloadFromFilter
+                }
+                disabledReason={downloadGateReason}
                 icon={Download}
                 label="4. Last ned"
-                onClick={() => analysis && setStep('download')}
+                onClick={() =>
+                  analysis &&
+                  canProceedToDownloadFromFilter &&
+                  setStep('download')
+                }
               />
             </div>
 
-            <div className={`mt-2 text-xs ${theme.muted}`}>
-              Backend: {backendInfo?.env || 'ukjent'}
-              {backendInfo?.commit ? ` (${backendInfo.commit})` : ''}
-              {processingMode
-                ? ` · Behandling: ${
-                    processingMode === 'browser'
-                      ? 'nettleser'
-                      : 'server'
-                  }`
-                : ''}
-            </div>
+            {step !== 'upload' ? (
+              <div className={`mt-2 text-xs ${theme.muted}`}>
+                Backend: {backendInfo?.env || 'ukjent'}
+                {backendInfo?.commit
+                  ? ` (${backendInfo.commit})`
+                  : ''}
+                {processingMode
+                  ? ` · Behandling: ${
+                      processingMode === 'browser'
+                        ? 'nettleser'
+                        : 'server'
+                    }`
+                  : ''}
+              </div>
+            ) : (
+              <div
+                className={`mt-2 text-xs ${theme.muted} invisible`}
+                aria-hidden="true"
+              >
+                Backend: placeholder
+              </div>
+            )}
           </div>
         </header>
 
         <main className="min-h-0 flex-1 overflow-hidden">
           <div className="mx-auto h-full w-full max-w-7xl px-6 py-6">
             {error ? (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+              <div
+                className={`mb-4 rounded-lg border px-4 py-3 ${theme.dangerBorder} ${theme.dangerBg} ${theme.dangerText}`}
+              >
                 {error}
               </div>
             ) : null}
 
             {encodingInfo?.fallbackUsed ? (
-              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+              <div
+                className={`mb-4 rounded-lg border px-4 py-3 ${theme.warningBorder} ${theme.warningBg} ${theme.warningText}`}
+              >
                 Filen ble tolket med tegnsett «{encodingInfo.used}».
               </div>
             ) : null}
@@ -913,7 +948,7 @@ export default function Home() {
                   <img
                     src="/sosi-rens-logo.svg"
                     alt="SOSI-Rens"
-                    className="mx-auto mb-4 h-14 w-auto"
+                    className={`mx-auto mb-4 h-20 w-auto ${theme.logo}`}
                   />
                   <h2 className="text-2xl font-semibold tracking-tight">
                     Last opp SOSI-fil
@@ -1429,22 +1464,32 @@ export default function Home() {
 
                   <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-col items-start gap-1">
-                      <button
-                        type="button"
-                        disabled={!canProceedToDownloadFromFilter}
-                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
-                        onClick={() => {
-                          if (!canProceedToDownloadFromFilter) return;
-                          setStep('download');
-                        }}
+                      <span
+                        className="inline-flex"
+                        title={
+                          canProceedToDownloadFromFilter
+                            ? ''
+                            : 'Du må åpne både «Punkter» og «Ledninger» før du kan gå til nedlasting.'
+                        }
                       >
-                        <Download className="h-4 w-4" />
-                        Gå til nedlasting
-                      </button>
+                        <button
+                          type="button"
+                          disabled={!canProceedToDownloadFromFilter}
+                          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
+                          onClick={() => {
+                            if (!canProceedToDownloadFromFilter)
+                              return;
+                            setStep('download');
+                          }}
+                        >
+                          <Download className="h-4 w-4" />
+                          Gå til nedlasting
+                        </button>
+                      </span>
                       {!canProceedToDownloadFromFilter ? (
                         <div className={`text-xs ${theme.muted}`}>
-                          Åpne både «Punkter» og «Ledninger» før du går
-                          videre.
+                          Åpne både «Punkter» og «Ledninger» før du
+                          går videre.
                         </div>
                       ) : null}
                     </div>
@@ -1576,7 +1621,9 @@ export default function Home() {
                           <div className="text-sm font-semibold">
                             Fjern felter helt
                           </div>
-                          <div className={`mt-0.5 text-xs ${theme.muted}`}>
+                          <div
+                            className={`mt-0.5 text-xs ${theme.muted}`}
+                          >
                             Uønskede felter fjernes fra objektene.
                           </div>
                         </div>
@@ -1599,7 +1646,9 @@ export default function Home() {
                           <div className="text-sm font-semibold">
                             Behold felter, fjern verdier
                           </div>
-                          <div className={`mt-0.5 text-xs ${theme.muted}`}>
+                          <div
+                            className={`mt-0.5 text-xs ${theme.muted}`}
+                          >
                             Feltlinjene beholdes, men verdier slettes.
                           </div>
                         </div>
