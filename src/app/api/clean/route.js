@@ -9,7 +9,10 @@ import {
   decodeSosiBuffer,
   encodeSosiText,
 } from '../../../lib/sosi/encoding.js';
-import { cleanSosiText } from '../../../lib/sosi/clean.js';
+import {
+  cleanSosiText,
+  extractExcludedSosiText,
+} from '../../../lib/sosi/clean.js';
 
 /** Use Node.js runtime for Buffer and iconv support. */
 export const runtime = 'nodejs';
@@ -28,6 +31,7 @@ export async function POST(request) {
     const file = formData.get('file');
     const selectionJson = formData.get('selection');
     const fieldModeRaw = formData.get('fieldMode');
+    const modeRaw = formData.get('mode');
 
     if (!file) {
       return Response.json(
@@ -60,22 +64,27 @@ export async function POST(request) {
         ? 'clear-values'
         : 'remove-fields';
 
+    const mode = String(modeRaw || '') === 'excluded-only'
+      ? 'excluded-only'
+      : 'clean';
+
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     const decoded = decodeSosiBuffer(buffer);
-    const cleaned = cleanSosiText(decoded.text, selection, {
-      fieldMode,
-    });
+    const cleaned =
+      mode === 'excluded-only'
+        ? extractExcludedSosiText(decoded.text, selection)
+        : cleanSosiText(decoded.text, selection, { fieldMode });
 
     const outEncoding = decoded.encoding?.used || 'utf8';
     const outBuffer = encodeSosiText(cleaned.text, outEncoding);
 
     const originalName = file.name || 'fil.sos';
-    const cleanedName = originalName.replace(
-      /(\.[^.]+)?$/,
-      '-renset$1'
-    );
+    const cleanedName =
+      mode === 'excluded-only'
+        ? originalName.replace(/(\.[^.]+)?$/, '-ekskluderte$1')
+        : originalName.replace(/(\.[^.]+)?$/, '-renset$1');
 
     return new Response(outBuffer, {
       status: 200,

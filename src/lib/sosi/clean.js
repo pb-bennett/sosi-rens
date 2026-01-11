@@ -64,6 +64,49 @@ function extractKeyFromAttributeLine(line) {
 }
 
 /**
+ * Extract identifier values (SID/PSID/LSID) from a feature block.
+ * Identifiers in the Gemini VA exports used by this app are typically stored as
+ * triple-dot attributes inside EGS groups (e.g. `...SID 123`).
+ * @param {string[]} blockLines - Lines of a feature block.
+ * @returns {{ idType: 'SID' | 'PSID' | 'LSID', value: string }[]} Extracted IDs.
+ */
+function extractIdsFromBlock(blockLines) {
+  const out = [];
+  for (const rawLine of blockLines) {
+    const line = String(rawLine);
+    const match = line.match(/^\.\.\.(SID|PSID|LSID)\s+(\S+)/i);
+    if (!match) continue;
+    const idType = String(match[1]).toUpperCase();
+    const value = String(match[2]).trim();
+    if (!value) continue;
+    if (idType === 'SID' || idType === 'PSID' || idType === 'LSID') {
+      out.push({ idType, value });
+    }
+  }
+  return out;
+}
+
+/**
+ * Build a set of excluded IDs for a category.
+ * @param {Object} selection - Selection object.
+ * @param {'punkter' | 'ledninger'} category - Category.
+ * @returns {Set<string>} Set of keys like `SID:123`.
+ */
+function buildExcludedSet(selection, category) {
+  const list = selection?.excludedByCategory?.[category] || [];
+  const set = new Set();
+  for (const entry of list) {
+    const idType = String(entry?.idType || '').toUpperCase();
+    const id = String(entry?.id || '').trim();
+    if (!id) continue;
+    if (idType === 'SID' || idType === 'PSID' || idType === 'LSID') {
+      set.add(`${idType}:${id}`);
+    }
+  }
+  return set;
+}
+
+/**
  * Determine if a field key must always be kept (structural / mandatory).
  * @param {string} keyUpper - Uppercased attribute key.
  * @returns {boolean} True if the key is mandatory.
@@ -191,6 +234,11 @@ export function cleanSosiText(sosiText, selection, options) {
     ),
   };
 
+  const excludedByCategory = {
+    punkter: buildExcludedSet(selection, 'punkter'),
+    ledninger: buildExcludedSet(selection, 'ledninger'),
+  };
+
   const outLines = [];
   let currentBlock = [];
   let currentSection = null;
@@ -223,6 +271,21 @@ export function cleanSosiText(sosiText, selection, options) {
       outLines.push(...currentBlock);
       currentBlock = [];
       return;
+    }
+
+    // Exclusion list takes precedence: skip matching features entirely.
+    if (category === 'punkter' || category === 'ledninger') {
+      const excludedSet = excludedByCategory[category];
+      if (excludedSet && excludedSet.size > 0) {
+        const ids = extractIdsFromBlock(currentBlock);
+        const shouldExclude = ids.some((id) =>
+          excludedSet.has(`${id.idType}:${id.value}`)
+        );
+        if (shouldExclude) {
+          currentBlock = [];
+          return;
+        }
+      }
     }
 
     if (category === 'punkter') {
@@ -287,6 +350,94 @@ export function cleanSosiText(sosiText, selection, options) {
     }
 
     // Header / non-feature lines pass-through.
+    outLines.push(line);
+  }
+
+  flushBlock();
+
+  return {
+    text: outLines.join(newline),
+  };
+}
+
+/**
+ * Extract a SOSI containing only the excluded objects.
+ * Preserves non-feature sections (e.g. .HODE, .SLUTT) verbatim.
+ * Intended for review/auditing of what will be removed from the main export.
+ * @param {string} sosiText - Full SOSI file content.
+ * @param {Object} selection - Selection containing excludedByCategory.
+ * @returns {{ text: string }} SOSI text with only excluded objects.
+ */
+export function extractExcludedSosiText(sosiText, selection) {
+  const text = String(sosiText);
+  const newline = text.includes('\r\n') ? '\r\n' : '\n';
+  const lines = text.split(/\r?\n/);
+
+  const excludedByCategory = {
+    punkter: buildExcludedSet(selection, 'punkter'),
+    ledninger: buildExcludedSet(selection, 'ledninger'),
+  };
+
+  const outLines = [];
+  let currentBlock = [];
+  let currentSection = null;
+
+  function flushBlock() {
+    if (currentBlock.length === 0) return;
+
+    const section = currentSection;
+    const category = categorizeSection(section);
+
+    // Preserve non-feature sections (e.g. .HODE, .SLUTT) verbatim.
+    if (category === 'unknown') {
+      outLines.push(...currentBlock);
+      currentBlock = [];
+      return;
+    }
+
+    // If it's not a feature block (no section), just pass-through.
+    if (!section) {
+      outLines.push(...currentBlock);
+      currentBlock = [];
+      return;
+    }
+
+    if (category === 'punkter' || category === 'ledninger') {
+      const excludedSet = excludedByCategory[category];
+      if (!excludedSet || excludedSet.size === 0) {
+        currentBlock = [];
+        return;
+      }
+
+      const ids = extractIdsFromBlock(currentBlock);
+      const shouldKeep = ids.some((id) =>
+        excludedSet.has(`${id.idType}:${id.value}`)
+      );
+      if (shouldKeep) outLines.push(...currentBlock);
+      currentBlock = [];
+      return;
+    }
+
+    // Unknown category: keep.
+    outLines.push(...currentBlock);
+    currentBlock = [];
+  }
+
+  for (const rawLine of lines) {
+    const line = String(rawLine || '');
+
+    if (isFeatureStartLine(line)) {
+      flushBlock();
+      currentSection = getSectionName(line);
+      currentBlock = [line];
+      continue;
+    }
+
+    if (currentBlock.length > 0) {
+      currentBlock.push(line);
+      continue;
+    }
+
     outLines.push(line);
   }
 
