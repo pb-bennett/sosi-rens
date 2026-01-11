@@ -930,10 +930,10 @@ export default function Home() {
                   <img
                     src="/sosi-rens-logo.svg"
                     alt="SOSI-Rens"
-                    className={`h-8 w-auto ${theme.logo}`}
+                    className={`h-16 w-auto ${theme.logo}`}
                   />
                 ) : (
-                  <div className="h-8 w-28" aria-hidden="true" />
+                  <div className="h-16 w-28" aria-hidden="true" />
                 )}
                 <h1 className="sr-only">SOSI-Rens</h1>
               </div>
