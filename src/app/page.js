@@ -957,6 +957,16 @@ export default function Home() {
     downloadBlob(blob, 'sosi-rens-utvalg.json');
   }
 
+  function exportExclusionsOnly() {
+    const payload = {
+      excludedByCategory: selection.excludedByCategory,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json',
+    });
+    downloadBlob(blob, 'sosi-rens-ekskluderinger.json');
+  }
+
   async function importSettingsFromFile(fileObj) {
     setError(null);
     try {
@@ -970,6 +980,22 @@ export default function Home() {
         excludedByCategory: normalizeExcludedByCategory(
           imported.excludedByCategory ?? prev.excludedByCategory
         ),
+      }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function importExclusionsOnlyFromFile(fileObj) {
+    setError(null);
+    try {
+      const imported = await readJsonFile(fileObj);
+      const nextExcluded = normalizeExcludedByCategory(
+        imported?.excludedByCategory
+      );
+      setSelection((prev) => ({
+        ...prev,
+        excludedByCategory: nextExcluded,
       }));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -2110,6 +2136,32 @@ export default function Home() {
                     <div className={`mt-1 text-sm ${theme.muted}`}>
                       Objekter i listen fjernes fra eksporten, selv om
                       de ellers matcher filtervalgene.
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                        onClick={exportExclusionsOnly}
+                      >
+                        <Download className="h-4 w-4" />
+                        Eksporter ekskluderinger (JSON)
+                      </button>
+                      <label
+                        className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                      >
+                        <FileUp className="h-4 w-4" />
+                        Importer ekskluderinger (JSON)
+                        <input
+                          type="file"
+                          accept="application/json,.json"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) importExclusionsOnlyFromFile(f);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
                     </div>
                   </div>
 
