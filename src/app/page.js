@@ -235,6 +235,108 @@ function getCategoryLabel(category) {
   return category === 'ledninger' ? 'Ledninger' : 'Punkter';
 }
 
+/**
+ * Search for all objects with a given SID across both categories.
+ * Returns an array of matches with metadata for user to pick from.
+ * @param {string} sosiText - Full SOSI text.
+ * @param {string} sid - The SID value to search for.
+ * @returns {{ category: string, sid: string, objType: string | null, tema: string | null, material: string | null, dimensjon: string | null }[]}
+ */
+function searchBySid(sosiText, sid) {
+  const wantedSid = String(sid).trim();
+  if (!sosiText || !wantedSid) return [];
+  if (!/^[0-9]+$/.test(wantedSid)) return [];
+
+  const sidLineRe = new RegExp(
+    `^\\.\\.\\.SID\\s+${escapeRegExp(wantedSid)}\\s*$`
+  );
+
+  const matches = [];
+  let currentSection = null;
+  let currentCategory = 'unknown';
+  let currentObjType = null;
+  let currentTema = null;
+  let currentMaterial = null;
+  let currentDimensjon = null;
+  let matchInThisBlock = false;
+
+  function resetForBlock() {
+    currentObjType = null;
+    currentTema = null;
+    currentMaterial = null;
+    currentDimensjon = null;
+    matchInThisBlock = false;
+  }
+
+  function finalizeBlock() {
+    if (!matchInThisBlock) return;
+    if (currentCategory === 'unknown') return;
+    matches.push({
+      category: currentCategory,
+      sid: wantedSid,
+      objType: currentObjType || null,
+      tema: currentTema || null,
+      material: currentMaterial || null,
+      dimensjon: currentDimensjon || null,
+    });
+  }
+
+  resetForBlock();
+
+  forEachLine(sosiText, (lineRaw) => {
+    const line = String(lineRaw || '');
+    if (!line) return;
+
+    if (isFeatureStartLine(line)) {
+      finalizeBlock();
+      currentSection = getSectionName(line);
+      currentCategory = categorizeSection(currentSection);
+      resetForBlock();
+      return;
+    }
+
+    if (line.startsWith('..OBJTYPE')) {
+      const objType = line.replace('..OBJTYPE', '').trim();
+      if (objType) currentObjType = objType;
+      return;
+    }
+
+    if (line.startsWith('...P_TEMA')) {
+      const value = line.replace('...P_TEMA', '').trim();
+      if (value) currentTema = value;
+      return;
+    }
+
+    if (line.startsWith('...L_TEMA')) {
+      const value = line.replace('...L_TEMA', '').trim();
+      if (value) currentTema = value;
+      return;
+    }
+
+    if (line.startsWith('...MATERIAL')) {
+      const value = line.replace('...MATERIAL', '').trim();
+      if (value) currentMaterial = value;
+      return;
+    }
+
+    if (line.startsWith('...DIMENSJON')) {
+      const value = line.replace('...DIMENSJON', '').trim();
+      if (value) currentDimensjon = value;
+      return;
+    }
+
+    if (sidLineRe.test(line.trim())) {
+      matchInThisBlock = true;
+      return;
+    }
+  });
+
+  // Finalize last block
+  finalizeBlock();
+
+  return matches;
+}
+
 function lookupExclusionMeta(sosiText, category, idType, id) {
   const wantedCategory = String(category);
   const wantedType = String(idType).toUpperCase();
@@ -410,6 +512,68 @@ function computeValueFrequencyForField(
 }
 
 /**
+ * Extract unique EIER values and their counts from a SOSI text, grouped by category.
+ * @param {string} sosiText - Full SOSI text.
+ * @returns {{ punkter: { value: string, count: number }[], ledninger: { value: string, count: number }[] }}
+ */
+function extractEierValues(sosiText) {
+  const countsPunkter = new Map();
+  const countsLedninger = new Map();
+
+  let currentCategory = 'unknown';
+  let currentSection = null;
+  let blockEierValue = null;
+
+  function finalizeBlock() {
+    if (blockEierValue !== null) {
+      const val = blockEierValue || '(tom)';
+      if (currentCategory === 'punkter') {
+        countsPunkter.set(val, (countsPunkter.get(val) || 0) + 1);
+      } else if (currentCategory === 'ledninger') {
+        countsLedninger.set(val, (countsLedninger.get(val) || 0) + 1);
+      }
+    }
+    blockEierValue = null;
+  }
+
+  forEachLine(sosiText, (rawLine) => {
+    const line = String(rawLine || '');
+    if (!line) return;
+
+    if (isFeatureStartLine(line)) {
+      finalizeBlock();
+      currentSection = getSectionName(line);
+      currentCategory = categorizeSection(currentSection);
+      blockEierValue = null;
+      return;
+    }
+
+    if (currentCategory === 'unknown') return;
+
+    if (line.startsWith('...EIER')) {
+      const value = line.replace('...EIER', '').trim();
+      blockEierValue = value || '';
+    }
+  });
+
+  finalizeBlock();
+
+  const sortEntries = (map) =>
+    Array.from(map.entries())
+      .sort(
+        (a, b) =>
+          (b[1] || 0) - (a[1] || 0) ||
+          String(a[0]).localeCompare(String(b[0]))
+      )
+      .map(([value, count]) => ({ value, count }));
+
+  return {
+    punkter: sortEntries(countsPunkter),
+    ledninger: sortEntries(countsLedninger),
+  };
+}
+
+/**
  * Step navigation button used in the header.
  * Displays an icon + label, handles active/disabled states, and shows tooltip when disabled.
  * @param {Object} props
@@ -433,7 +597,7 @@ function StepButton({
 }) {
   const button = (
     <button
-      className={`group inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+      className={`group inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
         active
           ? `${theme.primary} ${theme.primaryRing} border-transparent text-white`
           : `${theme.surface} ${theme.text} ${theme.primaryRing} ${theme.border} ${theme.hoverSurfaceMuted}`
@@ -442,7 +606,7 @@ function StepButton({
       onClick={onClick}
       type="button"
     >
-      <Icon className={`h-4 w-4 ${active ? 'text-white' : ''}`} />
+      <Icon className={`h-3.5 w-3.5 ${active ? 'text-white' : ''}`} />
       <span>{label}</span>
     </button>
   );
@@ -667,8 +831,15 @@ export default function Home() {
     objTypesByCategory: { punkter: [], ledninger: [] },
     fieldsByCategory: { punkter: [], ledninger: [] },
     excludedByCategory: { punkter: [], ledninger: [] },
+    eierByCategory: { punkter: ['K'], ledninger: ['K'] }, // Default: only EIER=K
     lastFileName: null,
   });
+
+  // Memoized EIER values from current SOSI text
+  const availableEierValues = useMemo(() => {
+    if (!sosiText) return { punkter: [], ledninger: [] };
+    return extractEierValues(sosiText);
+  }, [sosiText]);
 
   useEffect(() => {
     try {
@@ -681,6 +852,14 @@ export default function Home() {
         excludedByCategory: normalizeExcludedByCategory(
           parsed?.excludedByCategory ?? prev.excludedByCategory
         ),
+        eierByCategory: {
+          punkter: Array.isArray(parsed?.eierByCategory?.punkter)
+            ? parsed.eierByCategory.punkter
+            : prev.eierByCategory.punkter,
+          ledninger: Array.isArray(parsed?.eierByCategory?.ledninger)
+            ? parsed.eierByCategory.ledninger
+            : prev.eierByCategory.ledninger,
+        },
       }));
     } catch {
       // ignore
@@ -850,6 +1029,52 @@ export default function Home() {
     });
   }
 
+  /**
+   * Toggle a single EIER value in/out of the filter for a category.
+   * @param {string} category - 'punkter' or 'ledninger'
+   * @param {string} eierValue - The EIER value to toggle
+   */
+  function toggleEier(category, eierValue) {
+    setSelection((prev) => ({
+      ...prev,
+      eierByCategory: {
+        ...prev.eierByCategory,
+        [category]: toggleInList(
+          prev.eierByCategory[category],
+          eierValue
+        ),
+      },
+    }));
+  }
+
+  /**
+   * Select all EIER values for a category.
+   */
+  function selectAllEier(category) {
+    const allValues =
+      availableEierValues[category]?.map((v) => v.value) || [];
+    setSelection((prev) => ({
+      ...prev,
+      eierByCategory: {
+        ...prev.eierByCategory,
+        [category]: allValues,
+      },
+    }));
+  }
+
+  /**
+   * Deselect all EIER values for a category.
+   */
+  function deselectAllEier(category) {
+    setSelection((prev) => ({
+      ...prev,
+      eierByCategory: {
+        ...prev.eierByCategory,
+        [category]: [],
+      },
+    }));
+  }
+
   async function downloadCleanedClient() {
     if (!file) return;
     setProcessingMode('browser');
@@ -863,6 +1088,7 @@ export default function Home() {
         objTypesByCategory: selection.objTypesByCategory,
         fieldsByCategory: selection.fieldsByCategory,
         excludedByCategory: selection.excludedByCategory,
+        eierByCategory: selection.eierByCategory,
       },
       {
         fieldMode:
@@ -1041,20 +1267,44 @@ export default function Home() {
     }
   }
 
+  /**
+   * Export all settings (filters, exclusions, EIER) as a unified JSON file.
+   * Includes metadata for versioning and identification.
+   */
   function exportSettings() {
     const payload = {
+      // Metadata
+      _meta: {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        sourceFile: selection.lastFileName || null,
+        appVersion: 'sosi-rens:v0',
+      },
+      // Filter settings
       objTypesByCategory: selection.objTypesByCategory,
       fieldsByCategory: selection.fieldsByCategory,
+      eierByCategory: selection.eierByCategory,
+      // Exclusions
       excludedByCategory: selection.excludedByCategory,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
     });
-    downloadBlob(blob, 'sosi-rens-utvalg.json');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const baseName = selection.lastFileName
+      ? selection.lastFileName.replace(/\.[^.]+$/, '')
+      : 'sosi-rens';
+    downloadBlob(blob, `${baseName}-innstillinger-${dateStr}.json`);
   }
 
   function exportExclusionsOnly() {
     const payload = {
+      _meta: {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        type: 'exclusions-only',
+        sourceFile: selection.lastFileName || null,
+      },
       excludedByCategory: selection.excludedByCategory,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -1073,6 +1323,16 @@ export default function Home() {
           imported.objTypesByCategory || prev.objTypesByCategory,
         fieldsByCategory:
           imported.fieldsByCategory || prev.fieldsByCategory,
+        eierByCategory: {
+          punkter: Array.isArray(imported?.eierByCategory?.punkter)
+            ? imported.eierByCategory.punkter
+            : prev.eierByCategory.punkter,
+          ledninger: Array.isArray(
+            imported?.eierByCategory?.ledninger
+          )
+            ? imported.eierByCategory.ledninger
+            : prev.eierByCategory.ledninger,
+        },
         excludedByCategory: normalizeExcludedByCategory(
           imported.excludedByCategory ?? prev.excludedByCategory
         ),
@@ -1108,6 +1368,7 @@ export default function Home() {
       objTypesByCategory: { punkter: [], ledninger: [] },
       fieldsByCategory: { punkter: [], ledninger: [] },
       excludedByCategory: { punkter: [], ledninger: [] },
+      eierByCategory: { punkter: ['K'], ledninger: ['K'] },
       lastFileName: null,
     });
     if (available) ensureDefaultsFromAnalysis();
@@ -1119,9 +1380,132 @@ export default function Home() {
       ledninger: { idType: 'SID', id: '', comment: '' },
     });
 
+  // New SID search state for simplified exclude UX
+  const [sidSearchInput, setSidSearchInput] = useState('');
+  const [sidSearchResults, setSidSearchResults] = useState([]);
+  const [sidSearchPerformed, setSidSearchPerformed] = useState(false);
+  const [selectedSidMatch, setSelectedSidMatch] = useState(null);
+  const [sidExcludeComment, setSidExcludeComment] = useState('');
+
+  // Reset confirmation dialog state
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  /**
+   * Reset filters (objTypes, fields, EIER) to file defaults.
+   * Preserves exclusion list.
+   */
+  function resetFiltersToDefaults() {
+    if (!available) return;
+    setSelection((prev) => ({
+      ...prev,
+      objTypesByCategory: {
+        punkter: available.punkter.objTypes,
+        ledninger: available.ledninger.objTypes,
+      },
+      fieldsByCategory: {
+        punkter: available.punkter.fields,
+        ledninger: available.ledninger.fields,
+      },
+      eierByCategory: { punkter: ['K'], ledninger: ['K'] },
+      // Keep excludedByCategory unchanged
+    }));
+    setShowResetConfirm(false);
+  }
+
   const [editingExcluded, setEditingExcluded] = useState(null);
   const [editingExcludedDraft, setEditingExcludedDraft] =
     useState(null);
+
+  /**
+   * Search for objects matching the entered SID.
+   */
+  function performSidSearch() {
+    const sid = sidSearchInput.trim();
+    setSidSearchPerformed(true);
+    setSelectedSidMatch(null);
+    setSidExcludeComment('');
+
+    if (!sid) {
+      setSidSearchResults([]);
+      return;
+    }
+
+    if (!/^[0-9]+$/.test(sid)) {
+      setError('SID må være et tall.');
+      setSidSearchResults([]);
+      return;
+    }
+
+    if (!sosiText) {
+      setError('Last inn en SOSI-fil før du søker etter SID.');
+      setSidSearchResults([]);
+      return;
+    }
+
+    setError(null);
+    const results = searchBySid(sosiText, sid);
+    setSidSearchResults(results);
+  }
+
+  /**
+   * Add the selected match to the exclusion list.
+   */
+  function addSelectedSidMatch() {
+    if (!selectedSidMatch) {
+      setError('Velg et objekt fra søkeresultatene først.');
+      return;
+    }
+
+    const cat = selectedSidMatch.category;
+    const sid = selectedSidMatch.sid;
+    const comment = sidExcludeComment.trim();
+
+    const entry = {
+      idType: 'SID',
+      id: sid,
+      comment,
+      meta: {
+        objType: selectedSidMatch.objType,
+        tema: selectedSidMatch.tema,
+        material: selectedSidMatch.material,
+        dimensjon: selectedSidMatch.dimensjon,
+      },
+    };
+
+    const key = buildExcludedKey(entry);
+    const existing = selection?.excludedByCategory?.[cat] || [];
+    if (existing.some((e) => buildExcludedKey(e) === key)) {
+      setError('Dette objektet er allerede ekskludert.');
+      return;
+    }
+
+    setSelection((prev) => {
+      const nextExcluded = normalizeExcludedByCategory(
+        prev.excludedByCategory
+      );
+      nextExcluded[cat] = [...nextExcluded[cat], entry];
+      return { ...prev, excludedByCategory: nextExcluded };
+    });
+
+    // Reset search state
+    setSidSearchInput('');
+    setSidSearchResults([]);
+    setSidSearchPerformed(false);
+    setSelectedSidMatch(null);
+    setSidExcludeComment('');
+    setError(null);
+  }
+
+  /**
+   * Clear the SID search state.
+   */
+  function clearSidSearch() {
+    setSidSearchInput('');
+    setSidSearchResults([]);
+    setSidSearchPerformed(false);
+    setSelectedSidMatch(null);
+    setSidExcludeComment('');
+  }
 
   async function addExcludedEntry(category) {
     const cat = String(category);
@@ -1440,128 +1824,107 @@ export default function Home() {
           className={`shrink-0 border-b ${theme.border} ${theme.headerBg}`}
         >
           <div className="mx-auto w-full max-w-7xl px-6 py-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {step !== 'upload' ? (
-                  <img
-                    src="/sosi-rens-logo.svg"
-                    alt="SOSI-Rens"
-                    className={`h-16 w-auto ${theme.logo}`}
-                  />
-                ) : (
-                  <div className="h-16 w-28" aria-hidden="true" />
-                )}
-                <h1 className="sr-only">SOSI-Rens</h1>
-              </div>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {step !== 'upload' ? (
+                    <img
+                      src="/sosi-rens-logo.svg"
+                      alt="SOSI-Rens"
+                      className={`h-16 w-auto ${theme.logo}`}
+                    />
+                  ) : (
+                    <div className="h-16 w-28" aria-hidden="true" />
+                  )}
+                  <h1 className="sr-only">SOSI-Rens</h1>
+                </div>
 
-              <div className="flex items-center gap-3">
-                <label
-                  className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium ${theme.border} ${theme.surface}`}
-                >
-                  <Palette className="h-4 w-4" />
-                  <span className={theme.muted}>Tema</span>
-                  <select
-                    className={`ml-1 rounded-md border px-2 py-1 text-sm font-semibold outline-none ${theme.surface} ${theme.text} ${theme.border}`}
-                    value={themeKey}
-                    onChange={(e) => setThemeKey(e.target.value)}
+                <div className="flex items-center gap-3">
+                  <label
+                    className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium ${theme.border} ${theme.surface}`}
                   >
-                    {Object.entries(THEMES).map(([key, t]) => (
-                      <option key={key} value={key}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <Palette className="h-4 w-4" />
+                    <span className={theme.muted}>Tema</span>
+                    <select
+                      className={`ml-1 rounded-md border px-2 py-1 text-sm font-semibold outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                      value={themeKey}
+                      onChange={(e) => setThemeKey(e.target.value)}
+                    >
+                      {Object.entries(THEMES).map(([key, t]) => (
+                        <option key={key} value={key}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex w-full flex-wrap items-center justify-end gap-2">
+                <StepButton
+                  theme={theme}
+                  active={step === 'upload'}
+                  disabled={busy}
+                  icon={Upload}
+                  label="1. Last opp"
+                  onClick={() => setStep('upload')}
+                />
+                <StepButton
+                  theme={theme}
+                  active={step === 'explore'}
+                  disabled={busy || !analysis}
+                  icon={Settings2}
+                  label="2. Utforsk"
+                  onClick={() => analysis && setStep('explore')}
+                />
+                <StepButton
+                  theme={theme}
+                  active={step === 'filter'}
+                  disabled={busy || !analysis}
+                  icon={Filter}
+                  label="3. Filtrer"
+                  onClick={() => analysis && setStep('filter')}
+                />
+                <StepButton
+                  theme={theme}
+                  active={step === 'exclude'}
+                  disabled={
+                    busy ||
+                    !analysis ||
+                    !canProceedToExclusionsFromFilter
+                  }
+                  disabledReason={
+                    canProceedToExclusionsFromFilter
+                      ? null
+                      : 'Åpne både «Punkter» og «Ledninger» i «Filtrer» først.'
+                  }
+                  icon={Trash2}
+                  label="4. Ekskluder"
+                  onClick={() =>
+                    analysis &&
+                    canProceedToExclusionsFromFilter &&
+                    setStep('exclude')
+                  }
+                />
+                <StepButton
+                  theme={theme}
+                  active={step === 'download'}
+                  disabled={
+                    busy ||
+                    !analysis ||
+                    !canProceedToDownloadFromExclusions
+                  }
+                  disabledReason={downloadGateReason}
+                  icon={Download}
+                  label="5. Last ned"
+                  onClick={() =>
+                    analysis &&
+                    canProceedToDownloadFromExclusions &&
+                    setStep('download')
+                  }
+                />
               </div>
             </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <StepButton
-                theme={theme}
-                active={step === 'upload'}
-                disabled={busy}
-                icon={Upload}
-                label="1. Last opp"
-                onClick={() => setStep('upload')}
-              />
-              <StepButton
-                theme={theme}
-                active={step === 'explore'}
-                disabled={busy || !analysis}
-                icon={Settings2}
-                label="2. Utforsk"
-                onClick={() => analysis && setStep('explore')}
-              />
-              <StepButton
-                theme={theme}
-                active={step === 'filter'}
-                disabled={busy || !analysis}
-                icon={Filter}
-                label="3. Filtrer"
-                onClick={() => analysis && setStep('filter')}
-              />
-              <StepButton
-                theme={theme}
-                active={step === 'exclude'}
-                disabled={
-                  busy ||
-                  !analysis ||
-                  !canProceedToExclusionsFromFilter
-                }
-                disabledReason={
-                  canProceedToExclusionsFromFilter
-                    ? null
-                    : 'Åpne både «Punkter» og «Ledninger» i «Filtrer» først.'
-                }
-                icon={Trash2}
-                label="4. Ekskluder"
-                onClick={() =>
-                  analysis &&
-                  canProceedToExclusionsFromFilter &&
-                  setStep('exclude')
-                }
-              />
-              <StepButton
-                theme={theme}
-                active={step === 'download'}
-                disabled={
-                  busy ||
-                  !analysis ||
-                  !canProceedToDownloadFromExclusions
-                }
-                disabledReason={downloadGateReason}
-                icon={Download}
-                label="5. Last ned"
-                onClick={() =>
-                  analysis &&
-                  canProceedToDownloadFromExclusions &&
-                  setStep('download')
-                }
-              />
-            </div>
-
-            {step !== 'upload' ? (
-              <div className={`mt-2 text-xs ${theme.muted}`}>
-                Backend: {backendInfo?.env || 'ukjent'}
-                {backendInfo?.commit
-                  ? ` (${backendInfo.commit})`
-                  : ''}
-                {processingMode
-                  ? ` · Behandling: ${
-                      processingMode === 'browser'
-                        ? 'nettleser'
-                        : 'server'
-                    }`
-                  : ''}
-              </div>
-            ) : (
-              <div
-                className={`mt-2 text-xs ${theme.muted} invisible`}
-                aria-hidden="true"
-              >
-                Backend: placeholder
-              </div>
-            )}
           </div>
         </header>
 
@@ -1898,7 +2261,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-5 flex gap-2">
+                  <div className="mt-5 flex flex-wrap gap-2">
                     <button
                       type="button"
                       className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
@@ -1936,6 +2299,77 @@ export default function Home() {
                         onChange={setActiveTab}
                       />
                     </div>
+
+                    {/* EIER filter section */}
+                    {availableEierValues[activeTab]?.length > 0 && (
+                      <div
+                        className={`mt-4 rounded-lg border p-3 ${theme.border} ${theme.surfaceMuted}`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <h3 className="text-sm font-semibold">
+                              Eier (EIER)
+                            </h3>
+                            <p className={`text-xs ${theme.muted}`}>
+                              Velg hvilke eiertyper som skal
+                              inkluderes i eksporten. Standard: K
+                              (kommunal).
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
+                              onClick={() => selectAllEier(activeTab)}
+                            >
+                              Alle
+                            </button>
+                            <button
+                              type="button"
+                              className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
+                              onClick={() =>
+                                deselectAllEier(activeTab)
+                              }
+                            >
+                              Ingen
+                            </button>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {availableEierValues[activeTab].map(
+                            ({ value, count }) => {
+                              const checked = (
+                                selection.eierByCategory[activeTab] ||
+                                []
+                              ).includes(value);
+                              return (
+                                <label
+                                  key={value}
+                                  className={`inline-flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 ${theme.hoverAccentSoft}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() =>
+                                      toggleEier(activeTab, value)
+                                    }
+                                    className="h-4 w-4"
+                                  />
+                                  <span className="text-sm font-medium">
+                                    {value}
+                                  </span>
+                                  <span
+                                    className={`text-xs ${theme.muted}`}
+                                  >
+                                    ({count.toLocaleString('nb-NO')})
+                                  </span>
+                                </label>
+                              );
+                            }
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-5 min-h-0 flex-1 overflow-hidden">
@@ -1986,6 +2420,7 @@ export default function Home() {
                                   <input
                                     type="checkbox"
                                     checked={checked}
+                                    className="h-4 w-4"
                                     onChange={() => {
                                       setSelection((prev) => ({
                                         ...prev,
@@ -2052,54 +2487,70 @@ export default function Home() {
                         <div
                           className={`mt-2 min-h-0 flex-1 overflow-auto rounded-md border p-2 ${theme.border}`}
                         >
-                          {uniq([
-                            ...available[activeTab].fields,
-                            ...Array.from(mandatoryFields),
-                          ]).map((fieldKey) => {
-                            const keyUpper =
-                              String(fieldKey).toUpperCase();
-                            const locked =
-                              mandatoryFields.has(keyUpper);
-                            const checked =
-                              locked ||
-                              selectedFields
-                                .map((f) => String(f).toUpperCase())
-                                .includes(keyUpper);
-                            return (
-                              <label
-                                key={fieldKey}
-                                className={`flex items-center gap-2 rounded px-2 py-1 ${theme.hoverAccentSoft}`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  disabled={locked}
-                                  onChange={() => {
-                                    if (locked) return;
-                                    setSelection((prev) => ({
-                                      ...prev,
-                                      fieldsByCategory: {
-                                        ...prev.fieldsByCategory,
-                                        [activeTab]: toggleInList(
-                                          prev.fieldsByCategory?.[
-                                            activeTab
-                                          ] || [],
-                                          keyUpper
-                                        ),
-                                      },
-                                    }));
-                                  }}
-                                />
-                                <span
-                                  className={`text-sm ${
-                                    locked ? 'text-zinc-500' : ''
+                          <div className="space-y-0.5">
+                            {uniq([
+                              ...available[activeTab].fields,
+                              ...Array.from(mandatoryFields),
+                            ]).map((fieldKey) => {
+                              const keyUpper =
+                                String(fieldKey).toUpperCase();
+                              const locked =
+                                mandatoryFields.has(keyUpper);
+                              const checked =
+                                locked ||
+                                selectedFields
+                                  .map((f) => String(f).toUpperCase())
+                                  .includes(keyUpper);
+                              return (
+                                <label
+                                  key={fieldKey}
+                                  className={`flex items-center gap-2 rounded px-2 py-1 ${
+                                    theme.hoverAccentSoft
+                                  } ${
+                                    locked
+                                      ? 'cursor-not-allowed opacity-60'
+                                      : 'cursor-pointer'
                                   }`}
                                 >
-                                  {fieldKey}
-                                </span>
-                              </label>
-                            );
-                          })}
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    disabled={locked}
+                                    className="h-4 w-4"
+                                    onChange={() => {
+                                      if (locked) return;
+                                      setSelection((prev) => ({
+                                        ...prev,
+                                        fieldsByCategory: {
+                                          ...prev.fieldsByCategory,
+                                          [activeTab]: toggleInList(
+                                            prev.fieldsByCategory?.[
+                                              activeTab
+                                            ] || [],
+                                            keyUpper
+                                          ),
+                                        },
+                                      }));
+                                    }}
+                                  />
+                                  <span
+                                    className={`font-mono text-xs ${
+                                      locked ? 'italic' : ''
+                                    }`}
+                                  >
+                                    {fieldKey}
+                                  </span>
+                                  {locked && (
+                                    <span
+                                      className={`ml-auto text-xs ${theme.muted}`}
+                                    >
+                                      låst
+                                    </span>
+                                  )}
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2151,7 +2602,7 @@ export default function Home() {
                         <button
                           type="button"
                           className={`flex w-full items-start gap-3 px-4 py-3 text-left ${theme.hoverAccentSoft}`}
-                          onClick={() => ensureDefaultsFromAnalysis()}
+                          onClick={() => setShowResetConfirm(true)}
                         >
                           <RotateCcw className="mt-0.5 h-4 w-4 shrink-0" />
                           <div>
@@ -2159,8 +2610,8 @@ export default function Home() {
                               Tilbakestill til standard (fra fil)
                             </div>
                             <div className={`text-xs ${theme.muted}`}>
-                              Bruk feltene/objekttypene som finnes i
-                              den opplastede filen.
+                              Nullstiller objekttyper, felter og eier.
+                              Ekskluderingslisten beholdes.
                             </div>
                           </div>
                         </button>
@@ -2235,72 +2686,211 @@ export default function Home() {
                       Ekskluder objekter
                     </h2>
                     <div className={`mt-1 text-sm ${theme.muted}`}>
-                      Objekter i listen fjernes fra eksporten, selv om
-                      de ellers matcher filtervalgene.
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={
-                          busy ||
-                          !file ||
-                          ((selection?.excludedByCategory?.punkter
-                            ?.length ||
-                            0) +
-                            (selection?.excludedByCategory?.ledninger
-                              ?.length ||
-                              0) ===
-                            0)
-                        }
-                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
-                        onClick={downloadExcludedOnly}
-                      >
-                        <Download className="h-4 w-4" />
-                        Last ned ekskluderte (SOSI)
-                      </button>
-                      <button
-                        type="button"
-                        className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                        onClick={exportExclusionsOnly}
-                      >
-                        <Download className="h-4 w-4" />
-                        Eksporter ekskluderinger (JSON)
-                      </button>
-                      <label
-                        className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                      >
-                        <FileUp className="h-4 w-4" />
-                        Importer ekskluderinger (JSON)
-                        <input
-                          type="file"
-                          accept="application/json,.json"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) importExclusionsOnlyFromFile(f);
-                            e.target.value = '';
-                          }}
-                        />
-                      </label>
+                      Søk etter SID for å finne objekter. Objekter i
+                      ekskluderingslisten fjernes fra eksporten.
                     </div>
                   </div>
 
+                  {/* SID Search Section */}
+                  <div
+                    className={`mt-4 rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}
+                  >
+                    <div className="text-sm font-semibold">
+                      Søk etter SID
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-end gap-2">
+                      <label className="flex min-w-48 flex-1 flex-col">
+                        <span className={`text-xs ${theme.muted}`}>
+                          SID-nummer
+                        </span>
+                        <input
+                          className={`mt-1 rounded-md border px-3 py-2 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                          inputMode="numeric"
+                          placeholder="f.eks. 1234"
+                          value={sidSearchInput}
+                          onChange={(e) =>
+                            setSidSearchInput(e.target.value)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              performSidSearch();
+                            }
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className={`rounded-md border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                        onClick={performSidSearch}
+                      >
+                        Søk
+                      </button>
+                      {sidSearchPerformed && (
+                        <button
+                          type="button"
+                          className={`rounded-md border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                          onClick={clearSidSearch}
+                        >
+                          Tøm
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Search Results */}
+                    {sidSearchPerformed && (
+                      <div className="mt-3">
+                        {sidSearchResults.length === 0 ? (
+                          <div className={`text-sm ${theme.muted}`}>
+                            Ingen objekter funnet med SID «
+                            {sidSearchInput}».
+                          </div>
+                        ) : (
+                          <div>
+                            <div
+                              className={`text-xs font-semibold ${theme.muted}`}
+                            >
+                              {sidSearchResults.length} objekt
+                              {sidSearchResults.length > 1
+                                ? 'er'
+                                : ''}{' '}
+                              funnet:
+                            </div>
+                            <div
+                              className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
+                            >
+                              {sidSearchResults.map((match, idx) => {
+                                const isSelected =
+                                  selectedSidMatch === match;
+                                const metaParts = [
+                                  getCategoryLabel(match.category),
+                                ];
+                                if (match.objType)
+                                  metaParts.push(match.objType);
+                                if (match.tema)
+                                  metaParts.push(match.tema);
+                                if (match.category === 'ledninger') {
+                                  if (match.dimensjon)
+                                    metaParts.push(
+                                      `Ø ${match.dimensjon}`
+                                    );
+                                  if (match.material)
+                                    metaParts.push(match.material);
+                                }
+
+                                // Check if already excluded
+                                const existingList =
+                                  selection?.excludedByCategory?.[
+                                    match.category
+                                  ] || [];
+                                const alreadyExcluded =
+                                  existingList.some(
+                                    (e) =>
+                                      e.idType === 'SID' &&
+                                      e.id === match.sid
+                                  );
+
+                                return (
+                                  <div
+                                    key={`${match.category}:${idx}`}
+                                    className={`border-t px-3 py-2 first:border-t-0 ${
+                                      theme.border
+                                    } ${
+                                      isSelected
+                                        ? theme.accentSoft
+                                        : ''
+                                    }`}
+                                  >
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                      <div className="min-w-0">
+                                        <div className="text-sm font-semibold">
+                                          SID {match.sid}
+                                        </div>
+                                        <div
+                                          className={`mt-0.5 text-xs ${theme.muted}`}
+                                        >
+                                          {metaParts.join(' · ')}
+                                        </div>
+                                      </div>
+                                      {alreadyExcluded ? (
+                                        <div
+                                          className={`text-xs font-semibold ${theme.muted}`}
+                                        >
+                                          Allerede ekskludert
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${
+                                            theme.border
+                                          } ${theme.surface} ${
+                                            theme.primaryRing
+                                          } ${
+                                            isSelected
+                                              ? 'ring-2 ring-emerald-500'
+                                              : ''
+                                          }`}
+                                          onClick={() =>
+                                            setSelectedSidMatch(
+                                              isSelected
+                                                ? null
+                                                : match
+                                            )
+                                          }
+                                        >
+                                          {isSelected
+                                            ? 'Valgt'
+                                            : 'Velg'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Comment and Add */}
+                    {selectedSidMatch && (
+                      <div className="mt-3 flex flex-wrap items-end gap-2">
+                        <label className="flex min-w-48 flex-1 flex-col">
+                          <span className={`text-xs ${theme.muted}`}>
+                            Kommentar (valgfri)
+                          </span>
+                          <input
+                            className={`mt-1 rounded-md border px-3 py-2 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                            placeholder="f.eks. kritisk infrastruktur"
+                            value={sidExcludeComment}
+                            onChange={(e) =>
+                              setSidExcludeComment(e.target.value)
+                            }
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
+                          onClick={addSelectedSidMatch}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Legg til i ekskluderingslisten
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Exclusion Lists */}
                   <div className="mt-5 min-h-0 flex-1 overflow-hidden">
                     <div className="grid h-full grid-cols-1 gap-6 overflow-hidden lg:grid-cols-2">
-                      {(['punkter', 'ledninger'] || []).map((cat) => {
+                      {['punkter', 'ledninger'].map((cat) => {
                         const list =
                           selection?.excludedByCategory?.[cat] || [];
-                        const draft = excludedDraftByCategory?.[
-                          cat
-                        ] || {
-                          idType: 'SID',
-                          id: '',
-                          comment: '',
-                        };
                         return (
                           <div
                             key={cat}
-                            className={`min-h-0 rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}
+                            className={`flex min-h-0 flex-col rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div className="text-sm font-semibold">
@@ -2313,93 +2903,7 @@ export default function Home() {
                               </div>
                             </div>
 
-                            <div className="mt-3 flex flex-wrap items-end gap-2">
-                              <label className="flex flex-col">
-                                <span
-                                  className={`text-xs ${theme.muted}`}
-                                >
-                                  Type
-                                </span>
-                                <select
-                                  className={`mt-1 rounded-md border px-2 py-1 text-sm font-semibold outline-none ${theme.surface} ${theme.text} ${theme.border}`}
-                                  value={draft.idType}
-                                  onChange={(e) =>
-                                    setExcludedDraftByCategory(
-                                      (prev) => ({
-                                        ...prev,
-                                        [cat]: {
-                                          ...prev[cat],
-                                          idType: e.target.value,
-                                        },
-                                      })
-                                    )
-                                  }
-                                >
-                                  <option value="SID">SID</option>
-                                  <option value="PSID">PSID</option>
-                                  <option value="LSID">LSID</option>
-                                </select>
-                              </label>
-
-                              <label className="flex min-w-40 flex-1 flex-col">
-                                <span
-                                  className={`text-xs ${theme.muted}`}
-                                >
-                                  ID
-                                </span>
-                                <input
-                                  className={`mt-1 rounded-md border px-2 py-1 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
-                                  inputMode="numeric"
-                                  placeholder="f.eks. 1234"
-                                  value={draft.id}
-                                  onChange={(e) =>
-                                    setExcludedDraftByCategory(
-                                      (prev) => ({
-                                        ...prev,
-                                        [cat]: {
-                                          ...prev[cat],
-                                          id: e.target.value,
-                                        },
-                                      })
-                                    )
-                                  }
-                                />
-                              </label>
-
-                              <label className="flex min-w-48 flex-1 flex-col">
-                                <span
-                                  className={`text-xs ${theme.muted}`}
-                                >
-                                  Kommentar (valgfri)
-                                </span>
-                                <input
-                                  className={`mt-1 rounded-md border px-2 py-1 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
-                                  placeholder="f.eks. kritisk"
-                                  value={draft.comment}
-                                  onChange={(e) =>
-                                    setExcludedDraftByCategory(
-                                      (prev) => ({
-                                        ...prev,
-                                        [cat]: {
-                                          ...prev[cat],
-                                          comment: e.target.value,
-                                        },
-                                      })
-                                    )
-                                  }
-                                />
-                              </label>
-
-                              <button
-                                type="button"
-                                className={`rounded-md border px-3 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                                onClick={() => addExcludedEntry(cat)}
-                              >
-                                Legg til
-                              </button>
-                            </div>
-
-                            <div className="mt-3 min-h-0 overflow-auto">
+                            <div className="mt-3 min-h-0 flex-1 overflow-auto">
                               {list.length === 0 ? (
                                 <div
                                   className={`text-xs ${theme.muted}`}
@@ -2411,10 +2915,6 @@ export default function Home() {
                                   className={`overflow-hidden rounded-lg border ${theme.border}`}
                                 >
                                   {list.map((entry, idx) => {
-                                    const isEditing =
-                                      editingExcluded?.category ===
-                                        cat &&
-                                      editingExcluded?.index === idx;
                                     const meta = entry?.meta || null;
                                     const metaParts = [];
                                     if (meta?.objType)
@@ -2422,7 +2922,7 @@ export default function Home() {
                                     if (cat === 'ledninger') {
                                       if (meta?.dimensjon)
                                         metaParts.push(
-                                          `\u00d8 ${meta.dimensjon}`
+                                          `Ø ${meta.dimensjon}`
                                         );
                                       if (meta?.material)
                                         metaParts.push(meta.material);
@@ -2434,171 +2934,45 @@ export default function Home() {
 
                                     return (
                                       <div
-                                        key={`${cat}:${idx}:${entry.idType}:${entry.id}`}
+                                        key={`${cat}:${idx}:${entry.id}`}
                                         className={`border-t px-3 py-2 first:border-t-0 ${theme.border}`}
                                       >
-                                        {isEditing ? (
-                                          <div className="flex flex-wrap items-end gap-2">
-                                            <label className="flex flex-col">
-                                              <span
-                                                className={`text-xs ${theme.muted}`}
-                                              >
-                                                Type
-                                              </span>
-                                              <select
-                                                className={`mt-1 rounded-md border px-2 py-1 text-sm font-semibold outline-none ${theme.surface} ${theme.text} ${theme.border}`}
-                                                value={
-                                                  editingExcludedDraft?.idType ||
-                                                  'SID'
-                                                }
-                                                onChange={(e) =>
-                                                  setEditingExcludedDraft(
-                                                    (prev) => ({
-                                                      ...(prev || {}),
-                                                      idType:
-                                                        e.target
-                                                          .value,
-                                                    })
-                                                  )
-                                                }
-                                              >
-                                                <option value="SID">
-                                                  SID
-                                                </option>
-                                                <option value="PSID">
-                                                  PSID
-                                                </option>
-                                                <option value="LSID">
-                                                  LSID
-                                                </option>
-                                              </select>
-                                            </label>
-
-                                            <label className="flex min-w-40 flex-1 flex-col">
-                                              <span
-                                                className={`text-xs ${theme.muted}`}
-                                              >
-                                                ID
-                                              </span>
-                                              <input
-                                                className={`mt-1 rounded-md border px-2 py-1 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
-                                                inputMode="numeric"
-                                                value={
-                                                  editingExcludedDraft?.id ||
-                                                  ''
-                                                }
-                                                onChange={(e) =>
-                                                  setEditingExcludedDraft(
-                                                    (prev) => ({
-                                                      ...(prev || {}),
-                                                      id: e.target
-                                                        .value,
-                                                    })
-                                                  )
-                                                }
-                                              />
-                                            </label>
-
-                                            <label className="flex min-w-48 flex-1 flex-col">
-                                              <span
-                                                className={`text-xs ${theme.muted}`}
-                                              >
-                                                Kommentar
-                                              </span>
-                                              <input
-                                                className={`mt-1 rounded-md border px-2 py-1 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
-                                                value={
-                                                  editingExcludedDraft?.comment ||
-                                                  ''
-                                                }
-                                                onChange={(e) =>
-                                                  setEditingExcludedDraft(
-                                                    (prev) => ({
-                                                      ...(prev || {}),
-                                                      comment:
-                                                        e.target
-                                                          .value,
-                                                    })
-                                                  )
-                                                }
-                                              />
-                                            </label>
-
-                                            <div className="flex gap-2">
-                                              <button
-                                                type="button"
-                                                className={`rounded-md border px-3 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                                                onClick={
-                                                  saveEditExcludedEntry
-                                                }
-                                              >
-                                                Lagre
-                                              </button>
-                                              <button
-                                                type="button"
-                                                className={`rounded-md border px-3 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                                                onClick={
-                                                  cancelEditExcludedEntry
-                                                }
-                                              >
-                                                Avbryt
-                                              </button>
+                                        <div className="flex flex-wrap items-start justify-between gap-2">
+                                          <div className="min-w-0">
+                                            <div className="text-sm font-semibold">
+                                              SID {entry.id}
                                             </div>
-                                          </div>
-                                        ) : (
-                                          <div className="flex flex-wrap items-start justify-between gap-2">
-                                            <div className="min-w-0">
-                                              <div className="text-sm font-semibold">
-                                                {entry.idType}{' '}
-                                                {entry.id}
-                                              </div>
+                                            <div
+                                              className={`mt-0.5 text-xs ${theme.muted}`}
+                                            >
+                                              {metaParts.length > 0
+                                                ? metaParts.join(
+                                                    ' · '
+                                                  )
+                                                : 'Ikke funnet i filen'}
+                                            </div>
+                                            {entry.comment ? (
                                               <div
                                                 className={`mt-0.5 text-xs ${theme.muted}`}
                                               >
-                                                {metaParts.length > 0
-                                                  ? metaParts.join(
-                                                      ' \u00b7 '
-                                                    )
-                                                  : 'Ikke funnet i filen'}
+                                                {entry.comment}
                                               </div>
-                                              {entry.comment ? (
-                                                <div
-                                                  className={`mt-0.5 text-xs ${theme.muted}`}
-                                                >
-                                                  Kommentar:{' '}
-                                                  {entry.comment}
-                                                </div>
-                                              ) : null}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <button
-                                                type="button"
-                                                className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                                                onClick={() =>
-                                                  startEditExcludedEntry(
-                                                    cat,
-                                                    idx
-                                                  )
-                                                }
-                                              >
-                                                Rediger
-                                              </button>
-                                              <button
-                                                type="button"
-                                                className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                                                onClick={() =>
-                                                  removeExcludedEntry(
-                                                    cat,
-                                                    idx
-                                                  )
-                                                }
-                                              >
-                                                <Trash2 className="h-4 w-4" />
-                                                Fjern
-                                              </button>
-                                            </div>
+                                            ) : null}
                                           </div>
-                                        )}
+                                          <button
+                                            type="button"
+                                            className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                                            onClick={() =>
+                                              removeExcludedEntry(
+                                                cat,
+                                                idx
+                                              )
+                                            }
+                                          >
+                                            <Trash2 className="h-3 w-3" />
+                                            Fjern
+                                          </button>
+                                        </div>
                                       </div>
                                     );
                                   })}
@@ -2611,23 +2985,138 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
-                      onClick={() => setStep('download')}
-                    >
-                      <Download className="h-4 w-4" />
-                      Gå til nedlasting
-                    </button>
-                    <button
-                      type="button"
-                      className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                      onClick={() => setStep('filter')}
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Tilbake til filtrering
-                    </button>
+                  {/* Footer Actions */}
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
+                        onClick={() => setStep('download')}
+                      >
+                        <Download className="h-4 w-4" />
+                        Gå til nedlasting
+                      </button>
+                      <button
+                        type="button"
+                        className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                        onClick={() => setStep('filter')}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Tilbake til filtrering
+                      </button>
+                    </div>
+                    <details className="relative">
+                      <summary
+                        className={`inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                      >
+                        <Filter className="h-4 w-4" />
+                        Avanserte valg
+                        <ChevronDown className="h-4 w-4" />
+                      </summary>
+                      <div
+                        className={`absolute right-0 bottom-full z-20 mb-2 w-80 overflow-hidden rounded-xl border shadow-lg ${theme.border} ${theme.surface}`}
+                      >
+                        <button
+                          type="button"
+                          disabled={
+                            busy ||
+                            !file ||
+                            (selection?.excludedByCategory?.punkter
+                              ?.length || 0) +
+                              (selection?.excludedByCategory
+                                ?.ledninger?.length || 0) ===
+                              0
+                          }
+                          className={`flex w-full items-start gap-3 px-4 py-3 text-left ${theme.hoverAccentSoft} disabled:opacity-50`}
+                          onClick={downloadExcludedOnly}
+                        >
+                          <Download className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold">
+                              Last ned ekskluderte (SOSI)
+                            </div>
+                            <div className={`text-xs ${theme.muted}`}>
+                              Generer en fil som kun inneholder de
+                              ekskluderte objektene.
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
+                          onClick={() => setShowResetConfirm(true)}
+                        >
+                          <RotateCcw className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold">
+                              Tilbakestill til standard (fra fil)
+                            </div>
+                            <div className={`text-xs ${theme.muted}`}>
+                              Nullstiller objekttyper, felter og eier.
+                              Ekskluderingslisten beholdes.
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
+                          onClick={exportSettings}
+                        >
+                          <Download className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold">
+                              Eksporter utvalg (JSON)
+                            </div>
+                            <div className={`text-xs ${theme.muted}`}>
+                              Lagre filtervalgene for deling/backup.
+                            </div>
+                          </div>
+                        </button>
+
+                        <label
+                          className={`flex w-full cursor-pointer items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
+                        >
+                          <FileUp className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold">
+                              Importer utvalg (JSON)
+                            </div>
+                            <div className={`text-xs ${theme.muted}`}>
+                              Last inn tidligere lagrede filtervalg.
+                            </div>
+                          </div>
+                          <input
+                            type="file"
+                            accept="application/json,.json"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) importSettingsFromFile(f);
+                              e.target.value = '';
+                            }}
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
+                          onClick={clearSavedSettings}
+                        >
+                          <Trash2 className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold">
+                              Slett lagrede innstillinger
+                            </div>
+                            <div className={`text-xs ${theme.muted}`}>
+                              Fjerner lagrede valg fra denne
+                              nettleseren.
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </details>
                   </div>
                 </div>
               </section>
@@ -2732,6 +3221,44 @@ export default function Home() {
           </div>
         </main>
       </div>
+
+      {/* Reset Confirmation Dialog */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
+          <div
+            className={`w-full max-w-sm rounded-xl border p-5 shadow-lg ${theme.border} ${theme.surface}`}
+            role="dialog"
+            aria-labelledby="reset-dialog-title"
+          >
+            <h3
+              id="reset-dialog-title"
+              className={`text-lg font-semibold ${theme.text}`}
+            >
+              Tilbakestill filtere?
+            </h3>
+            <p className={`mt-2 text-sm ${theme.muted}`}>
+              Dette vil nullstille objekttyper, felter og eiervalg til
+              standardverdier fra filen. Ekskluderingslisten beholdes.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                onClick={() => setShowResetConfirm(false)}
+              >
+                Avbryt
+              </button>
+              <button
+                type="button"
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
+                onClick={resetFiltersToDefaults}
+              >
+                Tilbakestill
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {busy ? (
         <LoadingOverlay theme={theme} label={busyLabel} />
