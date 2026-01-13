@@ -575,6 +575,74 @@ function extractEierValues(sosiText) {
 }
 
 /**
+ * Extract unique STATUS values and their counts from a SOSI text, grouped by category.
+ * @param {string} sosiText - Full SOSI text.
+ * @returns {{ punkter: { value: string, count: number }[], ledninger: { value: string, count: number }[] }}
+ */
+function extractStatusValues(sosiText) {
+  const countsPunkter = new Map();
+  const countsLedninger = new Map();
+
+  let currentCategory = 'unknown';
+  let currentSection = null;
+  let blockStatusValue = null;
+
+  function finalizeBlock() {
+    if (blockStatusValue !== null) {
+      const val = blockStatusValue || '(tom)';
+      if (currentCategory === 'punkter') {
+        countsPunkter.set(
+          val,
+          (countsPunkter.get(val) || 0) + 1
+        );
+      } else if (currentCategory === 'ledninger') {
+        countsLedninger.set(
+          val,
+          (countsLedninger.get(val) || 0) + 1
+        );
+      }
+    }
+    blockStatusValue = null;
+  }
+
+  forEachLine(sosiText, (rawLine) => {
+    const line = String(rawLine || '');
+    if (!line) return;
+
+    if (isFeatureStartLine(line)) {
+      finalizeBlock();
+      currentSection = getSectionName(line);
+      currentCategory = categorizeSection(currentSection);
+      blockStatusValue = null;
+      return;
+    }
+
+    if (currentCategory === 'unknown') return;
+
+    if (line.startsWith('...STATUS')) {
+      const value = line.replace('...STATUS', '').trim();
+      blockStatusValue = value || '';
+    }
+  });
+
+  finalizeBlock();
+
+  const sortEntries = (map) =>
+    Array.from(map.entries())
+      .sort(
+        (a, b) =>
+          (b[1] || 0) - (a[1] || 0) ||
+          String(a[0]).localeCompare(String(b[0]))
+      )
+      .map(([value, count]) => ({ value, count }));
+
+  return {
+    punkter: sortEntries(countsPunkter),
+    ledninger: sortEntries(countsLedninger),
+  };
+}
+
+/**
  * Step navigation button used in the header.
  * Displays an icon + label, handles active/disabled states, and shows tooltip when disabled.
  * @param {Object} props
@@ -843,6 +911,7 @@ export default function Home() {
     fieldsByCategory: { punkter: [], ledninger: [] },
     excludedByCategory: { punkter: [], ledninger: [] },
     eierByCategory: { punkter: ['K'], ledninger: ['K'] }, // Default: only EIER=K
+    statusByCategory: { punkter: [], ledninger: [] },
     lastFileName: null,
   });
 
@@ -850,6 +919,12 @@ export default function Home() {
   const availableEierValues = useMemo(() => {
     if (!sosiText) return { punkter: [], ledninger: [] };
     return extractEierValues(sosiText);
+  }, [sosiText]);
+
+  // Memoized STATUS values from current SOSI text
+  const availableStatusValues = useMemo(() => {
+    if (!sosiText) return { punkter: [], ledninger: [] };
+    return extractStatusValues(sosiText);
   }, [sosiText]);
 
   useEffect(() => {
@@ -870,6 +945,14 @@ export default function Home() {
           ledninger: Array.isArray(parsed?.eierByCategory?.ledninger)
             ? parsed.eierByCategory.ledninger
             : prev.eierByCategory.ledninger,
+        },
+        statusByCategory: {
+          punkter: Array.isArray(parsed?.statusByCategory?.punkter)
+            ? parsed.statusByCategory.punkter
+            : prev.statusByCategory.punkter,
+          ledninger: Array.isArray(parsed?.statusByCategory?.ledninger)
+            ? parsed.statusByCategory.ledninger
+            : prev.statusByCategory.ledninger,
         },
       }));
     } catch {
@@ -1088,6 +1171,52 @@ export default function Home() {
     }));
   }
 
+  /**
+   * Toggle a single STATUS value in/out of the filter for a category.
+   * @param {string} category - 'punkter' or 'ledninger'
+   * @param {string} statusValue - The STATUS value to toggle
+   */
+  function toggleStatus(category, statusValue) {
+    setSelection((prev) => ({
+      ...prev,
+      statusByCategory: {
+        ...prev.statusByCategory,
+        [category]: toggleInList(
+          prev.statusByCategory[category],
+          statusValue
+        ),
+      },
+    }));
+  }
+
+  /**
+   * Select all STATUS values for a category.
+   */
+  function selectAllStatus(category) {
+    const allValues =
+      availableStatusValues[category]?.map((v) => v.value) || [];
+    setSelection((prev) => ({
+      ...prev,
+      statusByCategory: {
+        ...prev.statusByCategory,
+        [category]: allValues,
+      },
+    }));
+  }
+
+  /**
+   * Deselect all STATUS values for a category.
+   */
+  function deselectAllStatus(category) {
+    setSelection((prev) => ({
+      ...prev,
+      statusByCategory: {
+        ...prev.statusByCategory,
+        [category]: [],
+      },
+    }));
+  }
+
   async function downloadCleanedClient() {
     if (!file) return;
     setProcessingMode('browser');
@@ -1102,6 +1231,7 @@ export default function Home() {
         fieldsByCategory: selection.fieldsByCategory,
         excludedByCategory: selection.excludedByCategory,
         eierByCategory: selection.eierByCategory,
+        statusByCategory: selection.statusByCategory,
       },
       {
         fieldMode:
@@ -1243,6 +1373,8 @@ export default function Home() {
           objTypesByCategory: selection.objTypesByCategory,
           fieldsByCategory: selection.fieldsByCategory,
           excludedByCategory: selection.excludedByCategory,
+          eierByCategory: selection.eierByCategory,
+          statusByCategory: selection.statusByCategory,
         })
       );
       fd.set(
@@ -1297,6 +1429,7 @@ export default function Home() {
       objTypesByCategory: selection.objTypesByCategory,
       fieldsByCategory: selection.fieldsByCategory,
       eierByCategory: selection.eierByCategory,
+      statusByCategory: selection.statusByCategory,
       // Exclusions
       excludedByCategory: selection.excludedByCategory,
     };
@@ -1346,6 +1479,16 @@ export default function Home() {
             ? imported.eierByCategory.ledninger
             : prev.eierByCategory.ledninger,
         },
+        statusByCategory: {
+          punkter: Array.isArray(imported?.statusByCategory?.punkter)
+            ? imported.statusByCategory.punkter
+            : prev.statusByCategory.punkter,
+          ledninger: Array.isArray(
+            imported?.statusByCategory?.ledninger
+          )
+            ? imported.statusByCategory.ledninger
+            : prev.statusByCategory.ledninger,
+        },
         excludedByCategory: normalizeExcludedByCategory(
           imported.excludedByCategory ?? prev.excludedByCategory
         ),
@@ -1382,6 +1525,7 @@ export default function Home() {
       fieldsByCategory: { punkter: [], ledninger: [] },
       excludedByCategory: { punkter: [], ledninger: [] },
       eierByCategory: { punkter: ['K'], ledninger: ['K'] },
+      statusByCategory: { punkter: [], ledninger: [] },
       lastFileName: null,
     });
     if (available) ensureDefaultsFromAnalysis();
@@ -1420,6 +1564,7 @@ export default function Home() {
         ledninger: available.ledninger.fields,
       },
       eierByCategory: { punkter: ['K'], ledninger: ['K'] },
+      statusByCategory: { punkter: [], ledninger: [] },
       // Keep excludedByCategory unchanged
     }));
     setShowResetConfirm(false);
@@ -2437,7 +2582,9 @@ export default function Home() {
                                             }}
                                           >
                                             <Settings2 className="h-3.5 w-3.5" />
-                                            Utvidet visning
+                                            {isPivot2dOpen
+                                              ? 'Enkel visning'
+                                              : 'Utvidet visning'}
                                           </button>
                                         </div>
 
@@ -3055,6 +3202,79 @@ export default function Home() {
                             }
                           )}
                         </div>
+
+                        {availableStatusValues[activeTab]?.length > 0 ? (
+                          <div className={`mt-4 border-t pt-3 ${theme.border}`}>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <h3 className="text-sm font-semibold">
+                                  Status (STATUS)
+                                </h3>
+                                <p className={`text-xs ${theme.muted}`}>
+                                  Valgfritt eksportfilter basert på STATUS. Tomt valg betyr ingen filtrering.
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
+                                  onClick={() =>
+                                    selectAllStatus(activeTab)
+                                  }
+                                >
+                                  Alle
+                                </button>
+                                <button
+                                  type="button"
+                                  className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
+                                  onClick={() =>
+                                    deselectAllStatus(activeTab)
+                                  }
+                                >
+                                  Ingen
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {availableStatusValues[activeTab].map(
+                                ({ value, count }) => {
+                                  const checked = (
+                                    selection.statusByCategory?.[
+                                      activeTab
+                                    ] || []
+                                  ).includes(value);
+                                  return (
+                                    <label
+                                      key={value}
+                                      className={`inline-flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 ${theme.hoverAccentSoft}`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={() =>
+                                          toggleStatus(
+                                            activeTab,
+                                            value
+                                          )
+                                        }
+                                        className="h-4 w-4"
+                                      />
+                                      <span className="text-sm font-medium">
+                                        {value}
+                                      </span>
+                                      <span
+                                        className={`text-xs ${theme.muted}`}
+                                      >
+                                        ({count.toLocaleString('nb-NO')})
+                                      </span>
+                                    </label>
+                                  );
+                                }
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                     )}
                   </div>

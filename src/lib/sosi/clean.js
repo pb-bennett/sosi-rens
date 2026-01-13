@@ -104,6 +104,23 @@ function extractEierFromBlock(blockLines) {
 }
 
 /**
+ * Extract the STATUS value from a feature block.
+ * STATUS is typically stored as `...STATUS <value>` inside EGS groups.
+ * @param {string[]} blockLines - Lines of a feature block.
+ * @returns {string | null} The STATUS value, or null if not found.
+ */
+function extractStatusFromBlock(blockLines) {
+  for (const rawLine of blockLines) {
+    const line = String(rawLine);
+    const match = line.match(/^\.\.\.STATUS\s+(\S+)/i);
+    if (match) {
+      return String(match[1]).trim();
+    }
+  }
+  return null;
+}
+
+/**
  * Build a set of excluded IDs for a category.
  * @param {Object} selection - Selection object.
  * @param {'punkter' | 'ledninger'} category - Category.
@@ -271,6 +288,21 @@ export function cleanSosiText(sosiText, selection, options) {
     ),
   };
 
+  // Build STATUS filter sets – if empty array, no filtering (all allowed).
+  // If array has values, only features with matching STATUS are kept.
+  const keepStatusByCategory = {
+    punkter: new Set(
+      (selection?.statusByCategory?.punkter || []).map((v) =>
+        String(v).toUpperCase()
+      )
+    ),
+    ledninger: new Set(
+      (selection?.statusByCategory?.ledninger || []).map((v) =>
+        String(v).toUpperCase()
+      )
+    ),
+  };
+
   const outLines = [];
   let currentBlock = [];
   let currentSection = null;
@@ -329,6 +361,24 @@ export function cleanSosiText(sosiText, selection, options) {
         // If feature has EIER and it's not in the allowed set, skip it.
         // If feature has no EIER, we keep it (don't filter out features without EIER).
         if (eierValue && !keepEierSet.has(eierValue.toUpperCase())) {
+          currentBlock = [];
+          return;
+        }
+      }
+    }
+
+    // STATUS filter: if statusByCategory has values, only keep features with matching STATUS.
+    // If the set is empty, no STATUS filtering is applied (all STATUS values pass).
+    if (category === 'punkter' || category === 'ledninger') {
+      const keepStatusSet = keepStatusByCategory[category];
+      if (keepStatusSet && keepStatusSet.size > 0) {
+        const statusValue = extractStatusFromBlock(currentBlock);
+        // If feature has STATUS and it's not in the allowed set, skip it.
+        // If feature has no STATUS, we keep it (don't filter out features without STATUS).
+        if (
+          statusValue &&
+          !keepStatusSet.has(statusValue.toUpperCase())
+        ) {
           currentBlock = [];
           return;
         }
