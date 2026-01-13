@@ -1,6 +1,6 @@
 # SOSI-Rens
 
-SOSI-Rens is a small web app for cleaning SOSI files by selecting which **object types** and **fields** to keep. It provides a guided workflow (Upload → Explore → Filter → Download) and can produce output in two modes: either removing unselected fields entirely, or keeping the fields while clearing their values for maximum downstream compatibility.
+SOSI-Rens is a small web app for cleaning SOSI files by selecting which **object types** and **fields** to keep. It provides a guided workflow (Upload → Explore → Filter → Exclude → Download) and can produce output in two modes: either removing unselected fields entirely, or keeping the fields while clearing their values for maximum downstream compatibility.
 
 The README is in English. The UI text is Norwegian Bokmål.
 
@@ -24,17 +24,23 @@ Given a SOSI file (`.sos` / `.sosi`), SOSI-Rens helps you:
 
 - Analyze and summarize the file content.
 - Explore distributions of `OBJTYPE`, `P_TEMA` / `L_TEMA`, and other attributes.
+- Explore 2D distributions (crosstabs) via “Utvidet visning” on a field.
 - Filter which `OBJTYPE` values and attribute keys are kept.
+- Exclude individual objects by SID (per category) from the export.
 - Download a cleaned SOSI file.
 
 ## Key features
 
-- **Step-based flow**: Upload → Explore → Filter → Download.
+- **Step-based flow**: Upload → Explore → Filter → Exclude → Download.
 - **Two categories**: separates filters for `Punkter` and `Ledninger`.
 - **Gating to prevent mistakes**: you must visit both tabs in Filter before proceeding to Download.
+- **Export-only filters**: Explore always reflects the raw file; filters/exclusions apply when generating the export.
 - **Two output modes**:
   - `remove-fields` (default): remove unselected attribute lines.
   - `clear-values`: keep attribute keys but strip values.
+- **Default owner filter (EIER)**: export defaults to keeping `EIER=K` (municipal) unless changed.
+- **Object exclusion (SID)**: exclude specific objects per category using SID lookup.
+- **Settings import/export**: export/import a single JSON with current filters, owner selection, and exclusions.
 - **Encoding detection**:
   - Reads `..TEGNSETT` if present.
   - Probes UTF-8, otherwise falls back to Windows-1252.
@@ -90,10 +96,15 @@ npm run start
 2. **Explore**
    - Inspect counts and distributions.
    - Expand a field to see value frequencies (computed client-side).
+  - Use **Utvidet visning** on an expanded field to compute a 2D crosstab with a secondary field.
+    - Caps: max 200 rows and 25 columns (remaining values grouped as `Andre`).
+    - Optional heatmap (“Varmekart”).
 3. **Filter**
    - Choose object types and fields to keep.
    - You must open both `Punkter` and `Ledninger` tabs before continuing.
-4. **Download**
+4. **Exclude**
+  - Exclude individual objects by SID (separately for `Punkter` and `Ledninger`).
+5. **Download**
    - Choose output mode:
      - Remove unselected fields, or
      - Keep fields but clear values.
