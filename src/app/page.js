@@ -31,6 +31,7 @@ import {
   decodeSosiArrayBuffer,
   encodeSosiTextToBytes,
 } from '../lib/sosi/browserEncoding.js';
+import { computePivot2D } from '../lib/sosi/pivot2d.js';
 
 /** localStorage key for persisting user selection (objTypes, fields). */
 const STORAGE_KEY = 'sosi-rens:v0';
@@ -735,6 +736,16 @@ export default function Home() {
     ledninger: {},
   });
 
+  const [pivot2dUiByCategory, setPivot2dUiByCategory] = useState({
+    punkter: {},
+    ledninger: {},
+  });
+  const [pivot2dCacheByCategory, setPivot2dCacheByCategory] =
+    useState({
+      punkter: {},
+      ledninger: {},
+    });
+
   useEffect(() => {
     setFilterVisitedTabs({ punkter: false, ledninger: false });
     setExclusionsVisited(false);
@@ -959,6 +970,8 @@ export default function Home() {
     setBusyLabel('Analyserer fil…');
     setExpandedFieldsByCategory({ punkter: [], ledninger: [] });
     setPivotCacheByCategory({ punkter: {}, ledninger: {} });
+    setPivot2dUiByCategory({ punkter: {}, ledninger: {} });
+    setPivot2dCacheByCategory({ punkter: {}, ledninger: {} });
     try {
       // Always analyze in-browser so we can support per-field value pivots.
       await runAnalyzeClient(selectedFile);
@@ -1815,6 +1828,179 @@ export default function Home() {
     }));
   }
 
+  /**
+   * Build a stable cache key for a 2D pivot based on (primary, secondary).
+   * @param {string} primaryKeyUpper - Uppercased primary field key.
+   * @param {string} secondaryKeyUpper - Uppercased secondary field key.
+   * @returns {string} Cache key.
+   */
+  function pivot2dCacheKey(primaryKeyUpper, secondaryKeyUpper) {
+    return `${String(primaryKeyUpper || '').toUpperCase()}::${String(
+      secondaryKeyUpper || ''
+    ).toUpperCase()}`;
+  }
+
+  /**
+   * Sort an axis array either by totals (desc) or alphabetically.
+   * Keeps the "Andre" bucket last when present.
+   * @param {string[]} labels - Axis labels.
+   * @param {Record<string, number>} totals - Totals per label.
+   * @param {'total' | 'alpha'} sortMode - Sort mode.
+   * @returns {string[]} Sorted labels.
+   */
+  function getSortedAxis(labels, totals, sortMode) {
+    const ANDRE = 'Andre';
+    const base = Array.isArray(labels) ? [...labels] : [];
+    const hasAndre = base.includes(ANDRE);
+    const withoutAndre = hasAndre
+      ? base.filter((x) => x !== ANDRE)
+      : base;
+
+    if (sortMode === 'alpha') {
+      withoutAndre.sort((a, b) => String(a).localeCompare(String(b)));
+    } else {
+      withoutAndre.sort(
+        (a, b) =>
+          Number(totals?.[b] || 0) - Number(totals?.[a] || 0) ||
+          String(a).localeCompare(String(b))
+      );
+    }
+
+    return hasAndre ? [...withoutAndre, ANDRE] : withoutAndre;
+  }
+
+  /**
+   * Build the list of selectable secondary fields for a given Explore tab.
+   * Always includes OBJTYPE and excludes the primary field.
+   * @param {any} tabData - Explore data for the active category.
+   * @param {string} primaryKeyUpper - Uppercased primary field key.
+   * @returns {{ keyUpper: string, label: string }[]} Secondary field options.
+   */
+  function getSecondaryFieldOptions(tabData, primaryKeyUpper) {
+    const primaryUpper = String(primaryKeyUpper || '').toUpperCase();
+    const options = [{ keyUpper: 'OBJTYPE', label: 'OBJTYPE' }];
+
+    const fields = Array.isArray(tabData?.fields)
+      ? tabData.fields
+      : [];
+    for (const [key] of fields) {
+      const upper = String(key || '').toUpperCase();
+      if (!upper) continue;
+      if (upper === primaryUpper) continue;
+      if (upper === 'OBJTYPE') continue;
+      options.push({ keyUpper: upper, label: String(key) });
+    }
+    return options;
+  }
+
+  /**
+   * Toggle the "Utvidet visning" panel for a field in Explore.
+   * @param {'punkter' | 'ledninger'} category
+   * @param {string} primaryKeyUpper - Uppercased primary field key.
+   */
+  function togglePivot2dUi(category, primaryKeyUpper) {
+    setPivot2dUiByCategory((prev) => {
+      const current = prev?.[category] || {};
+      const existing = current?.[primaryKeyUpper] || null;
+      const isOpen = !!existing?.open;
+      const next = {
+        ...current,
+        [primaryKeyUpper]: {
+          open: !isOpen,
+          secondaryKeyUpper: String(
+            existing?.secondaryKeyUpper || 'OBJTYPE'
+          ).toUpperCase(),
+          sortRows: existing?.sortRows || 'total',
+          sortCols: existing?.sortCols || 'total',
+          heatmap: !!existing?.heatmap,
+        },
+      };
+      return { ...prev, [category]: next };
+    });
+  }
+
+  /**
+   * Update the "Utvidet visning" UI state for a field in Explore.
+   * @param {'punkter' | 'ledninger'} category
+   * @param {string} primaryKeyUpper - Uppercased primary field key.
+   * @param {any} patch - Partial update.
+   */
+  function updatePivot2dUi(category, primaryKeyUpper, patch) {
+    setPivot2dUiByCategory((prev) => {
+      const current = prev?.[category] || {};
+      const existing = current?.[primaryKeyUpper] || {
+        open: true,
+        secondaryKeyUpper: 'OBJTYPE',
+        sortRows: 'total',
+        sortCols: 'total',
+        heatmap: false,
+      };
+
+      return {
+        ...prev,
+        [category]: {
+          ...current,
+          [primaryKeyUpper]: {
+            ...existing,
+            ...patch,
+          },
+        },
+      };
+    });
+  }
+
+  /**
+   * Ensure that the 2D pivot result exists in cache (compute on-demand).
+   * @param {'punkter' | 'ledninger'} category
+   * @param {string} primaryKeyUpper - Uppercased primary field key.
+   * @param {string} secondaryKeyUpper - Uppercased secondary field key.
+   */
+  async function ensurePivot2D(
+    category,
+    primaryKeyUpper,
+    secondaryKeyUpper
+  ) {
+    if (!sosiText) return;
+    const key = pivot2dCacheKey(primaryKeyUpper, secondaryKeyUpper);
+    const existing = pivot2dCacheByCategory?.[category]?.[key];
+    if (
+      existing?.status === 'loading' ||
+      existing?.status === 'ready'
+    )
+      return;
+
+    setPivot2dCacheByCategory((prev) => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [key]: { status: 'loading', result: null },
+      },
+    }));
+
+    await new Promise((r) => setTimeout(r, 0));
+
+    const result = computePivot2D(
+      sosiText,
+      category,
+      String(primaryKeyUpper || '').toUpperCase(),
+      String(secondaryKeyUpper || '').toUpperCase(),
+      {
+        topColumns: 25,
+        rowCap: 200,
+        numericBins: 10,
+        numericBinning: 'equal-width',
+      }
+    );
+
+    setPivot2dCacheByCategory((prev) => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [key]: { status: 'ready', result },
+      },
+    }));
+  }
+
   return (
     <div
       className={`h-screen overflow-hidden ${theme.appBg} ${theme.text}`}
@@ -1860,7 +2046,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="flex w-full flex-wrap items-center justify-end gap-2">
+              <div className="flex w-full flex-wrap items-center justify-start gap-2">
                 <StepButton
                   theme={theme}
                   active={step === 'upload'}
@@ -2206,52 +2392,553 @@ export default function Home() {
                                 <div
                                   className={`px-4 pb-4 ${theme.surface}`}
                                 >
-                                  {pivot?.status === 'loading' ? (
-                                    <div
-                                      className={`flex items-center gap-2 py-3 text-sm ${theme.muted}`}
-                                    >
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                      Beregner fordeling…
-                                    </div>
-                                  ) : null}
+                                  {(() => {
+                                    const isPivot2dOpen =
+                                      !!pivot2dUiByCategory?.[
+                                        activeTab
+                                      ]?.[row.keyUpper]?.open;
 
-                                  {pivot?.status === 'ready' ? (
-                                    <div
-                                      className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
-                                    >
-                                      <div className="w-full max-w-lg">
-                                        <div
-                                          className={`grid grid-cols-[minmax(0,1fr)_6rem] border-b px-2 py-1.5 text-[11px] font-semibold ${theme.surfaceMuted} ${theme.muted}`}
-                                        >
-                                          <div>Verdi</div>
-                                          <div className="text-right">
-                                            Antall
+                                    return (
+                                      <>
+                                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                                          <div
+                                            className={`text-xs ${theme.muted}`}
+                                          >
+                                            Utvidet visning viser
+                                            2D-krysstabell (maks 200
+                                            rader og 25 kolonner;
+                                            resten = Andre).
                                           </div>
+                                          <button
+                                            type="button"
+                                            className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surfaceMuted} ${theme.primaryRing}`}
+                                            onClick={async () => {
+                                              togglePivot2dUi(
+                                                activeTab,
+                                                row.keyUpper
+                                              );
+                                              const nextUi =
+                                                pivot2dUiByCategory?.[
+                                                  activeTab
+                                                ]?.[row.keyUpper];
+                                              const secondaryKeyUpper =
+                                                String(
+                                                  nextUi?.secondaryKeyUpper ||
+                                                    'OBJTYPE'
+                                                ).toUpperCase();
+                                              // Only compute when opening.
+                                              if (!nextUi?.open) {
+                                                await ensurePivot2D(
+                                                  activeTab,
+                                                  row.keyUpper,
+                                                  secondaryKeyUpper
+                                                );
+                                              }
+                                            }}
+                                          >
+                                            <Settings2 className="h-3.5 w-3.5" />
+                                            Utvidet visning
+                                          </button>
                                         </div>
-                                        <div>
-                                          {(pivot.entries || []).map(
-                                            ([value, count]) => (
+
+                                        {!isPivot2dOpen ? (
+                                          <>
+                                            {pivot?.status ===
+                                            'loading' ? (
                                               <div
-                                                key={`${row.keyUpper}:${value}`}
-                                                className={`grid grid-cols-[minmax(0,1fr)_6rem] gap-2 px-2 py-1.5 text-xs border-t ${theme.border} first:border-t-0`}
+                                                className={`flex items-center gap-2 py-3 text-sm ${theme.muted}`}
                                               >
-                                                <div className="break-all">
-                                                  {String(value)}
-                                                </div>
-                                                <div className="text-right tabular-nums">
-                                                  {Number(
-                                                    count || 0
-                                                  ).toLocaleString(
-                                                    'nb-NO'
-                                                  )}
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Beregner fordeling…
+                                              </div>
+                                            ) : null}
+
+                                            {pivot?.status ===
+                                            'ready' ? (
+                                              <div
+                                                className={`mt-2 overflow-hidden rounded-lg border ${theme.border}`}
+                                              >
+                                                <div className="w-full max-w-lg">
+                                                  <div
+                                                    className={`grid grid-cols-[minmax(0,1fr)_6rem] border-b px-2 py-1.5 text-[11px] font-semibold ${theme.surfaceMuted} ${theme.muted}`}
+                                                  >
+                                                    <div>Verdi</div>
+                                                    <div className="text-right">
+                                                      Antall
+                                                    </div>
+                                                  </div>
+                                                  <div>
+                                                    {(
+                                                      pivot.entries ||
+                                                      []
+                                                    ).map(
+                                                      ([
+                                                        value,
+                                                        count,
+                                                      ]) => (
+                                                        <div
+                                                          key={`${row.keyUpper}:${value}`}
+                                                          className={`grid grid-cols-[minmax(0,1fr)_6rem] gap-2 px-2 py-1.5 text-xs border-t ${theme.border} first:border-t-0`}
+                                                        >
+                                                          <div className="break-all">
+                                                            {String(
+                                                              value
+                                                            )}
+                                                          </div>
+                                                          <div className="text-right tabular-nums">
+                                                            {Number(
+                                                              count ||
+                                                                0
+                                                            ).toLocaleString(
+                                                              'nb-NO'
+                                                            )}
+                                                          </div>
+                                                        </div>
+                                                      )
+                                                    )}
+                                                  </div>
                                                 </div>
                                               </div>
-                                            )
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ) : null}
+                                            ) : null}
+                                          </>
+                                        ) : null}
+
+                                        {pivot2dUiByCategory?.[
+                                          activeTab
+                                        ]?.[row.keyUpper]?.open
+                                          ? (() => {
+                                              const ui =
+                                                pivot2dUiByCategory?.[
+                                                  activeTab
+                                                ]?.[row.keyUpper] ||
+                                                {};
+                                              const secondaryKeyUpper =
+                                                String(
+                                                  ui.secondaryKeyUpper ||
+                                                    'OBJTYPE'
+                                                ).toUpperCase();
+                                              const cacheKey =
+                                                pivot2dCacheKey(
+                                                  row.keyUpper,
+                                                  secondaryKeyUpper
+                                                );
+                                              const cached =
+                                                pivot2dCacheByCategory?.[
+                                                  activeTab
+                                                ]?.[cacheKey] || null;
+                                              const result =
+                                                cached?.result ||
+                                                null;
+
+                                              const secondaryOptions =
+                                                getSecondaryFieldOptions(
+                                                  tabData,
+                                                  row.keyUpper
+                                                );
+
+                                              const sortRows =
+                                                ui.sortRows ||
+                                                'total';
+                                              const sortCols =
+                                                ui.sortCols ||
+                                                'total';
+                                              const heatmap =
+                                                !!ui.heatmap;
+
+                                              const rows = result
+                                                ? getSortedAxis(
+                                                    result.rows,
+                                                    result.rowTotals,
+                                                    sortRows ===
+                                                      'alpha'
+                                                      ? 'alpha'
+                                                      : 'total'
+                                                  )
+                                                : [];
+                                              const cols = result
+                                                ? getSortedAxis(
+                                                    result.cols,
+                                                    result.colTotals,
+                                                    sortCols ===
+                                                      'alpha'
+                                                      ? 'alpha'
+                                                      : 'total'
+                                                  )
+                                                : [];
+
+                                              let maxCell = 0;
+                                              if (result && heatmap) {
+                                                for (const r of rows) {
+                                                  for (const c of cols) {
+                                                    const v = Number(
+                                                      result.cells?.[
+                                                        r
+                                                      ]?.[c] || 0
+                                                    );
+                                                    if (v > maxCell)
+                                                      maxCell = v;
+                                                  }
+                                                }
+                                              }
+
+                                              return (
+                                                <div
+                                                  className={`mt-3 rounded-lg border p-3 ${theme.border} ${theme.surfaceMuted}`}
+                                                >
+                                                  <div className="flex flex-col gap-2">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                      <div className="text-xs font-semibold">
+                                                        Sekundært felt
+                                                      </div>
+                                                      <select
+                                                        className={`rounded-lg border px-2 py-1 text-xs ${theme.border} ${theme.surface} ${theme.text}`}
+                                                        value={
+                                                          secondaryKeyUpper
+                                                        }
+                                                        onChange={async (
+                                                          e
+                                                        ) => {
+                                                          const next =
+                                                            String(
+                                                              e.target
+                                                                .value ||
+                                                                'OBJTYPE'
+                                                            ).toUpperCase();
+                                                          updatePivot2dUi(
+                                                            activeTab,
+                                                            row.keyUpper,
+                                                            {
+                                                              secondaryKeyUpper:
+                                                                next,
+                                                            }
+                                                          );
+                                                          await ensurePivot2D(
+                                                            activeTab,
+                                                            row.keyUpper,
+                                                            next
+                                                          );
+                                                        }}
+                                                      >
+                                                        {secondaryOptions.map(
+                                                          (opt) => (
+                                                            <option
+                                                              key={
+                                                                opt.keyUpper
+                                                              }
+                                                              value={
+                                                                opt.keyUpper
+                                                              }
+                                                            >
+                                                              {
+                                                                opt.label
+                                                              }
+                                                            </option>
+                                                          )
+                                                        )}
+                                                      </select>
+
+                                                      <div className="ml-auto flex flex-wrap items-center gap-2">
+                                                        <label
+                                                          className={`flex items-center gap-1.5 text-xs ${theme.muted}`}
+                                                        >
+                                                          <input
+                                                            type="checkbox"
+                                                            className="h-3.5 w-3.5"
+                                                            checked={
+                                                              heatmap
+                                                            }
+                                                            onChange={(
+                                                              e
+                                                            ) =>
+                                                              updatePivot2dUi(
+                                                                activeTab,
+                                                                row.keyUpper,
+                                                                {
+                                                                  heatmap:
+                                                                    e
+                                                                      .target
+                                                                      .checked,
+                                                                }
+                                                              )
+                                                            }
+                                                          />
+                                                          Varmekart
+                                                        </label>
+                                                        <select
+                                                          className={`rounded-lg border px-2 py-1 text-xs ${theme.border} ${theme.surface} ${theme.text}`}
+                                                          value={
+                                                            sortRows
+                                                          }
+                                                          onChange={(
+                                                            e
+                                                          ) =>
+                                                            updatePivot2dUi(
+                                                              activeTab,
+                                                              row.keyUpper,
+                                                              {
+                                                                sortRows:
+                                                                  e
+                                                                    .target
+                                                                    .value,
+                                                              }
+                                                            )
+                                                          }
+                                                        >
+                                                          <option value="total">
+                                                            Sorter
+                                                            rader:
+                                                            Totalt
+                                                          </option>
+                                                          <option value="alpha">
+                                                            Sorter
+                                                            rader:
+                                                            Alfabetisk
+                                                          </option>
+                                                        </select>
+                                                        <select
+                                                          className={`rounded-lg border px-2 py-1 text-xs ${theme.border} ${theme.surface} ${theme.text}`}
+                                                          value={
+                                                            sortCols
+                                                          }
+                                                          onChange={(
+                                                            e
+                                                          ) =>
+                                                            updatePivot2dUi(
+                                                              activeTab,
+                                                              row.keyUpper,
+                                                              {
+                                                                sortCols:
+                                                                  e
+                                                                    .target
+                                                                    .value,
+                                                              }
+                                                            )
+                                                          }
+                                                        >
+                                                          <option value="total">
+                                                            Sorter
+                                                            kolonner:
+                                                            Totalt
+                                                          </option>
+                                                          <option value="alpha">
+                                                            Sorter
+                                                            kolonner:
+                                                            Alfabetisk
+                                                          </option>
+                                                        </select>
+                                                      </div>
+                                                    </div>
+
+                                                    {cached?.status ===
+                                                    'loading' ? (
+                                                      <div
+                                                        className={`flex items-center gap-2 py-2 text-xs ${theme.muted}`}
+                                                      >
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                        Beregner
+                                                        krysstabell…
+                                                      </div>
+                                                    ) : null}
+
+                                                    {result ? (
+                                                      <div>
+                                                        {result.meta
+                                                          ?.secondaryIsNumeric ? (
+                                                          <div
+                                                            className={`text-xs ${theme.muted}`}
+                                                          >
+                                                            Sekundært
+                                                            felt
+                                                            tolkes som
+                                                            tall og er
+                                                            gruppert i
+                                                            intervaller.
+                                                          </div>
+                                                        ) : null}
+                                                        {result.meta
+                                                          ?.note ? (
+                                                          <div
+                                                            className={`mt-1 text-xs ${theme.muted}`}
+                                                          >
+                                                            {
+                                                              result
+                                                                .meta
+                                                                .note
+                                                            }
+                                                          </div>
+                                                        ) : null}
+
+                                                        <div
+                                                          className={`mt-2 overflow-auto rounded-lg border ${theme.border} ${theme.surface}`}
+                                                        >
+                                                          <table className="w-full border-collapse text-xs">
+                                                            <thead>
+                                                              <tr
+                                                                className={`${theme.surfaceMuted} ${theme.muted}`}
+                                                              >
+                                                                <th
+                                                                  className={`sticky left-0 z-10 border-b px-2 py-1 text-left font-semibold ${theme.border} ${theme.surfaceMuted}`}
+                                                                >
+                                                                  Verdi
+                                                                </th>
+                                                                {cols.map(
+                                                                  (
+                                                                    c
+                                                                  ) => (
+                                                                    <th
+                                                                      key={
+                                                                        c
+                                                                      }
+                                                                      className={`border-b px-2 py-1 text-right font-semibold tabular-nums ${theme.border}`}
+                                                                    >
+                                                                      {
+                                                                        c
+                                                                      }
+                                                                    </th>
+                                                                  )
+                                                                )}
+                                                                <th
+                                                                  className={`border-b px-2 py-1 text-right font-semibold tabular-nums ${theme.border}`}
+                                                                >
+                                                                  Totalt
+                                                                </th>
+                                                              </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                              {rows.map(
+                                                                (
+                                                                  r
+                                                                ) => (
+                                                                  <tr
+                                                                    key={
+                                                                      r
+                                                                    }
+                                                                  >
+                                                                    <td
+                                                                      className={`sticky left-0 z-10 border-t px-2 py-1 font-semibold ${theme.border} ${theme.surface}`}
+                                                                    >
+                                                                      {
+                                                                        r
+                                                                      }
+                                                                    </td>
+                                                                    {cols.map(
+                                                                      (
+                                                                        c
+                                                                      ) => {
+                                                                        const v =
+                                                                          Number(
+                                                                            result
+                                                                              .cells?.[
+                                                                              r
+                                                                            ]?.[
+                                                                              c
+                                                                            ] ||
+                                                                              0
+                                                                          );
+                                                                        const intensity =
+                                                                          heatmap &&
+                                                                          maxCell >
+                                                                            0
+                                                                            ? v /
+                                                                              maxCell
+                                                                            : 0;
+                                                                        return (
+                                                                          <td
+                                                                            key={`${r}:${c}`}
+                                                                            className={`relative border-t px-2 py-1 text-right tabular-nums ${theme.border}`}
+                                                                          >
+                                                                            {heatmap ? (
+                                                                              <div
+                                                                                className={`pointer-events-none absolute inset-0 ${theme.accentSoft}`}
+                                                                                style={{
+                                                                                  opacity:
+                                                                                    Math.min(
+                                                                                      0.8,
+                                                                                      Math.max(
+                                                                                        0,
+                                                                                        intensity
+                                                                                      )
+                                                                                    ),
+                                                                                }}
+                                                                              />
+                                                                            ) : null}
+                                                                            <span className="relative">
+                                                                              {v.toLocaleString(
+                                                                                'nb-NO'
+                                                                              )}
+                                                                            </span>
+                                                                          </td>
+                                                                        );
+                                                                      }
+                                                                    )}
+                                                                    <td
+                                                                      className={`border-t px-2 py-1 text-right font-semibold tabular-nums ${theme.border}`}
+                                                                    >
+                                                                      {Number(
+                                                                        result
+                                                                          .rowTotals?.[
+                                                                          r
+                                                                        ] ||
+                                                                          0
+                                                                      ).toLocaleString(
+                                                                        'nb-NO'
+                                                                      )}
+                                                                    </td>
+                                                                  </tr>
+                                                                )
+                                                              )}
+                                                              <tr
+                                                                className={`${theme.surfaceMuted}`}
+                                                              >
+                                                                <td
+                                                                  className={`sticky left-0 z-10 border-t px-2 py-1 font-semibold ${theme.border} ${theme.surfaceMuted}`}
+                                                                >
+                                                                  Totalt
+                                                                </td>
+                                                                {cols.map(
+                                                                  (
+                                                                    c
+                                                                  ) => (
+                                                                    <td
+                                                                      key={`tot:${c}`}
+                                                                      className={`border-t px-2 py-1 text-right font-semibold tabular-nums ${theme.border}`}
+                                                                    >
+                                                                      {Number(
+                                                                        result
+                                                                          .colTotals?.[
+                                                                          c
+                                                                        ] ||
+                                                                          0
+                                                                      ).toLocaleString(
+                                                                        'nb-NO'
+                                                                      )}
+                                                                    </td>
+                                                                  )
+                                                                )}
+                                                                <td
+                                                                  className={`border-t px-2 py-1 text-right font-semibold tabular-nums ${theme.border}`}
+                                                                >
+                                                                  {Number(
+                                                                    result.grandTotal ||
+                                                                      0
+                                                                  ).toLocaleString(
+                                                                    'nb-NO'
+                                                                  )}
+                                                                </td>
+                                                              </tr>
+                                                            </tbody>
+                                                          </table>
+                                                        </div>
+                                                      </div>
+                                                    ) : null}
+                                                  </div>
+                                                </div>
+                                              );
+                                            })()
+                                          : null}
+                                      </>
+                                    );
+                                  })()}
                                 </div>
                               ) : null}
                             </div>

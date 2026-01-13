@@ -286,3 +286,22 @@ Required labels include:
 20. For the magnifying-glass inspection: should the modal show the **raw SOSI feature blocks** as text (recommended), or a parsed JSON-like view? ` Show the raw SOSI feature blocks as text. This is more useful for debugging and understanding the actual data structure. Also have otpion to show the header information at the top of the file, like TEGNSETT and other metadata lines.`
 21. Should the modal list be capped for performance (e.g. show first N matches + “Vis flere”), or must it always show all matches? ` Cap the list for performance. Show first N matches + "Vis flere" button to load more if needed.`
 22. Masking: which identifiers should be masked in this modal by default (GUID only, or also SID, or any value that looks unique/high-cardinality)? ` Mask GUID only. SID can be shown as is, since it is needed for identification and exclusion.`
+
+23. Should 2D pivots in Utforsk reflect raw file only (current behavior), or should they respect export filters (objTypes/EIER/exclusions)? This is the biggest product decision because the spec says “Respect global filters everywhere” but earlier you preferred “Utforsk shows raw”. `All data exploration should reflect the raw file only. Filters only affect export. This keeps the exploration consistent and allows users to understand the full dataset before applying any filters for export.`
+24. Where do you want 2D pivot entrypoint UX? `have a button on the top of the 1D pivot view that says "Utvidet visning" which then opens up the 2D pivot interface. This keeps it easily accessible without cluttering the main view.`
+    A) inside each expanded field (recommended, minimal) `A`
+    B) a separate “Utvidet visning” area at top of Utforsk
+    Caps/defaults: confirm defaults:
+    Columns Top-N = 25 + “Andre”
+    Row cap = 200 (or different?)
+    Numeric bins = 10 (or different?)
+    Heatmap: do you want it ON by default, OFF by default, or omit initially?
+    Masking unique IDs: should masking apply to:
+    A) only known ID-like fields (SID/GUID/etc), or
+    B) any field classified “Unik verdi / Høy kardinalitet”? `no need to mask any values, this is data available to the user.`
+    Multi-valued fields: confirm “explode” behavior is acceptable (totals can exceed object count), with a clear note. ` Yes, explode behavior is acceptable as long as there is a clear note explaining that totals can exceed object count.`
+    Numeric detection: is “numeric if every non-empty value parses as a number” good enough, or do you have fields with mixed numeric/text where we should avoid binning? ` This is good enough for now. If we encounter specific fields with mixed numeric/text later, we can handle them on a case-by-case basis.`
+    Do you want sorting controls in 2D?
+    A) sort rows by row total desc (default) + optional alphabetical
+    B) only alphabetical (simpler) `A`
+    Secondary-field list: should it include OBJTYPE as a secondary dimension option? (It’s often useful, but can get wide.) ` Yes, include OBJTYPE as a secondary dimension option. It is often useful for analysis despite the potential width.`
