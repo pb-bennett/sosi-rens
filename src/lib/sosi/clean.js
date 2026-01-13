@@ -87,6 +87,23 @@ function extractIdsFromBlock(blockLines) {
 }
 
 /**
+ * Extract the EIER (owner) value from a feature block.
+ * EIER is typically stored as `...EIER <value>` inside EGS groups.
+ * @param {string[]} blockLines - Lines of a feature block.
+ * @returns {string | null} The EIER value, or null if not found.
+ */
+function extractEierFromBlock(blockLines) {
+  for (const rawLine of blockLines) {
+    const line = String(rawLine);
+    const match = line.match(/^\.\.\.EIER\s+(\S+)/i);
+    if (match) {
+      return String(match[1]).trim();
+    }
+  }
+  return null;
+}
+
+/**
  * Build a set of excluded IDs for a category.
  * @param {Object} selection - Selection object.
  * @param {'punkter' | 'ledninger'} category - Category.
@@ -239,6 +256,21 @@ export function cleanSosiText(sosiText, selection, options) {
     ledninger: buildExcludedSet(selection, 'ledninger'),
   };
 
+  // Build EIER filter sets – if empty array, no filtering (all allowed).
+  // If array has values, only features with matching EIER are kept.
+  const keepEierByCategory = {
+    punkter: new Set(
+      (selection?.eierByCategory?.punkter || []).map((v) =>
+        String(v).toUpperCase()
+      )
+    ),
+    ledninger: new Set(
+      (selection?.eierByCategory?.ledninger || []).map((v) =>
+        String(v).toUpperCase()
+      )
+    ),
+  };
+
   const outLines = [];
   let currentBlock = [];
   let currentSection = null;
@@ -282,6 +314,21 @@ export function cleanSosiText(sosiText, selection, options) {
           excludedSet.has(`${id.idType}:${id.value}`)
         );
         if (shouldExclude) {
+          currentBlock = [];
+          return;
+        }
+      }
+    }
+
+    // EIER filter: if eierByCategory has values, only keep features with matching EIER.
+    // If the set is empty, no EIER filtering is applied (all EIER values pass).
+    if (category === 'punkter' || category === 'ledninger') {
+      const keepEierSet = keepEierByCategory[category];
+      if (keepEierSet && keepEierSet.size > 0) {
+        const eierValue = extractEierFromBlock(currentBlock);
+        // If feature has EIER and it's not in the allowed set, skip it.
+        // If feature has no EIER, we keep it (don't filter out features without EIER).
+        if (eierValue && !keepEierSet.has(eierValue.toUpperCase())) {
           currentBlock = [];
           return;
         }
