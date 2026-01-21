@@ -122,7 +122,7 @@ function sortEntriesDesc(obj) {
   return Object.entries(obj || {}).sort(
     (a, b) =>
       (b[1] || 0) - (a[1] || 0) ||
-      String(a[0]).localeCompare(String(b[0]))
+      String(a[0]).localeCompare(String(b[0])),
   );
 }
 
@@ -228,7 +228,7 @@ function normalizeExcludedByCategory(excludedByCategory) {
 
 function buildExcludedKey(entry) {
   return `${String(entry?.idType || '').toUpperCase()}:${String(
-    entry?.id || ''
+    entry?.id || '',
   ).trim()}`;
 }
 
@@ -249,7 +249,7 @@ function searchBySid(sosiText, sid) {
   if (!/^[0-9]+$/.test(wantedSid)) return [];
 
   const sidLineRe = new RegExp(
-    `^\\.\\.\\.SID\\s+${escapeRegExp(wantedSid)}\\s*$`
+    `^\\.\\.\\.SID\\s+${escapeRegExp(wantedSid)}\\s*$`,
   );
 
   const matches = [];
@@ -348,8 +348,8 @@ function lookupExclusionMeta(sosiText, category, idType, id) {
 
   const idLineRe = new RegExp(
     `^\\.\\.\\.${escapeRegExp(wantedType)}\\s+${escapeRegExp(
-      wantedId
-    )}\\s*$`
+      wantedId,
+    )}\\s*$`,
   );
 
   let currentSection = null;
@@ -476,7 +476,7 @@ function categorizeSection(section) {
 function computeValueFrequencyForField(
   sosiText,
   fieldKeyUpper,
-  category
+  category,
 ) {
   const counts = new Map();
   let currentCategory = 'unknown';
@@ -508,7 +508,7 @@ function computeValueFrequencyForField(
   return Array.from(counts.entries()).sort(
     (a, b) =>
       (b[1] || 0) - (a[1] || 0) ||
-      String(a[0]).localeCompare(String(b[0]))
+      String(a[0]).localeCompare(String(b[0])),
   );
 }
 
@@ -573,7 +573,7 @@ function extractEierValues(sosiText) {
       .sort(
         (a, b) =>
           (b[1] || 0) - (a[1] || 0) ||
-          String(a[0]).localeCompare(String(b[0]))
+          String(a[0]).localeCompare(String(b[0])),
       )
       .map(([value, count]) => ({ value, count }));
 
@@ -644,7 +644,7 @@ function extractStatusValues(sosiText) {
       .sort(
         (a, b) =>
           (b[1] || 0) - (a[1] || 0) ||
-          String(a[0]).localeCompare(String(b[0]))
+          String(a[0]).localeCompare(String(b[0])),
       )
       .map(([value, count]) => ({ value, count }));
 
@@ -954,7 +954,7 @@ export default function Home() {
           status: parsed?.filtersEnabled?.status !== false,
         },
         excludedByCategory: normalizeExcludedByCategory(
-          parsed?.excludedByCategory ?? prev.excludedByCategory
+          parsed?.excludedByCategory ?? prev.excludedByCategory,
         ),
         eierByCategory: {
           punkter: Array.isArray(parsed?.eierByCategory?.punkter)
@@ -969,7 +969,7 @@ export default function Home() {
             ? parsed.statusByCategory.punkter
             : prev.statusByCategory.punkter,
           ledninger: Array.isArray(
-            parsed?.statusByCategory?.ledninger
+            parsed?.statusByCategory?.ledninger,
           )
             ? parsed.statusByCategory.ledninger
             : prev.statusByCategory.ledninger,
@@ -1022,7 +1022,7 @@ export default function Home() {
       ledninger: {
         features: byCategory.ledninger?.features || 0,
         objTypes: sortEntriesDesc(
-          byCategory.ledninger?.objTypes || {}
+          byCategory.ledninger?.objTypes || {},
         ),
         fields: sortEntriesDesc(byCategory.ledninger?.fields || {}),
         tema: sortEntriesDesc(byCategory.ledninger?.lTema || {}),
@@ -1111,7 +1111,7 @@ export default function Home() {
           : available.ledninger.fields,
       };
       next.excludedByCategory = normalizeExcludedByCategory(
-        prev.excludedByCategory
+        prev.excludedByCategory,
       );
       return next;
     });
@@ -1157,7 +1157,7 @@ export default function Home() {
         ...prev.eierByCategory,
         [category]: toggleInList(
           prev.eierByCategory[category],
-          eierValue
+          eierValue,
         ),
       },
     }));
@@ -1203,7 +1203,7 @@ export default function Home() {
         ...prev.statusByCategory,
         [category]: toggleInList(
           prev.statusByCategory[category],
-          statusValue
+          statusValue,
         ),
       },
     }));
@@ -1259,12 +1259,12 @@ export default function Home() {
           downloadFieldMode === 'clear-values'
             ? 'clear-values'
             : 'remove-fields',
-      }
+      },
     ).text;
 
     const outBytes = encodeSosiTextToBytes(
       cleanedText,
-      decoded.encoding?.used || 'utf8'
+      decoded.encoding?.used || 'utf8',
     );
     const blob = new Blob([outBytes], {
       type: 'application/octet-stream',
@@ -1273,7 +1273,7 @@ export default function Home() {
     const originalName = file.name || 'fil.sos';
     const cleanedName = originalName.replace(
       /(\.[^.]+)?$/,
-      '-renset$1'
+      '-renset$1',
     );
     downloadBlob(blob, cleanedName);
   }
@@ -1291,7 +1291,7 @@ export default function Home() {
 
     const outBytes = encodeSosiTextToBytes(
       excludedText,
-      decoded.encoding?.used || 'utf8'
+      decoded.encoding?.used || 'utf8',
     );
     const blob = new Blob([outBytes], {
       type: 'application/octet-stream',
@@ -1300,7 +1300,7 @@ export default function Home() {
     const originalName = file.name || 'fil.sos';
     const name = originalName.replace(
       /(\.[^.]+)?$/,
-      '-ekskluderte$1'
+      '-ekskluderte$1',
     );
     downloadBlob(blob, name);
   }
@@ -1337,7 +1337,7 @@ export default function Home() {
         'selection',
         JSON.stringify({
           excludedByCategory: selection.excludedByCategory,
-        })
+        }),
       );
       fd.set('mode', 'excluded-only');
 
@@ -1397,13 +1397,13 @@ export default function Home() {
           excludedByCategory: selection.excludedByCategory,
           eierByCategory: selection.eierByCategory,
           statusByCategory: selection.statusByCategory,
-        })
+        }),
       );
       fd.set(
         'fieldMode',
         downloadFieldMode === 'clear-values'
           ? 'clear-values'
-          : 'remove-fields'
+          : 'remove-fields',
       );
 
       const res = await fetch('/api/clean', {
@@ -1502,7 +1502,7 @@ export default function Home() {
             ? imported.eierByCategory.punkter
             : prev.eierByCategory.punkter,
           ledninger: Array.isArray(
-            imported?.eierByCategory?.ledninger
+            imported?.eierByCategory?.ledninger,
           )
             ? imported.eierByCategory.ledninger
             : prev.eierByCategory.ledninger,
@@ -1512,13 +1512,13 @@ export default function Home() {
             ? imported.statusByCategory.punkter
             : prev.statusByCategory.punkter,
           ledninger: Array.isArray(
-            imported?.statusByCategory?.ledninger
+            imported?.statusByCategory?.ledninger,
           )
             ? imported.statusByCategory.ledninger
             : prev.statusByCategory.ledninger,
         },
         excludedByCategory: normalizeExcludedByCategory(
-          imported.excludedByCategory ?? prev.excludedByCategory
+          imported.excludedByCategory ?? prev.excludedByCategory,
         ),
       }));
     } catch (e) {
@@ -1531,7 +1531,7 @@ export default function Home() {
     try {
       const imported = await readJsonFile(fileObj);
       const nextExcluded = normalizeExcludedByCategory(
-        imported?.excludedByCategory
+        imported?.excludedByCategory,
       );
       setSelection((prev) => ({
         ...prev,
@@ -1668,7 +1668,7 @@ export default function Home() {
 
     setSelection((prev) => {
       const nextExcluded = normalizeExcludedByCategory(
-        prev.excludedByCategory
+        prev.excludedByCategory,
       );
       nextExcluded[cat] = [...nextExcluded[cat], entry];
       return { ...prev, excludedByCategory: nextExcluded };
@@ -1747,7 +1747,7 @@ export default function Home() {
 
     if (!sosiText) {
       setError(
-        'Last inn en SOSI-fil før du legger til ekskluderinger.'
+        'Last inn en SOSI-fil før du legger til ekskluderinger.',
       );
       setBusy(false);
       setBusyLabel('');
@@ -1764,8 +1764,8 @@ export default function Home() {
     if (meta === null) {
       setError(
         `Fant ikke ${idType} ${id} i «${getCategoryLabel(
-          cat
-        )}» i denne filen.`
+          cat,
+        )}» i denne filen.`,
       );
       setBusy(false);
       setBusyLabel('');
@@ -1774,7 +1774,7 @@ export default function Home() {
 
     setSelection((prev) => {
       const nextExcluded = normalizeExcludedByCategory(
-        prev.excludedByCategory
+        prev.excludedByCategory,
       );
       nextExcluded[cat] = [...nextExcluded[cat], { ...entry, meta }];
       return { ...prev, excludedByCategory: nextExcluded };
@@ -1793,10 +1793,10 @@ export default function Home() {
     const cat = String(category);
     setSelection((prev) => {
       const nextExcluded = normalizeExcludedByCategory(
-        prev.excludedByCategory
+        prev.excludedByCategory,
       );
       nextExcluded[cat] = (nextExcluded[cat] || []).filter(
-        (_, i) => i !== index
+        (_, i) => i !== index,
       );
       return { ...prev, excludedByCategory: nextExcluded };
     });
@@ -1846,7 +1846,7 @@ export default function Home() {
     const existingList = selection?.excludedByCategory?.[cat] || [];
     const nextKey = buildExcludedKey({ idType, id });
     const hasDuplicate = existingList.some(
-      (e, i) => i !== index && buildExcludedKey(e) === nextKey
+      (e, i) => i !== index && buildExcludedKey(e) === nextKey,
     );
     if (hasDuplicate) {
       setError('Dette ID-et er allerede ekskludert.');
@@ -1870,7 +1870,7 @@ export default function Home() {
 
     if (!sosiText) {
       setError(
-        'Last inn en SOSI-fil før du redigerer ekskluderinger.'
+        'Last inn en SOSI-fil før du redigerer ekskluderinger.',
       );
       setBusy(false);
       setBusyLabel('');
@@ -1887,8 +1887,8 @@ export default function Home() {
     if (meta === null) {
       setError(
         `Fant ikke ${idType} ${id} i «${getCategoryLabel(
-          cat
-        )}» i denne filen.`
+          cat,
+        )}» i denne filen.`,
       );
       setBusy(false);
       setBusyLabel('');
@@ -1897,7 +1897,7 @@ export default function Home() {
 
     setSelection((prev) => {
       const nextExcluded = normalizeExcludedByCategory(
-        prev.excludedByCategory
+        prev.excludedByCategory,
       );
       const nextList = [...(nextExcluded[cat] || [])];
       const nextEntry = { idType, id, comment, meta };
@@ -1920,7 +1920,7 @@ export default function Home() {
 
   const mandatoryFields = useMemo(
     () => new Set(['OBJTYPE', 'EGS_PUNKT', 'EGS_LEDNING']),
-    []
+    [],
   );
 
   const canProceedToExclusionsFromFilter =
@@ -1932,10 +1932,10 @@ export default function Home() {
   const downloadGateReason = !analysis
     ? null
     : !canProceedToExclusionsFromFilter
-    ? 'Du må åpne både «Punkter» og «Ledninger» i «Filtrer» før du kan gå til nedlasting.'
-    : !exclusionsVisited
-    ? 'Gå til «Ekskluder» før du kan gå til nedlasting.'
-    : null;
+      ? 'Du må åpne både «Punkter» og «Ledninger» i «Filtrer» før du kan gå til nedlasting.'
+      : !exclusionsVisited
+        ? 'Gå til «Ekskluder» før du kan gå til nedlasting.'
+        : null;
 
   const exploreFieldRows = useMemo(() => {
     if (!tabData) return [];
@@ -1990,7 +1990,7 @@ export default function Home() {
     const entries = computeValueFrequencyForField(
       sosiText,
       fieldKeyUpper,
-      category
+      category,
     );
 
     setPivotCacheByCategory((prev) => ({
@@ -2010,7 +2010,7 @@ export default function Home() {
    */
   function pivot2dCacheKey(primaryKeyUpper, secondaryKeyUpper) {
     return `${String(primaryKeyUpper || '').toUpperCase()}::${String(
-      secondaryKeyUpper || ''
+      secondaryKeyUpper || '',
     ).toUpperCase()}`;
   }
 
@@ -2036,7 +2036,7 @@ export default function Home() {
       withoutAndre.sort(
         (a, b) =>
           Number(totals?.[b] || 0) - Number(totals?.[a] || 0) ||
-          String(a).localeCompare(String(b))
+          String(a).localeCompare(String(b)),
       );
     }
 
@@ -2082,7 +2082,7 @@ export default function Home() {
         [primaryKeyUpper]: {
           open: !isOpen,
           secondaryKeyUpper: String(
-            existing?.secondaryKeyUpper || 'OBJTYPE'
+            existing?.secondaryKeyUpper || 'OBJTYPE',
           ).toUpperCase(),
           sortRows: existing?.sortRows || 'total',
           sortCols: existing?.sortCols || 'total',
@@ -2132,7 +2132,7 @@ export default function Home() {
   async function ensurePivot2D(
     category,
     primaryKeyUpper,
-    secondaryKeyUpper
+    secondaryKeyUpper,
   ) {
     if (!sosiText) return;
     const key = pivot2dCacheKey(primaryKeyUpper, secondaryKeyUpper);
@@ -2163,7 +2163,7 @@ export default function Home() {
         rowCap: 200,
         numericBins: 10,
         numericBinning: 'equal-width',
-      }
+      },
     );
 
     setPivot2dCacheByCategory((prev) => ({
@@ -2479,7 +2479,7 @@ export default function Home() {
                         </div>
                         <div className="mt-0.5 text-xl font-semibold tabular-nums">
                           {tabData.objTypes.length.toLocaleString(
-                            'nb-NO'
+                            'nb-NO',
                           )}
                         </div>
                       </div>
@@ -2491,7 +2491,7 @@ export default function Home() {
                         </div>
                         <div className="mt-0.5 text-xl font-semibold tabular-nums">
                           {tabData.fields.length.toLocaleString(
-                            'nb-NO'
+                            'nb-NO',
                           )}
                         </div>
                       </div>
@@ -2533,12 +2533,12 @@ export default function Home() {
                                 onClick={async () => {
                                   toggleExpandedField(
                                     activeTab,
-                                    row.keyUpper
+                                    row.keyUpper,
                                   );
                                   if (!isExpanded) {
                                     await ensurePivot(
                                       activeTab,
-                                      row.keyUpper
+                                      row.keyUpper,
                                     );
                                   }
                                 }}
@@ -2556,7 +2556,7 @@ export default function Home() {
                                     className={`shrink-0 text-xs tabular-nums ${theme.muted}`}
                                   >
                                     {Number(
-                                      row.count || 0
+                                      row.count || 0,
                                     ).toLocaleString('nb-NO')}
                                   </div>
                                 </div>
@@ -2589,7 +2589,7 @@ export default function Home() {
                                             onClick={async () => {
                                               togglePivot2dUi(
                                                 activeTab,
-                                                row.keyUpper
+                                                row.keyUpper,
                                               );
                                               const nextUi =
                                                 pivot2dUiByCategory?.[
@@ -2598,14 +2598,14 @@ export default function Home() {
                                               const secondaryKeyUpper =
                                                 String(
                                                   nextUi?.secondaryKeyUpper ||
-                                                    'OBJTYPE'
+                                                    'OBJTYPE',
                                                 ).toUpperCase();
                                               // Only compute when opening.
                                               if (!nextUi?.open) {
                                                 await ensurePivot2D(
                                                   activeTab,
                                                   row.keyUpper,
-                                                  secondaryKeyUpper
+                                                  secondaryKeyUpper,
                                                 );
                                               }
                                             }}
@@ -2658,19 +2658,19 @@ export default function Home() {
                                                         >
                                                           <div className="break-all">
                                                             {String(
-                                                              value
+                                                              value,
                                                             )}
                                                           </div>
                                                           <div className="text-right tabular-nums">
                                                             {Number(
                                                               count ||
-                                                                0
+                                                                0,
                                                             ).toLocaleString(
-                                                              'nb-NO'
+                                                              'nb-NO',
                                                             )}
                                                           </div>
                                                         </div>
-                                                      )
+                                                      ),
                                                     )}
                                                   </div>
                                                 </div>
@@ -2691,12 +2691,12 @@ export default function Home() {
                                               const secondaryKeyUpper =
                                                 String(
                                                   ui.secondaryKeyUpper ||
-                                                    'OBJTYPE'
+                                                    'OBJTYPE',
                                                 ).toUpperCase();
                                               const cacheKey =
                                                 pivot2dCacheKey(
                                                   row.keyUpper,
-                                                  secondaryKeyUpper
+                                                  secondaryKeyUpper,
                                                 );
                                               const cached =
                                                 pivot2dCacheByCategory?.[
@@ -2709,7 +2709,7 @@ export default function Home() {
                                               const secondaryOptions =
                                                 getSecondaryFieldOptions(
                                                   tabData,
-                                                  row.keyUpper
+                                                  row.keyUpper,
                                                 );
 
                                               const sortRows =
@@ -2728,7 +2728,7 @@ export default function Home() {
                                                     sortRows ===
                                                       'alpha'
                                                       ? 'alpha'
-                                                      : 'total'
+                                                      : 'total',
                                                   )
                                                 : [];
                                               const cols = result
@@ -2738,7 +2738,7 @@ export default function Home() {
                                                     sortCols ===
                                                       'alpha'
                                                       ? 'alpha'
-                                                      : 'total'
+                                                      : 'total',
                                                   )
                                                 : [];
 
@@ -2749,7 +2749,7 @@ export default function Home() {
                                                     const v = Number(
                                                       result.cells?.[
                                                         r
-                                                      ]?.[c] || 0
+                                                      ]?.[c] || 0,
                                                     );
                                                     if (v > maxCell)
                                                       maxCell = v;
@@ -2772,13 +2772,13 @@ export default function Home() {
                                                           secondaryKeyUpper
                                                         }
                                                         onChange={async (
-                                                          e
+                                                          e,
                                                         ) => {
                                                           const next =
                                                             String(
                                                               e.target
                                                                 .value ||
-                                                                'OBJTYPE'
+                                                                'OBJTYPE',
                                                             ).toUpperCase();
                                                           updatePivot2dUi(
                                                             activeTab,
@@ -2786,12 +2786,12 @@ export default function Home() {
                                                             {
                                                               secondaryKeyUpper:
                                                                 next,
-                                                            }
+                                                            },
                                                           );
                                                           await ensurePivot2D(
                                                             activeTab,
                                                             row.keyUpper,
-                                                            next
+                                                            next,
                                                           );
                                                         }}
                                                       >
@@ -2809,7 +2809,7 @@ export default function Home() {
                                                                 opt.label
                                                               }
                                                             </option>
-                                                          )
+                                                          ),
                                                         )}
                                                       </select>
 
@@ -2824,7 +2824,7 @@ export default function Home() {
                                                               heatmap
                                                             }
                                                             onChange={(
-                                                              e
+                                                              e,
                                                             ) =>
                                                               updatePivot2dUi(
                                                                 activeTab,
@@ -2834,7 +2834,7 @@ export default function Home() {
                                                                     e
                                                                       .target
                                                                       .checked,
-                                                                }
+                                                                },
                                                               )
                                                             }
                                                           />
@@ -2846,7 +2846,7 @@ export default function Home() {
                                                             sortRows
                                                           }
                                                           onChange={(
-                                                            e
+                                                            e,
                                                           ) =>
                                                             updatePivot2dUi(
                                                               activeTab,
@@ -2856,7 +2856,7 @@ export default function Home() {
                                                                   e
                                                                     .target
                                                                     .value,
-                                                              }
+                                                              },
                                                             )
                                                           }
                                                         >
@@ -2877,7 +2877,7 @@ export default function Home() {
                                                             sortCols
                                                           }
                                                           onChange={(
-                                                            e
+                                                            e,
                                                           ) =>
                                                             updatePivot2dUi(
                                                               activeTab,
@@ -2887,7 +2887,7 @@ export default function Home() {
                                                                   e
                                                                     .target
                                                                     .value,
-                                                              }
+                                                              },
                                                             )
                                                           }
                                                         >
@@ -2959,7 +2959,7 @@ export default function Home() {
                                                                 </th>
                                                                 {cols.map(
                                                                   (
-                                                                    c
+                                                                    c,
                                                                   ) => (
                                                                     <th
                                                                       key={
@@ -2971,7 +2971,7 @@ export default function Home() {
                                                                         c
                                                                       }
                                                                     </th>
-                                                                  )
+                                                                  ),
                                                                 )}
                                                                 <th
                                                                   className={`border-b px-2 py-1 text-right font-semibold tabular-nums ${theme.border}`}
@@ -2983,7 +2983,7 @@ export default function Home() {
                                                             <tbody>
                                                               {rows.map(
                                                                 (
-                                                                  r
+                                                                  r,
                                                                 ) => (
                                                                   <tr
                                                                     key={
@@ -2999,7 +2999,7 @@ export default function Home() {
                                                                     </td>
                                                                     {cols.map(
                                                                       (
-                                                                        c
+                                                                        c,
                                                                       ) => {
                                                                         const v =
                                                                           Number(
@@ -3009,7 +3009,7 @@ export default function Home() {
                                                                             ]?.[
                                                                               c
                                                                             ] ||
-                                                                              0
+                                                                              0,
                                                                           );
                                                                         const intensity =
                                                                           heatmap &&
@@ -3032,20 +3032,20 @@ export default function Home() {
                                                                                       0.8,
                                                                                       Math.max(
                                                                                         0,
-                                                                                        intensity
-                                                                                      )
+                                                                                        intensity,
+                                                                                      ),
                                                                                     ),
                                                                                 }}
                                                                               />
                                                                             ) : null}
                                                                             <span className="relative">
                                                                               {v.toLocaleString(
-                                                                                'nb-NO'
+                                                                                'nb-NO',
                                                                               )}
                                                                             </span>
                                                                           </td>
                                                                         );
-                                                                      }
+                                                                      },
                                                                     )}
                                                                     <td
                                                                       className={`border-t px-2 py-1 text-right font-semibold tabular-nums ${theme.border}`}
@@ -3055,13 +3055,13 @@ export default function Home() {
                                                                           .rowTotals?.[
                                                                           r
                                                                         ] ||
-                                                                          0
+                                                                          0,
                                                                       ).toLocaleString(
-                                                                        'nb-NO'
+                                                                        'nb-NO',
                                                                       )}
                                                                     </td>
                                                                   </tr>
-                                                                )
+                                                                ),
                                                               )}
                                                               <tr
                                                                 className={`${theme.surfaceMuted}`}
@@ -3073,7 +3073,7 @@ export default function Home() {
                                                                 </td>
                                                                 {cols.map(
                                                                   (
-                                                                    c
+                                                                    c,
                                                                   ) => (
                                                                     <td
                                                                       key={`tot:${c}`}
@@ -3084,21 +3084,21 @@ export default function Home() {
                                                                           .colTotals?.[
                                                                           c
                                                                         ] ||
-                                                                          0
+                                                                          0,
                                                                       ).toLocaleString(
-                                                                        'nb-NO'
+                                                                        'nb-NO',
                                                                       )}
                                                                     </td>
-                                                                  )
+                                                                  ),
                                                                 )}
                                                                 <td
                                                                   className={`border-t px-2 py-1 text-right font-semibold tabular-nums ${theme.border}`}
                                                                 >
                                                                   {Number(
                                                                     result.grandTotal ||
-                                                                      0
+                                                                      0,
                                                                   ).toLocaleString(
-                                                                    'nb-NO'
+                                                                    'nb-NO',
                                                                   )}
                                                                 </td>
                                                               </tr>
@@ -3189,8 +3189,7 @@ export default function Home() {
                                   false
                                 }
                                 onChange={(e) => {
-                                  const enabled =
-                                    !!e.target.checked;
+                                  const enabled = !!e.target.checked;
                                   setSelection((prev) => ({
                                     ...prev,
                                     filtersEnabled: {
@@ -3206,32 +3205,34 @@ export default function Home() {
                               />
                               Aktiver
                             </label>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
-                              onClick={() => selectAllEier(activeTab)}
-                              disabled={
-                                selection.filtersEnabled?.eier ===
-                                false
-                              }
-                            >
-                              Alle
-                            </button>
-                            <button
-                              type="button"
-                              className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
-                              onClick={() =>
-                                deselectAllEier(activeTab)
-                              }
-                              disabled={
-                                selection.filtersEnabled?.eier ===
-                                false
-                              }
-                            >
-                              Ingen
-                            </button>
-                          </div>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
+                                onClick={() =>
+                                  selectAllEier(activeTab)
+                                }
+                                disabled={
+                                  selection.filtersEnabled?.eier ===
+                                  false
+                                }
+                              >
+                                Alle
+                              </button>
+                              <button
+                                type="button"
+                                className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
+                                onClick={() =>
+                                  deselectAllEier(activeTab)
+                                }
+                                disabled={
+                                  selection.filtersEnabled?.eier ===
+                                  false
+                                }
+                              >
+                                Ingen
+                              </button>
+                            </div>
                           </div>
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -3259,8 +3260,8 @@ export default function Home() {
                                     }
                                     className="h-4 w-4"
                                     disabled={
-                                      selection.filtersEnabled?.eier ===
-                                      false
+                                      selection.filtersEnabled
+                                        ?.eier === false
                                     }
                                   />
                                   <span className="text-sm font-medium">
@@ -3273,7 +3274,7 @@ export default function Home() {
                                   </span>
                                 </label>
                               );
-                            }
+                            },
                           )}
                         </div>
 
@@ -3301,8 +3302,8 @@ export default function Home() {
                                     type="checkbox"
                                     className="h-4 w-4"
                                     checked={
-                                      selection.filtersEnabled?.status !==
-                                      false
+                                      selection.filtersEnabled
+                                        ?.status !== false
                                     }
                                     onChange={(e) => {
                                       const enabled =
@@ -3324,32 +3325,32 @@ export default function Home() {
                                 </label>
 
                                 <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
-                                  onClick={() =>
-                                    selectAllStatus(activeTab)
-                                  }
-                                  disabled={
-                                    selection.filtersEnabled?.status ===
-                                    false
-                                  }
-                                >
-                                  Alle
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
-                                  onClick={() =>
-                                    deselectAllStatus(activeTab)
-                                  }
-                                  disabled={
-                                    selection.filtersEnabled?.status ===
-                                    false
-                                  }
-                                >
-                                  Ingen
-                                </button>
+                                  <button
+                                    type="button"
+                                    className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
+                                    onClick={() =>
+                                      selectAllStatus(activeTab)
+                                    }
+                                    disabled={
+                                      selection.filtersEnabled
+                                        ?.status === false
+                                    }
+                                  >
+                                    Alle
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
+                                    onClick={() =>
+                                      deselectAllStatus(activeTab)
+                                    }
+                                    disabled={
+                                      selection.filtersEnabled
+                                        ?.status === false
+                                    }
+                                  >
+                                    Ingen
+                                  </button>
                                 </div>
                               </div>
                             </div>
@@ -3366,8 +3367,8 @@ export default function Home() {
                                     <label
                                       key={value}
                                       className={`inline-flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 ${theme.hoverAccentSoft} ${
-                                        selection.filtersEnabled?.status ===
-                                        false
+                                        selection.filtersEnabled
+                                          ?.status === false
                                           ? 'opacity-50'
                                           : ''
                                       }`}
@@ -3378,7 +3379,7 @@ export default function Home() {
                                         onChange={() =>
                                           toggleStatus(
                                             activeTab,
-                                            value
+                                            value,
                                           )
                                         }
                                         className="h-4 w-4"
@@ -3395,13 +3396,13 @@ export default function Home() {
                                       >
                                         (
                                         {count.toLocaleString(
-                                          'nb-NO'
+                                          'nb-NO',
                                         )}
                                         )
                                       </span>
                                     </label>
                                   );
-                                }
+                                },
                               )}
                             </div>
                           </div>
@@ -3423,12 +3424,11 @@ export default function Home() {
                                 type="checkbox"
                                 className="h-4 w-4"
                                 checked={
-                                  selection.filtersEnabled?.objType !==
-                                  false
+                                  selection.filtersEnabled
+                                    ?.objType !== false
                                 }
                                 onChange={(e) => {
-                                  const enabled =
-                                    !!e.target.checked;
+                                  const enabled = !!e.target.checked;
                                   setSelection((prev) => ({
                                     ...prev,
                                     filtersEnabled: {
@@ -3446,36 +3446,36 @@ export default function Home() {
                             </label>
 
                             <div className="flex gap-2">
-                            <button
-                              type="button"
-                              className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                              onClick={() =>
-                                setAll(
-                                  activeTab,
-                                  'objTypes',
-                                  available[activeTab].objTypes
-                                )
-                              }
-                              disabled={
-                                selection.filtersEnabled?.objType ===
-                                false
-                              }
-                            >
-                              Velg alle
-                            </button>
-                            <button
-                              type="button"
-                              className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                              onClick={() =>
-                                setAll(activeTab, 'objTypes', [])
-                              }
-                              disabled={
-                                selection.filtersEnabled?.objType ===
-                                false
-                              }
-                            >
-                              Velg ingen
-                            </button>
+                              <button
+                                type="button"
+                                className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                                onClick={() =>
+                                  setAll(
+                                    activeTab,
+                                    'objTypes',
+                                    available[activeTab].objTypes,
+                                  )
+                                }
+                                disabled={
+                                  selection.filtersEnabled
+                                    ?.objType === false
+                                }
+                              >
+                                Velg alle
+                              </button>
+                              <button
+                                type="button"
+                                className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                                onClick={() =>
+                                  setAll(activeTab, 'objTypes', [])
+                                }
+                                disabled={
+                                  selection.filtersEnabled
+                                    ?.objType === false
+                                }
+                              >
+                                Velg ingen
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -3491,8 +3491,8 @@ export default function Home() {
                                 <label
                                   key={objType}
                                   className={`flex items-center gap-2 rounded px-2 py-1 ${theme.hoverAccentSoft} ${
-                                    selection.filtersEnabled?.objType ===
-                                    false
+                                    selection.filtersEnabled
+                                      ?.objType === false
                                       ? 'opacity-50'
                                       : ''
                                   }`}
@@ -3510,14 +3510,14 @@ export default function Home() {
                                             prev.objTypesByCategory?.[
                                               activeTab
                                             ] || [],
-                                            objType
+                                            objType,
                                           ),
                                         },
                                       }));
                                     }}
                                     disabled={
-                                      selection.filtersEnabled?.objType ===
-                                      false
+                                      selection.filtersEnabled
+                                        ?.objType === false
                                     }
                                   />
                                   <span className="text-sm">
@@ -3525,7 +3525,7 @@ export default function Home() {
                                   </span>
                                 </label>
                               );
-                            }
+                            },
                           )}
                         </div>
                       </div>
@@ -3546,7 +3546,7 @@ export default function Home() {
                                   uniq([
                                     ...available[activeTab].fields,
                                     ...Array.from(mandatoryFields),
-                                  ])
+                                  ]),
                                 )
                               }
                             >
@@ -3559,7 +3559,7 @@ export default function Home() {
                                 setAll(
                                   activeTab,
                                   'fields',
-                                  Array.from(mandatoryFields)
+                                  Array.from(mandatoryFields),
                                 )
                               }
                             >
@@ -3611,7 +3611,7 @@ export default function Home() {
                                             prev.fieldsByCategory?.[
                                               activeTab
                                             ] || [],
-                                            keyUpper
+                                            keyUpper,
                                           ),
                                         },
                                       }));
@@ -3856,7 +3856,7 @@ export default function Home() {
                                 if (match.category === 'ledninger') {
                                   if (match.dimensjon)
                                     metaParts.push(
-                                      `Ø ${match.dimensjon}`
+                                      `Ø ${match.dimensjon}`,
                                     );
                                   if (match.material)
                                     metaParts.push(match.material);
@@ -3871,7 +3871,7 @@ export default function Home() {
                                   existingList.some(
                                     (e) =>
                                       e.idType === 'SID' &&
-                                      e.id === match.sid
+                                      e.id === match.sid,
                                   );
 
                                 return (
@@ -3918,7 +3918,7 @@ export default function Home() {
                                             setSelectedSidMatch(
                                               isSelected
                                                 ? null
-                                                : match
+                                                : match,
                                             )
                                           }
                                         >
@@ -4006,7 +4006,7 @@ export default function Home() {
                                     if (cat === 'ledninger') {
                                       if (meta?.dimensjon)
                                         metaParts.push(
-                                          `Ø ${meta.dimensjon}`
+                                          `Ø ${meta.dimensjon}`,
                                         );
                                       if (meta?.material)
                                         metaParts.push(meta.material);
@@ -4031,7 +4031,7 @@ export default function Home() {
                                             >
                                               {metaParts.length > 0
                                                 ? metaParts.join(
-                                                    ' · '
+                                                    ' · ',
                                                   )
                                                 : 'Ikke funnet i filen'}
                                             </div>
@@ -4049,7 +4049,7 @@ export default function Home() {
                                             onClick={() =>
                                               removeExcludedEntry(
                                                 cat,
-                                                idx
+                                                idx,
                                               )
                                             }
                                           >

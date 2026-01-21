@@ -42,7 +42,9 @@ const FILTER_TOKEN_MISSING = '(MANGLER)';
 const FILTER_TOKEN_EMPTY = '(TOM)';
 
 function normalizeSelectionToken(value) {
-  const upper = String(value ?? '').trim().toUpperCase();
+  const upper = String(value ?? '')
+    .trim()
+    .toUpperCase();
   if (!upper) return FILTER_TOKEN_EMPTY;
   if (upper === FILTER_TOKEN_EMPTY) return FILTER_TOKEN_EMPTY;
   if (upper === FILTER_TOKEN_MISSING) return FILTER_TOKEN_MISSING;
@@ -51,7 +53,9 @@ function normalizeSelectionToken(value) {
 
 function normalizeExtractedToken(value) {
   if (value === null) return FILTER_TOKEN_MISSING;
-  const upper = String(value ?? '').trim().toUpperCase();
+  const upper = String(value ?? '')
+    .trim()
+    .toUpperCase();
   return upper ? upper : FILTER_TOKEN_EMPTY;
 }
 
@@ -193,7 +197,7 @@ function filterFeatureBlock(
   blockLines,
   category,
   selection,
-  options
+  options,
 ) {
   const keepFields = (
     selection?.fieldsByCategory?.[category] || []
@@ -284,12 +288,12 @@ export function cleanSosiText(sosiText, selection, options) {
     punkter: new Set(
       filtersEnabled.objType
         ? (selection?.objTypesByCategory?.punkter || []).map(String)
-        : []
+        : [],
     ),
     ledninger: new Set(
       filtersEnabled.objType
         ? (selection?.objTypesByCategory?.ledninger || []).map(String)
-        : []
+        : [],
     ),
   };
 
@@ -304,16 +308,16 @@ export function cleanSosiText(sosiText, selection, options) {
     punkter: new Set(
       filtersEnabled.eier
         ? (selection?.eierByCategory?.punkter || []).map(
-            normalizeSelectionToken
+            normalizeSelectionToken,
           )
-        : []
+        : [],
     ),
     ledninger: new Set(
       filtersEnabled.eier
         ? (selection?.eierByCategory?.ledninger || []).map(
-            normalizeSelectionToken
+            normalizeSelectionToken,
           )
-        : []
+        : [],
     ),
   };
 
@@ -323,16 +327,16 @@ export function cleanSosiText(sosiText, selection, options) {
     punkter: new Set(
       filtersEnabled.status
         ? (selection?.statusByCategory?.punkter || []).map(
-            normalizeSelectionToken
+            normalizeSelectionToken,
           )
-        : []
+        : [],
     ),
     ledninger: new Set(
       filtersEnabled.status
         ? (selection?.statusByCategory?.ledninger || []).map(
-            normalizeSelectionToken
+            normalizeSelectionToken,
           )
-        : []
+        : [],
     ),
   };
 
@@ -394,7 +398,7 @@ export function cleanSosiText(sosiText, selection, options) {
       if (excludedSet && excludedSet.size > 0) {
         const ids = extractIdsFromBlock(currentBlock);
         const shouldExclude = ids.some((id) =>
-          excludedSet.has(`${id.idType}:${id.value}`)
+          excludedSet.has(`${id.idType}:${id.value}`),
         );
         if (shouldExclude) {
           currentBlock = [];
@@ -409,7 +413,7 @@ export function cleanSosiText(sosiText, selection, options) {
       const keepEierSet = keepEierByCategory[category];
       if (keepEierSet && keepEierSet.size > 0) {
         const eierToken = normalizeExtractedToken(
-          extractEierFromBlock(currentBlock)
+          extractEierFromBlock(currentBlock),
         );
         // If EIER filtering is active, the feature must match one of the allowed tokens.
         if (!keepEierSet.has(eierToken)) {
@@ -425,7 +429,7 @@ export function cleanSosiText(sosiText, selection, options) {
       const keepStatusSet = keepStatusByCategory[category];
       if (keepStatusSet && keepStatusSet.size > 0) {
         const statusToken = normalizeExtractedToken(
-          extractStatusFromBlock(currentBlock)
+          extractStatusFromBlock(currentBlock),
         );
         // If STATUS filtering is active, the feature must match one of the allowed tokens.
         if (!keepStatusSet.has(statusToken)) {
@@ -448,8 +452,8 @@ export function cleanSosiText(sosiText, selection, options) {
           currentBlock,
           'punkter',
           selection,
-          options
-        )
+          options,
+        ),
       );
       currentBlock = [];
       return;
@@ -468,8 +472,8 @@ export function cleanSosiText(sosiText, selection, options) {
           currentBlock,
           'ledninger',
           selection,
-          options
-        )
+          options,
+        ),
       );
       currentBlock = [];
       return;
@@ -558,7 +562,7 @@ export function extractExcludedSosiText(sosiText, selection) {
 
       const ids = extractIdsFromBlock(currentBlock);
       const shouldKeep = ids.some((id) =>
-        excludedSet.has(`${id.idType}:${id.value}`)
+        excludedSet.has(`${id.idType}:${id.value}`),
       );
       if (shouldKeep) outLines.push(...currentBlock);
       currentBlock = [];

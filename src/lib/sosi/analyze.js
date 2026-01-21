@@ -149,12 +149,12 @@ export function analyzeSosiText(sosiText) {
       if (currentCategory === 'punkter')
         inc(
           result.byCategory.punkter.objTypes,
-          currentObjType || '(unknown)'
+          currentObjType || '(unknown)',
         );
       else if (currentCategory === 'ledninger')
         inc(
           result.byCategory.ledninger.objTypes,
-          currentObjType || '(unknown)'
+          currentObjType || '(unknown)',
         );
       else
         inc(result.unknown.objTypes, currentObjType || '(unknown)');
