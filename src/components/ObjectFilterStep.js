@@ -67,10 +67,75 @@ export function ObjectFilterStep({
     [selection.objectFiltersByCategory, activeTab]
   );
 
+  const priorityFieldKeys = useMemo(
+    () => ['OBJTYPE', 'EIER', 'STATUS'],
+    []
+  );
+
+  const priorityFieldMeta = useMemo(() => {
+    if (!sosiText) {
+      return {
+        OBJTYPE: { present: true, count: 0 },
+        EIER: { present: false, count: 0 },
+        STATUS: { present: false, count: 0 },
+      };
+    }
+
+    const meta = {};
+    for (const key of priorityFieldKeys) {
+      const { values } = computeFieldValues(sosiText, activeTab, key);
+      const count = values.reduce((sum, v) => sum + Number(v.count || 0), 0);
+      const present =
+        key === 'OBJTYPE'
+          ? true
+          : values.some((v) => v.value !== TOKEN_MISSING);
+      meta[key] = { present, count };
+    }
+    return meta;
+  }, [sosiText, activeTab, priorityFieldKeys]);
+
   // Get all available fields for current tab
   const allFields = useMemo(() => {
-    return exploreData?.[activeTab]?.fields || [];
-  }, [exploreData, activeTab]);
+    const base = exploreData?.[activeTab]?.fields || [];
+    const byKey = new Map();
+
+    for (const [key, count] of base) {
+      const keyUpper = String(key).toUpperCase();
+      byKey.set(keyUpper, Number(count || 0));
+    }
+
+    const activeKeys = new Set(activeFilters.map((f) => f.fieldKeyUpper));
+
+    // Ensure priority keys are available for selection:
+    // - OBJTYPE always
+    // - EIER/STATUS if present in the file OR already active as a filter
+    for (const key of priorityFieldKeys) {
+      const meta = priorityFieldMeta[key];
+      const shouldInclude =
+        key === 'OBJTYPE' ||
+        meta?.present ||
+        activeKeys.has(key);
+      if (!shouldInclude) continue;
+      if (!byKey.has(key)) {
+        byKey.set(key, Number(meta?.count || 0));
+      }
+    }
+
+    const prioritizedIndex = new Map(
+      priorityFieldKeys.map((k, i) => [k, i])
+    );
+
+    return Array.from(byKey.entries()).sort(([aKey], [bKey]) => {
+      const aPri = prioritizedIndex.has(aKey)
+        ? prioritizedIndex.get(aKey)
+        : Number.POSITIVE_INFINITY;
+      const bPri = prioritizedIndex.has(bKey)
+        ? prioritizedIndex.get(bKey)
+        : Number.POSITIVE_INFINITY;
+      if (aPri !== bPri) return aPri - bPri;
+      return String(aKey).localeCompare(String(bKey));
+    });
+  }, [exploreData, activeTab, activeFilters, priorityFieldKeys, priorityFieldMeta]);
 
   // Compute field cardinalities for warning display
   const fieldCardinalities = useMemo(() => {
