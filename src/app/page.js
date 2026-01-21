@@ -1,7 +1,7 @@
 /**
  * @file page.js
  * Main client-side UI for SOSI-Rens.
- * Implements a five-step flow: Upload → Explore → Filter → Exclude → Download.
+ * Implements a six-step flow: Upload → Explore → ObjectFilter → FieldSelect → Exclude → Download.
  * Handles file decoding, analysis, filtering, theming, and selection persistence.
  */
 
@@ -21,6 +21,8 @@ import {
   Settings2,
   Trash2,
   Upload,
+  ListFilter,
+  ClipboardList,
 } from 'lucide-react';
 import { analyzeSosiText } from '../lib/sosi/analyze.js';
 import {
@@ -32,6 +34,7 @@ import {
   encodeSosiTextToBytes,
 } from '../lib/sosi/browserEncoding.js';
 import { computePivot2D } from '../lib/sosi/pivot2d.js';
+import { ObjectFilterStep } from '../components/ObjectFilterStep.js';
 
 /** localStorage key for persisting user selection (objTypes, fields). */
 const STORAGE_KEY = 'sosi-rens:v0';
@@ -711,7 +714,7 @@ function StepButton({
  * @param {(tab: 'punkter' | 'ledninger') => void} props.onChange - Tab change handler.
  * @returns {JSX.Element}
  */
-function Tabs({ theme, value, onChange }) {
+function Tabs({ theme, value, onChange, visitedTabs }) {
   return (
     <div
       className={`inline-flex items-center gap-1 rounded-xl border p-1 ${theme.border} ${theme.tabList}`}
@@ -721,23 +724,29 @@ function Tabs({ theme, value, onChange }) {
         type="button"
         role="tab"
         aria-selected={value === 'punkter'}
-        className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+        className={`relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
           value === 'punkter' ? theme.tabActive : theme.tabInactive
         }`}
         onClick={() => onChange('punkter')}
       >
         Punkter
+        {visitedTabs?.punkter && (
+          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-500" />
+        )}
       </button>
       <button
         type="button"
         role="tab"
         aria-selected={value === 'ledninger'}
-        className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+        className={`relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
           value === 'ledninger' ? theme.tabActive : theme.tabInactive
         }`}
         onClick={() => onChange('ledninger')}
       >
         Ledninger
+        {visitedTabs?.ledninger && (
+          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-500" />
+        )}
       </button>
     </div>
   );
@@ -780,11 +789,19 @@ function LoadingOverlay({ theme, label }) {
  * @returns {JSX.Element}
  */
 export default function Home() {
-  // Step state: upload | explore | filter | exclude | download
+  // Step state: upload | explore | objectFilter | fieldSelect | exclude | download
   const [step, setStep] = useState('upload');
   // Active tab for Explore/Filter views
   const [activeTab, setActiveTab] = useState('punkter');
   const [filterVisitedTabs, setFilterVisitedTabs] = useState({
+    punkter: false,
+    ledninger: false,
+  });
+  const [objectFilterVisitedTabs, setObjectFilterVisitedTabs] = useState({
+    punkter: false,
+    ledninger: false,
+  });
+  const [fieldSelectVisitedTabs, setFieldSelectVisitedTabs] = useState({
     punkter: false,
     ledninger: false,
   });
@@ -828,16 +845,31 @@ export default function Home() {
 
   useEffect(() => {
     setFilterVisitedTabs({ punkter: false, ledninger: false });
+    setObjectFilterVisitedTabs({ punkter: false, ledninger: false });
+    setFieldSelectVisitedTabs({ punkter: false, ledninger: false });
     setExclusionsVisited(false);
     setDownloadFieldMode(null);
   }, [file]);
 
   useEffect(() => {
-    if (step !== 'filter') return;
-    setFilterVisitedTabs((prev) => ({
-      ...prev,
-      [activeTab]: true,
-    }));
+    if (step === 'filter') {
+      setFilterVisitedTabs((prev) => ({
+        ...prev,
+        [activeTab]: true,
+      }));
+    }
+    if (step === 'objectFilter') {
+      setObjectFilterVisitedTabs((prev) => ({
+        ...prev,
+        [activeTab]: true,
+      }));
+    }
+    if (step === 'fieldSelect') {
+      setFieldSelectVisitedTabs((prev) => ({
+        ...prev,
+        [activeTab]: true,
+      }));
+    }
   }, [step, activeTab]);
 
   useEffect(() => {
@@ -925,6 +957,11 @@ export default function Home() {
     excludedByCategory: { punkter: [], ledninger: [] },
     eierByCategory: { punkter: ['K'], ledninger: ['K'] }, // Default: only EIER=K
     statusByCategory: { punkter: [], ledninger: [] },
+    /**
+     * New dynamic object filters per category.
+     * Each entry is { fieldKeyUpper: string, selectedValues: string[] }.
+     */
+    objectFiltersByCategory: { punkter: [], ledninger: [] },
     lastFileName: null,
   });
 
@@ -973,6 +1010,14 @@ export default function Home() {
           )
             ? parsed.statusByCategory.ledninger
             : prev.statusByCategory.ledninger,
+        },
+        objectFiltersByCategory: {
+          punkter: Array.isArray(parsed?.objectFiltersByCategory?.punkter)
+            ? parsed.objectFiltersByCategory.punkter
+            : prev.objectFiltersByCategory.punkter,
+          ledninger: Array.isArray(parsed?.objectFiltersByCategory?.ledninger)
+            ? parsed.objectFiltersByCategory.ledninger
+            : prev.objectFiltersByCategory.ledninger,
         },
       }));
     } catch {
@@ -1923,19 +1968,30 @@ export default function Home() {
     [],
   );
 
-  const canProceedToExclusionsFromFilter =
-    filterVisitedTabs.punkter && filterVisitedTabs.ledninger;
+  // Step gating: must visit both tabs in objectFilter before fieldSelect
+  const canProceedToFieldSelect =
+    objectFilterVisitedTabs.punkter && objectFilterVisitedTabs.ledninger;
+
+  // Step gating: must visit both tabs in fieldSelect before exclude
+  const canProceedToExclude =
+    canProceedToFieldSelect &&
+    fieldSelectVisitedTabs.punkter && fieldSelectVisitedTabs.ledninger;
+
+  // Legacy for backwards compatibility
+  const canProceedToExclusionsFromFilter = canProceedToExclude;
 
   const canProceedToDownloadFromExclusions =
     canProceedToExclusionsFromFilter && exclusionsVisited;
 
   const downloadGateReason = !analysis
     ? null
-    : !canProceedToExclusionsFromFilter
-      ? 'Du må åpne både «Punkter» og «Ledninger» i «Filtrer» før du kan gå til nedlasting.'
-      : !exclusionsVisited
-        ? 'Gå til «Ekskluder» før du kan gå til nedlasting.'
-        : null;
+    : !canProceedToFieldSelect
+      ? 'Du må åpne både «Punkter» og «Ledninger» i «Filtrer objekter» først.'
+      : !canProceedToExclude
+        ? 'Du må åpne både «Punkter» og «Ledninger» i «Velg felt» først.'
+        : !exclusionsVisited
+          ? 'Gå til «Ekskluder» før du kan gå til nedlasting.'
+          : null;
 
   const exploreFieldRows = useMemo(() => {
     if (!tabData) return [];
@@ -2239,11 +2295,28 @@ export default function Home() {
                 />
                 <StepButton
                   theme={theme}
-                  active={step === 'filter'}
+                  active={step === 'objectFilter'}
                   disabled={busy || !analysis}
-                  icon={Filter}
-                  label="3. Filtrer"
-                  onClick={() => analysis && setStep('filter')}
+                  icon={ListFilter}
+                  label="3. Filtrer objekter"
+                  onClick={() => analysis && setStep('objectFilter')}
+                />
+                <StepButton
+                  theme={theme}
+                  active={step === 'fieldSelect'}
+                  disabled={busy || !analysis || !canProceedToFieldSelect}
+                  disabledReason={
+                    canProceedToFieldSelect
+                      ? null
+                      : 'Åpne både «Punkter» og «Ledninger» i «Filtrer objekter» først.'
+                  }
+                  icon={ClipboardList}
+                  label="4. Velg felt"
+                  onClick={() =>
+                    analysis &&
+                    canProceedToFieldSelect &&
+                    setStep('fieldSelect')
+                  }
                 />
                 <StepButton
                   theme={theme}
@@ -2251,18 +2324,18 @@ export default function Home() {
                   disabled={
                     busy ||
                     !analysis ||
-                    !canProceedToExclusionsFromFilter
+                    !canProceedToExclude
                   }
                   disabledReason={
-                    canProceedToExclusionsFromFilter
+                    canProceedToExclude
                       ? null
-                      : 'Åpne både «Punkter» og «Ledninger» i «Filtrer» først.'
+                      : 'Åpne både «Punkter» og «Ledninger» i «Velg felt» først.'
                   }
                   icon={Trash2}
-                  label="4. Ekskluder"
+                  label="5. Ekskluder"
                   onClick={() =>
                     analysis &&
-                    canProceedToExclusionsFromFilter &&
+                    canProceedToExclude &&
                     setStep('exclude')
                   }
                 />
@@ -2276,7 +2349,7 @@ export default function Home() {
                   }
                   disabledReason={downloadGateReason}
                   icon={Download}
-                  label="5. Last ned"
+                  label="6. Last ned"
                   onClick={() =>
                     analysis &&
                     canProceedToDownloadFromExclusions &&
@@ -3128,11 +3201,203 @@ export default function Home() {
                     <button
                       type="button"
                       className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
-                      onClick={() => setStep('filter')}
+                      onClick={() => setStep('objectFilter')}
                     >
-                      <Filter className="h-4 w-4" />
+                      <ListFilter className="h-4 w-4" />
                       Gå til filtrering
                     </button>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {step === 'objectFilter' && exploreData && available ? (
+              <ObjectFilterStep
+                theme={theme}
+                sosiText={sosiText}
+                exploreData={exploreData}
+                selection={selection}
+                setSelection={setSelection}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                visitedTabs={objectFilterVisitedTabs}
+                onExportSettings={() => {
+                  const blob = new Blob(
+                    [JSON.stringify(selection, null, 2)],
+                    { type: 'application/json' },
+                  );
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'sosi-rens-innstillinger.json';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                onImportSettings={(file) => {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    try {
+                      const parsed = JSON.parse(e.target.result);
+                      setSelection(parsed);
+                    } catch (err) {
+                      setError('Kunne ikke lese innstillinger fra fil.');
+                    }
+                  };
+                  reader.readAsText(file);
+                }}
+              />
+            ) : null}
+
+            {step === 'fieldSelect' && exploreData && available ? (
+              <section className="flex h-full flex-col">
+                <div
+                  className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}
+                >
+                  <div>
+                    <h2 className="text-2xl font-semibold tracking-tight">
+                      Velg felt
+                    </h2>
+                    <div className={`mt-1 text-sm ${theme.muted}`}>
+                      Velg hvilke felter som skal være med i eksporten.
+                    </div>
+                    <div className={`mt-1 text-xs ${theme.muted}`}>
+                      Noen felter er låst (f.eks. OBJTYPE/EGS_*) fordi
+                      de er nødvendige for gyldig SOSI.
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-4">
+                      <Tabs
+                        theme={theme}
+                        value={activeTab}
+                        onChange={setActiveTab}
+                        visitedTabs={fieldSelectVisitedTabs}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface}`}
+                          onClick={() =>
+                            setAll(
+                              activeTab,
+                              'fields',
+                              uniq([
+                                ...available[activeTab].fields,
+                                ...Array.from(mandatoryFields),
+                              ]),
+                            )
+                          }
+                        >
+                          Velg alle
+                        </button>
+                        <button
+                          type="button"
+                          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface}`}
+                          onClick={() =>
+                            setAll(
+                              activeTab,
+                              'fields',
+                              Array.from(mandatoryFields),
+                            )
+                          }
+                        >
+                          Velg ingen
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Field selection list */}
+                  <div
+                    className={`mt-4 min-h-0 flex-1 overflow-auto rounded-lg border p-3 ${theme.border}`}
+                  >
+                    <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                      {uniq([
+                        ...available[activeTab].fields,
+                        ...Array.from(mandatoryFields),
+                      ]).map((fieldKey) => {
+                        const keyUpper = String(fieldKey).toUpperCase();
+                        const locked = mandatoryFields.has(keyUpper);
+                        const checked =
+                          locked ||
+                          selectedFields
+                            .map((f) => String(f).toUpperCase())
+                            .includes(keyUpper);
+                        return (
+                          <label
+                            key={fieldKey}
+                            className={`flex items-center gap-2 rounded px-2 py-1.5 ${
+                              theme.hoverAccentSoft
+                            } ${
+                              locked
+                                ? 'cursor-not-allowed opacity-60'
+                                : 'cursor-pointer'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={locked}
+                              className="h-4 w-4"
+                              onChange={() => {
+                                if (locked) return;
+                                setSelection((prev) => ({
+                                  ...prev,
+                                  fieldsByCategory: {
+                                    ...prev.fieldsByCategory,
+                                    [activeTab]: toggleInList(
+                                      prev.fieldsByCategory?.[activeTab] || [],
+                                      keyUpper,
+                                    ),
+                                  },
+                                }));
+                              }}
+                            />
+                            <span
+                              className={`font-mono text-xs ${
+                                locked ? 'italic' : ''
+                              }`}
+                            >
+                              {fieldKey}
+                            </span>
+                            {locked && (
+                              <span className={`ml-auto text-xs ${theme.muted}`}>
+                                låst
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface}`}
+                      onClick={() => setStep('objectFilter')}
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Tilbake til filtrering
+                    </button>
+                    <div className="flex flex-col items-end gap-1">
+                      <button
+                        type="button"
+                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${
+                          canProceedToExclude
+                            ? `${theme.primary}`
+                            : 'cursor-not-allowed bg-gray-400'
+                        }`}
+                        disabled={!canProceedToExclude}
+                        onClick={() => canProceedToExclude && setStep('exclude')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Gå til ekskludering
+                      </button>
+                      {!canProceedToExclude && (
+                        <span className={`text-xs ${theme.muted}`}>
+                          Åpne både «Punkter» og «Ledninger» først.
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </section>
@@ -3145,7 +3410,7 @@ export default function Home() {
                 >
                   <div>
                     <h2 className="text-2xl font-semibold tracking-tight">
-                      Filtrer
+                      Filtrer (gammel)
                     </h2>
                     <div className={`mt-1 text-sm ${theme.muted}`}>
                       Velg hvilke objekttyper og felter som skal være

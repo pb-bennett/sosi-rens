@@ -140,6 +140,25 @@ function extractStatusFromBlock(blockLines) {
 }
 
 /**
+ * Extract the value of any attribute key from a feature block.
+ * Handles both double-dot (..KEY) and triple-dot (...KEY) attributes.
+ * @param {string[]} blockLines - Lines of the feature block.
+ * @param {string} keyUpper - Uppercased attribute key (e.g. 'EIER', 'STATUS', 'OBJTYPE').
+ * @returns {string | null} The attribute value, or null if not found.
+ */
+function extractAttributeFromBlock(blockLines, keyUpper) {
+  // Build a regex pattern to match ..KEY or ...KEY
+  const pattern = new RegExp(`^\\.{2,}${keyUpper}\\b(.*)$`, 'i');
+  for (const rawLine of blockLines) {
+    const line = String(rawLine);
+    const match = line.match(pattern);
+    if (!match) continue;
+    return String(match[1] || '').trim();
+  }
+  return null;
+}
+
+/**
  * Build a set of excluded IDs for a category.
  * @param {Object} selection - Selection object.
  * @param {'punkter' | 'ledninger'} category - Category.
@@ -340,6 +359,13 @@ export function cleanSosiText(sosiText, selection, options) {
     ),
   };
 
+  // Dynamic object filters - array of { fieldKeyUpper, selectedValues } per category.
+  // Each filter is applied in order; all must pass for a feature to be kept.
+  const objectFiltersByCategory = {
+    punkter: selection?.objectFiltersByCategory?.punkter || [],
+    ledninger: selection?.objectFiltersByCategory?.ledninger || [],
+  };
+
   const outLines = [];
   let currentBlock = [];
   let currentSection = null;
@@ -433,6 +459,34 @@ export function cleanSosiText(sosiText, selection, options) {
         );
         // If STATUS filtering is active, the feature must match one of the allowed tokens.
         if (!keepStatusSet.has(statusToken)) {
+          currentBlock = [];
+          return;
+        }
+      }
+    }
+
+    // Dynamic object filters: apply each filter in order.
+    // If objectFiltersByCategory has filters, each filter must pass for the feature to be kept.
+    if (category === 'punkter' || category === 'ledninger') {
+      const objectFilters = objectFiltersByCategory[category] || [];
+      for (const filter of objectFilters) {
+        if (!filter.fieldKeyUpper || !Array.isArray(filter.selectedValues)) {
+          continue;
+        }
+        if (filter.selectedValues.length === 0) {
+          // No values selected means filter blocks all
+          currentBlock = [];
+          return;
+        }
+        const allowedSet = new Set(
+          filter.selectedValues.map(normalizeSelectionToken),
+        );
+        const extractedValue = extractAttributeFromBlock(
+          currentBlock,
+          filter.fieldKeyUpper,
+        );
+        const token = normalizeExtractedToken(extractedValue);
+        if (!allowedSet.has(token)) {
           currentBlock = [];
           return;
         }
