@@ -38,6 +38,23 @@ function categorizeSection(section) {
   return 'unknown';
 }
 
+const FILTER_TOKEN_MISSING = '(MANGLER)';
+const FILTER_TOKEN_EMPTY = '(TOM)';
+
+function normalizeSelectionToken(value) {
+  const upper = String(value ?? '').trim().toUpperCase();
+  if (!upper) return FILTER_TOKEN_EMPTY;
+  if (upper === FILTER_TOKEN_EMPTY) return FILTER_TOKEN_EMPTY;
+  if (upper === FILTER_TOKEN_MISSING) return FILTER_TOKEN_MISSING;
+  return upper;
+}
+
+function normalizeExtractedToken(value) {
+  if (value === null) return FILTER_TOKEN_MISSING;
+  const upper = String(value ?? '').trim().toUpperCase();
+  return upper ? upper : FILTER_TOKEN_EMPTY;
+}
+
 /**
  * Find the OBJTYPE value inside a feature block.
  * @param {string[]} blockLines - Lines of the feature block.
@@ -95,10 +112,9 @@ function extractIdsFromBlock(blockLines) {
 function extractEierFromBlock(blockLines) {
   for (const rawLine of blockLines) {
     const line = String(rawLine);
-    const match = line.match(/^\.\.\.EIER\s+(\S+)/i);
-    if (match) {
-      return String(match[1]).trim();
-    }
+    const match = line.match(/^\.\.\.EIER\b(.*)$/i);
+    if (!match) continue;
+    return String(match[1] || '').trim();
   }
   return null;
 }
@@ -112,10 +128,9 @@ function extractEierFromBlock(blockLines) {
 function extractStatusFromBlock(blockLines) {
   for (const rawLine of blockLines) {
     const line = String(rawLine);
-    const match = line.match(/^\.\.\.STATUS\s+(\S+)/i);
-    if (match) {
-      return String(match[1]).trim();
-    }
+    const match = line.match(/^\.\.\.STATUS\b(.*)$/i);
+    if (!match) continue;
+    return String(match[1] || '').trim();
   }
   return null;
 }
@@ -259,12 +274,22 @@ export function cleanSosiText(sosiText, selection, options) {
   const newline = text.includes('\r\n') ? '\r\n' : '\n';
   const lines = text.split(/\r?\n/);
 
+  const filtersEnabled = {
+    objType: selection?.filtersEnabled?.objType !== false,
+    eier: selection?.filtersEnabled?.eier !== false,
+    status: selection?.filtersEnabled?.status !== false,
+  };
+
   const keepObjTypesByCategory = {
     punkter: new Set(
-      (selection?.objTypesByCategory?.punkter || []).map(String)
+      filtersEnabled.objType
+        ? (selection?.objTypesByCategory?.punkter || []).map(String)
+        : []
     ),
     ledninger: new Set(
-      (selection?.objTypesByCategory?.ledninger || []).map(String)
+      filtersEnabled.objType
+        ? (selection?.objTypesByCategory?.ledninger || []).map(String)
+        : []
     ),
   };
 
@@ -277,14 +302,18 @@ export function cleanSosiText(sosiText, selection, options) {
   // If array has values, only features with matching EIER are kept.
   const keepEierByCategory = {
     punkter: new Set(
-      (selection?.eierByCategory?.punkter || []).map((v) =>
-        String(v).toUpperCase()
-      )
+      filtersEnabled.eier
+        ? (selection?.eierByCategory?.punkter || []).map(
+            normalizeSelectionToken
+          )
+        : []
     ),
     ledninger: new Set(
-      (selection?.eierByCategory?.ledninger || []).map((v) =>
-        String(v).toUpperCase()
-      )
+      filtersEnabled.eier
+        ? (selection?.eierByCategory?.ledninger || []).map(
+            normalizeSelectionToken
+          )
+        : []
     ),
   };
 
@@ -292,14 +321,18 @@ export function cleanSosiText(sosiText, selection, options) {
   // If array has values, only features with matching STATUS are kept.
   const keepStatusByCategory = {
     punkter: new Set(
-      (selection?.statusByCategory?.punkter || []).map((v) =>
-        String(v).toUpperCase()
-      )
+      filtersEnabled.status
+        ? (selection?.statusByCategory?.punkter || []).map(
+            normalizeSelectionToken
+          )
+        : []
     ),
     ledninger: new Set(
-      (selection?.statusByCategory?.ledninger || []).map((v) =>
-        String(v).toUpperCase()
-      )
+      filtersEnabled.status
+        ? (selection?.statusByCategory?.ledninger || []).map(
+            normalizeSelectionToken
+          )
+        : []
     ),
   };
 
@@ -329,9 +362,27 @@ export function cleanSosiText(sosiText, selection, options) {
 
     const objType = extractObjTypeFromBlock(currentBlock);
 
-    // If we cannot determine objtype, keep the block unmodified to avoid
-    // corrupting SOSI structure (especially for uncommon/edge feature shapes).
+    // If we cannot determine OBJTYPE:
+    // - if OBJTYPE filtering is active for this category, treat as missing and drop
+    //   unless the user explicitly kept '(mangler)'
+    // - otherwise, keep the block (no OBJTYPE filtering requested)
     if (!objType) {
+      const keepObjTypeSet =
+        category === 'punkter'
+          ? keepObjTypesByCategory.punkter
+          : category === 'ledninger'
+            ? keepObjTypesByCategory.ledninger
+            : null;
+
+      if (
+        keepObjTypeSet &&
+        keepObjTypeSet.size > 0 &&
+        !keepObjTypeSet.has('(mangler)')
+      ) {
+        currentBlock = [];
+        return;
+      }
+
       outLines.push(...currentBlock);
       currentBlock = [];
       return;
@@ -357,10 +408,11 @@ export function cleanSosiText(sosiText, selection, options) {
     if (category === 'punkter' || category === 'ledninger') {
       const keepEierSet = keepEierByCategory[category];
       if (keepEierSet && keepEierSet.size > 0) {
-        const eierValue = extractEierFromBlock(currentBlock);
-        // If feature has EIER and it's not in the allowed set, skip it.
-        // If feature has no EIER, we keep it (don't filter out features without EIER).
-        if (eierValue && !keepEierSet.has(eierValue.toUpperCase())) {
+        const eierToken = normalizeExtractedToken(
+          extractEierFromBlock(currentBlock)
+        );
+        // If EIER filtering is active, the feature must match one of the allowed tokens.
+        if (!keepEierSet.has(eierToken)) {
           currentBlock = [];
           return;
         }
@@ -372,13 +424,11 @@ export function cleanSosiText(sosiText, selection, options) {
     if (category === 'punkter' || category === 'ledninger') {
       const keepStatusSet = keepStatusByCategory[category];
       if (keepStatusSet && keepStatusSet.size > 0) {
-        const statusValue = extractStatusFromBlock(currentBlock);
-        // If feature has STATUS and it's not in the allowed set, skip it.
-        // If feature has no STATUS, we keep it (don't filter out features without STATUS).
-        if (
-          statusValue &&
-          !keepStatusSet.has(statusValue.toUpperCase())
-        ) {
+        const statusToken = normalizeExtractedToken(
+          extractStatusFromBlock(currentBlock)
+        );
+        // If STATUS filtering is active, the feature must match one of the allowed tokens.
+        if (!keepStatusSet.has(statusToken)) {
           currentBlock = [];
           return;
         }

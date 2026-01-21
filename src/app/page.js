@@ -524,15 +524,23 @@ function extractEierValues(sosiText) {
   let currentCategory = 'unknown';
   let currentSection = null;
   let blockEierValue = null;
+  let inBlock = false;
 
   function finalizeBlock() {
-    if (blockEierValue !== null) {
-      const val = blockEierValue || '(tom)';
-      if (currentCategory === 'punkter') {
-        countsPunkter.set(val, (countsPunkter.get(val) || 0) + 1);
-      } else if (currentCategory === 'ledninger') {
-        countsLedninger.set(val, (countsLedninger.get(val) || 0) + 1);
-      }
+    if (!inBlock) {
+      blockEierValue = null;
+      return;
+    }
+
+    const val =
+      blockEierValue === null
+        ? '(mangler)'
+        : blockEierValue || '(tom)';
+
+    if (currentCategory === 'punkter') {
+      countsPunkter.set(val, (countsPunkter.get(val) || 0) + 1);
+    } else if (currentCategory === 'ledninger') {
+      countsLedninger.set(val, (countsLedninger.get(val) || 0) + 1);
     }
     blockEierValue = null;
   }
@@ -546,6 +554,7 @@ function extractEierValues(sosiText) {
       currentSection = getSectionName(line);
       currentCategory = categorizeSection(currentSection);
       blockEierValue = null;
+      inBlock = true;
       return;
     }
 
@@ -586,21 +595,23 @@ function extractStatusValues(sosiText) {
   let currentCategory = 'unknown';
   let currentSection = null;
   let blockStatusValue = null;
+  let inBlock = false;
 
   function finalizeBlock() {
-    if (blockStatusValue !== null) {
-      const val = blockStatusValue || '(tom)';
-      if (currentCategory === 'punkter') {
-        countsPunkter.set(
-          val,
-          (countsPunkter.get(val) || 0) + 1
-        );
-      } else if (currentCategory === 'ledninger') {
-        countsLedninger.set(
-          val,
-          (countsLedninger.get(val) || 0) + 1
-        );
-      }
+    if (!inBlock) {
+      blockStatusValue = null;
+      return;
+    }
+
+    const val =
+      blockStatusValue === null
+        ? '(mangler)'
+        : blockStatusValue || '(tom)';
+
+    if (currentCategory === 'punkter') {
+      countsPunkter.set(val, (countsPunkter.get(val) || 0) + 1);
+    } else if (currentCategory === 'ledninger') {
+      countsLedninger.set(val, (countsLedninger.get(val) || 0) + 1);
     }
     blockStatusValue = null;
   }
@@ -614,6 +625,7 @@ function extractStatusValues(sosiText) {
       currentSection = getSectionName(line);
       currentCategory = categorizeSection(currentSection);
       blockStatusValue = null;
+      inBlock = true;
       return;
     }
 
@@ -907,6 +919,7 @@ export default function Home() {
   }, [step]);
 
   const [selection, setSelection] = useState({
+    filtersEnabled: { objType: true, eier: true, status: true },
     objTypesByCategory: { punkter: [], ledninger: [] },
     fieldsByCategory: { punkter: [], ledninger: [] },
     excludedByCategory: { punkter: [], ledninger: [] },
@@ -935,6 +948,11 @@ export default function Home() {
       setSelection((prev) => ({
         ...prev,
         ...parsed,
+        filtersEnabled: {
+          objType: parsed?.filtersEnabled?.objType !== false,
+          eier: parsed?.filtersEnabled?.eier !== false,
+          status: parsed?.filtersEnabled?.status !== false,
+        },
         excludedByCategory: normalizeExcludedByCategory(
           parsed?.excludedByCategory ?? prev.excludedByCategory
         ),
@@ -950,7 +968,9 @@ export default function Home() {
           punkter: Array.isArray(parsed?.statusByCategory?.punkter)
             ? parsed.statusByCategory.punkter
             : prev.statusByCategory.punkter,
-          ledninger: Array.isArray(parsed?.statusByCategory?.ledninger)
+          ledninger: Array.isArray(
+            parsed?.statusByCategory?.ledninger
+          )
             ? parsed.statusByCategory.ledninger
             : prev.statusByCategory.ledninger,
         },
@@ -1227,6 +1247,7 @@ export default function Home() {
     const cleanedText = cleanSosiText(
       decoded.text,
       {
+        filtersEnabled: selection.filtersEnabled,
         objTypesByCategory: selection.objTypesByCategory,
         fieldsByCategory: selection.fieldsByCategory,
         excludedByCategory: selection.excludedByCategory,
@@ -1370,6 +1391,7 @@ export default function Home() {
       fd.set(
         'selection',
         JSON.stringify({
+          filtersEnabled: selection.filtersEnabled,
           objTypesByCategory: selection.objTypesByCategory,
           fieldsByCategory: selection.fieldsByCategory,
           excludedByCategory: selection.excludedByCategory,
@@ -1426,6 +1448,7 @@ export default function Home() {
         appVersion: 'sosi-rens:v0',
       },
       // Filter settings
+      filtersEnabled: selection.filtersEnabled,
       objTypesByCategory: selection.objTypesByCategory,
       fieldsByCategory: selection.fieldsByCategory,
       eierByCategory: selection.eierByCategory,
@@ -1465,6 +1488,11 @@ export default function Home() {
       const imported = await readJsonFile(fileObj);
       setSelection((prev) => ({
         ...prev,
+        filtersEnabled: {
+          objType: imported?.filtersEnabled?.objType !== false,
+          eier: imported?.filtersEnabled?.eier !== false,
+          status: imported?.filtersEnabled?.status !== false,
+        },
         objTypesByCategory:
           imported.objTypesByCategory || prev.objTypesByCategory,
         fieldsByCategory:
@@ -1555,6 +1583,7 @@ export default function Home() {
     if (!available) return;
     setSelection((prev) => ({
       ...prev,
+      filtersEnabled: { objType: true, eier: true, status: true },
       objTypesByCategory: {
         punkter: available.punkter.objTypes,
         ledninger: available.ledninger.objTypes,
@@ -3150,11 +3179,42 @@ export default function Home() {
                               (kommunal).
                             </p>
                           </div>
+                          <div className="flex items-center gap-3">
+                            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4"
+                                checked={
+                                  selection.filtersEnabled?.eier !==
+                                  false
+                                }
+                                onChange={(e) => {
+                                  const enabled =
+                                    !!e.target.checked;
+                                  setSelection((prev) => ({
+                                    ...prev,
+                                    filtersEnabled: {
+                                      ...(prev.filtersEnabled || {
+                                        objType: true,
+                                        eier: true,
+                                        status: true,
+                                      }),
+                                      eier: enabled,
+                                    },
+                                  }));
+                                }}
+                              />
+                              Aktiver
+                            </label>
                           <div className="flex gap-2">
                             <button
                               type="button"
                               className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
                               onClick={() => selectAllEier(activeTab)}
+                              disabled={
+                                selection.filtersEnabled?.eier ===
+                                false
+                              }
                             >
                               Alle
                             </button>
@@ -3164,9 +3224,14 @@ export default function Home() {
                               onClick={() =>
                                 deselectAllEier(activeTab)
                               }
+                              disabled={
+                                selection.filtersEnabled?.eier ===
+                                false
+                              }
                             >
                               Ingen
                             </button>
+                          </div>
                           </div>
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -3179,7 +3244,12 @@ export default function Home() {
                               return (
                                 <label
                                   key={value}
-                                  className={`inline-flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 ${theme.hoverAccentSoft}`}
+                                  className={`inline-flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 ${theme.hoverAccentSoft} ${
+                                    selection.filtersEnabled?.eier ===
+                                    false
+                                      ? 'opacity-50'
+                                      : ''
+                                  }`}
                                 >
                                   <input
                                     type="checkbox"
@@ -3188,6 +3258,10 @@ export default function Home() {
                                       toggleEier(activeTab, value)
                                     }
                                     className="h-4 w-4"
+                                    disabled={
+                                      selection.filtersEnabled?.eier ===
+                                      false
+                                    }
                                   />
                                   <span className="text-sm font-medium">
                                     {value}
@@ -3203,23 +3277,62 @@ export default function Home() {
                           )}
                         </div>
 
-                        {availableStatusValues[activeTab]?.length > 0 ? (
-                          <div className={`mt-4 border-t pt-3 ${theme.border}`}>
+                        {availableStatusValues[activeTab]?.length >
+                        0 ? (
+                          <div
+                            className={`mt-4 border-t pt-3 ${theme.border}`}
+                          >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
                                 <h3 className="text-sm font-semibold">
                                   Status (STATUS)
                                 </h3>
-                                <p className={`text-xs ${theme.muted}`}>
-                                  Valgfritt eksportfilter basert på STATUS. Tomt valg betyr ingen filtrering.
+                                <p
+                                  className={`text-xs ${theme.muted}`}
+                                >
+                                  Valgfritt eksportfilter basert på
+                                  STATUS. Tomt valg betyr ingen
+                                  filtrering.
                                 </p>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex items-center gap-3">
+                                <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium">
+                                  <input
+                                    type="checkbox"
+                                    className="h-4 w-4"
+                                    checked={
+                                      selection.filtersEnabled?.status !==
+                                      false
+                                    }
+                                    onChange={(e) => {
+                                      const enabled =
+                                        !!e.target.checked;
+                                      setSelection((prev) => ({
+                                        ...prev,
+                                        filtersEnabled: {
+                                          ...(prev.filtersEnabled || {
+                                            objType: true,
+                                            eier: true,
+                                            status: true,
+                                          }),
+                                          status: enabled,
+                                        },
+                                      }));
+                                    }}
+                                  />
+                                  Aktiver
+                                </label>
+
+                                <div className="flex gap-2">
                                 <button
                                   type="button"
                                   className={`rounded-md border px-2 py-1 text-xs font-medium ${theme.border} ${theme.surface}`}
                                   onClick={() =>
                                     selectAllStatus(activeTab)
+                                  }
+                                  disabled={
+                                    selection.filtersEnabled?.status ===
+                                    false
                                   }
                                 >
                                   Alle
@@ -3230,9 +3343,14 @@ export default function Home() {
                                   onClick={() =>
                                     deselectAllStatus(activeTab)
                                   }
+                                  disabled={
+                                    selection.filtersEnabled?.status ===
+                                    false
+                                  }
                                 >
                                   Ingen
                                 </button>
+                                </div>
                               </div>
                             </div>
 
@@ -3247,7 +3365,12 @@ export default function Home() {
                                   return (
                                     <label
                                       key={value}
-                                      className={`inline-flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 ${theme.hoverAccentSoft}`}
+                                      className={`inline-flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 ${theme.hoverAccentSoft} ${
+                                        selection.filtersEnabled?.status ===
+                                        false
+                                          ? 'opacity-50'
+                                          : ''
+                                      }`}
                                     >
                                       <input
                                         type="checkbox"
@@ -3259,6 +3382,10 @@ export default function Home() {
                                           )
                                         }
                                         className="h-4 w-4"
+                                        disabled={
+                                          selection.filtersEnabled
+                                            ?.status === false
+                                        }
                                       />
                                       <span className="text-sm font-medium">
                                         {value}
@@ -3266,7 +3393,11 @@ export default function Home() {
                                       <span
                                         className={`text-xs ${theme.muted}`}
                                       >
-                                        ({count.toLocaleString('nb-NO')})
+                                        (
+                                        {count.toLocaleString(
+                                          'nb-NO'
+                                        )}
+                                        )
                                       </span>
                                     </label>
                                   );
@@ -3286,7 +3417,35 @@ export default function Home() {
                           <h3 className="text-sm font-semibold">
                             Objekttyper
                           </h3>
-                          <div className="flex gap-2">
+                          <div className="flex items-center gap-3">
+                            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4"
+                                checked={
+                                  selection.filtersEnabled?.objType !==
+                                  false
+                                }
+                                onChange={(e) => {
+                                  const enabled =
+                                    !!e.target.checked;
+                                  setSelection((prev) => ({
+                                    ...prev,
+                                    filtersEnabled: {
+                                      ...(prev.filtersEnabled || {
+                                        objType: true,
+                                        eier: true,
+                                        status: true,
+                                      }),
+                                      objType: enabled,
+                                    },
+                                  }));
+                                }}
+                              />
+                              Aktiver
+                            </label>
+
+                            <div className="flex gap-2">
                             <button
                               type="button"
                               className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
@@ -3297,6 +3456,10 @@ export default function Home() {
                                   available[activeTab].objTypes
                                 )
                               }
+                              disabled={
+                                selection.filtersEnabled?.objType ===
+                                false
+                              }
                             >
                               Velg alle
                             </button>
@@ -3306,9 +3469,14 @@ export default function Home() {
                               onClick={() =>
                                 setAll(activeTab, 'objTypes', [])
                               }
+                              disabled={
+                                selection.filtersEnabled?.objType ===
+                                false
+                              }
                             >
                               Velg ingen
                             </button>
+                            </div>
                           </div>
                         </div>
 
@@ -3322,7 +3490,12 @@ export default function Home() {
                               return (
                                 <label
                                   key={objType}
-                                  className={`flex items-center gap-2 rounded px-2 py-1 ${theme.hoverAccentSoft}`}
+                                  className={`flex items-center gap-2 rounded px-2 py-1 ${theme.hoverAccentSoft} ${
+                                    selection.filtersEnabled?.objType ===
+                                    false
+                                      ? 'opacity-50'
+                                      : ''
+                                  }`}
                                 >
                                   <input
                                     type="checkbox"
@@ -3342,6 +3515,10 @@ export default function Home() {
                                         },
                                       }));
                                     }}
+                                    disabled={
+                                      selection.filtersEnabled?.objType ===
+                                      false
+                                    }
                                   />
                                   <span className="text-sm">
                                     {objType}

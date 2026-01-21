@@ -96,14 +96,18 @@ npm run start
 2. **Explore**
    - Inspect counts and distributions.
    - Expand a field to see value frequencies (computed client-side).
-  - Use **Utvidet visning** on an expanded field to compute a 2D crosstab with a secondary field.
-    - Caps: max 200 rows and 25 columns (remaining values grouped as `Andre`).
-    - Optional heatmap (“Varmekart”).
+
+- Use **Utvidet visning** on an expanded field to compute a 2D crosstab with a secondary field.
+  - Caps: max 200 rows and 25 columns (remaining values grouped as `Andre`).
+  - Optional heatmap (“Varmekart”).
+
 3. **Filter**
    - Choose object types and fields to keep.
    - You must open both `Punkter` and `Ledninger` tabs before continuing.
 4. **Exclude**
-  - Exclude individual objects by SID (separately for `Punkter` and `Ledninger`).
+
+- Exclude individual objects by SID (separately for `Punkter` and `Ledninger`).
+
 5. **Download**
    - Choose output mode:
      - Remove unselected fields, or

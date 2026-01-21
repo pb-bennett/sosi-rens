@@ -74,6 +74,8 @@ function categorizeSection(section) {
 export function analyzeSosiText(sosiText) {
   const lines = String(sosiText).split(/\r?\n/);
 
+  const MISSING_OBJTYPE = '(mangler)';
+
   const result = {
     lines: lines.length,
     featuresBySection: {},
@@ -101,15 +103,32 @@ export function analyzeSosiText(sosiText) {
   let currentSection = null;
   let currentCategory = 'unknown';
   let currentObjType = null;
+  let inFeature = false;
+  let sawObjTypeLine = false;
+
+  function finalizeFeatureIfMissingObjType() {
+    if (!inFeature) return;
+    if (sawObjTypeLine) return;
+
+    if (currentCategory === 'punkter')
+      inc(result.byCategory.punkter.objTypes, MISSING_OBJTYPE);
+    else if (currentCategory === 'ledninger')
+      inc(result.byCategory.ledninger.objTypes, MISSING_OBJTYPE);
+    else inc(result.unknown.objTypes, MISSING_OBJTYPE);
+  }
 
   for (const rawLine of lines) {
     const line = String(rawLine || '');
     if (!line) continue;
 
     if (isFeatureStartLine(line)) {
+      finalizeFeatureIfMissingObjType();
+
       currentSection = getSectionName(line);
       currentCategory = categorizeSection(currentSection);
       currentObjType = null;
+      inFeature = true;
+      sawObjTypeLine = false;
 
       inc(result.featuresBySection, currentSection);
 
@@ -125,6 +144,7 @@ export function analyzeSosiText(sosiText) {
     if (line.startsWith('..OBJTYPE')) {
       const objType = line.replace('..OBJTYPE', '').trim();
       currentObjType = objType || currentObjType;
+      sawObjTypeLine = true;
 
       if (currentCategory === 'punkter')
         inc(
@@ -165,6 +185,8 @@ export function analyzeSosiText(sosiText) {
       else inc(result.unknown.fields, key);
     }
   }
+
+  finalizeFeatureIfMissingObjType();
 
   return result;
 }
