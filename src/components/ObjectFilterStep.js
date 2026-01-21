@@ -10,20 +10,16 @@ import {
   Plus,
   X,
   GripVertical,
-  TriangleAlert,
   Search,
   ChevronDown,
   ChevronRight,
   Copy,
-  Check,
 } from 'lucide-react';
 import { StepInstruction } from './StepInstruction.js';
 import { CategoryTabs } from './CategoryTabs.js';
 import { SettingsDropdown } from './SettingsDropdown.js';
 import {
-  computeFilterPreview,
   computeFieldValues,
-  computeFieldCardinalities,
   HIGH_CARDINALITY_THRESHOLD,
   TOKEN_MISSING,
   TOKEN_EMPTY,
@@ -60,6 +56,8 @@ export function ObjectFilterStep({
   const [valueSearches, setValueSearches] = useState({}); // fieldKey -> search string
   const [expandedFilters, setExpandedFilters] = useState({}); // fieldKey -> bool
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const [draftFilters, setDraftFilters] = useState(null);
+  const [fieldValuesCache, setFieldValuesCache] = useState({}); // `${tab}:${FIELD}` -> { values, isHighCardinality }
 
   // Get active filters for current tab - memoized to fix exhaustive deps warning
   const activeFilters = useMemo(
@@ -67,32 +65,21 @@ export function ObjectFilterStep({
     [selection.objectFiltersByCategory, activeTab]
   );
 
-  const priorityFieldKeys = useMemo(
-    () => ['OBJTYPE', 'EIER', 'STATUS'],
-    []
+  const priorityFieldKeys = useMemo(() => ['OBJTYPE', 'EIER', 'STATUS'], []);
+
+  const computeAndCacheFieldValues = useCallback(
+    (fieldKeyUpper) => {
+      const fieldKey = String(fieldKeyUpper).toUpperCase();
+      const cacheKey = `${activeTab}:${fieldKey}`;
+      const computed = computeFieldValues(sosiText, activeTab, fieldKey);
+      setFieldValuesCache((prev) => ({
+        ...prev,
+        [cacheKey]: computed,
+      }));
+      return computed;
+    },
+    [activeTab, sosiText]
   );
-
-  const priorityFieldMeta = useMemo(() => {
-    if (!sosiText) {
-      return {
-        OBJTYPE: { present: true, count: 0 },
-        EIER: { present: false, count: 0 },
-        STATUS: { present: false, count: 0 },
-      };
-    }
-
-    const meta = {};
-    for (const key of priorityFieldKeys) {
-      const { values } = computeFieldValues(sosiText, activeTab, key);
-      const count = values.reduce((sum, v) => sum + Number(v.count || 0), 0);
-      const present =
-        key === 'OBJTYPE'
-          ? true
-          : values.some((v) => v.value !== TOKEN_MISSING);
-      meta[key] = { present, count };
-    }
-    return meta;
-  }, [sosiText, activeTab, priorityFieldKeys]);
 
   // Get all available fields for current tab
   const allFields = useMemo(() => {
@@ -104,21 +91,10 @@ export function ObjectFilterStep({
       byKey.set(keyUpper, Number(count || 0));
     }
 
-    const activeKeys = new Set(activeFilters.map((f) => f.fieldKeyUpper));
-
-    // Ensure priority keys are available for selection:
-    // - OBJTYPE always
-    // - EIER/STATUS if present in the file OR already active as a filter
+    // Always expose priority keys at the top.
+    // Even if not present in the file, users may want to filter on (mangler)/(tom).
     for (const key of priorityFieldKeys) {
-      const meta = priorityFieldMeta[key];
-      const shouldInclude =
-        key === 'OBJTYPE' ||
-        meta?.present ||
-        activeKeys.has(key);
-      if (!shouldInclude) continue;
-      if (!byKey.has(key)) {
-        byKey.set(key, Number(meta?.count || 0));
-      }
+      if (!byKey.has(key)) byKey.set(key, 0);
     }
 
     const prioritizedIndex = new Map(
@@ -135,14 +111,7 @@ export function ObjectFilterStep({
       if (aPri !== bPri) return aPri - bPri;
       return String(aKey).localeCompare(String(bKey));
     });
-  }, [exploreData, activeTab, activeFilters, priorityFieldKeys, priorityFieldMeta]);
-
-  // Compute field cardinalities for warning display
-  const fieldCardinalities = useMemo(() => {
-    if (!sosiText || !allFields.length) return {};
-    const fieldKeys = allFields.map(([k]) => k);
-    return computeFieldCardinalities(sosiText, activeTab, fieldKeys);
-  }, [sosiText, activeTab, allFields]);
+  }, [exploreData, activeTab, priorityFieldKeys]);
 
   // Fields not yet added to active filters
   const availableFields = useMemo(() => {
@@ -159,42 +128,20 @@ export function ObjectFilterStep({
     );
   }, [availableFields, fieldSearch]);
 
-  // Compute filter preview (counts after each filter)
-  const filterPreview = useMemo(() => {
-    if (!sosiText || activeFilters.length === 0) {
-      const totalFeatures = exploreData?.[activeTab]?.features || 0;
-      return {
-        totalFeatures,
-        keptFeatures: totalFeatures,
-        excludedFeatures: 0,
-        countsByFilter: {},
-        keptAfterEachFilter: [],
-      };
-    }
-    return computeFilterPreview(sosiText, activeTab, activeFilters);
-  }, [sosiText, activeTab, activeFilters, exploreData]);
-
-  // When a filter is added, compute its initial values
-  const [pendingValueLoads, setPendingValueLoads] = useState({});
-
   // Add a field to active filters
   const addFilter = useCallback(
     (fieldKeyUpper) => {
-      // Check if high cardinality and show warning
-      const cardinality = fieldCardinalities[fieldKeyUpper];
-      if (cardinality?.isHighCardinality) {
+      const computed = computeAndCacheFieldValues(fieldKeyUpper);
+      if (computed?.isHighCardinality) {
         const confirmed = window.confirm(
-          `Feltet "${fieldKeyUpper}" har ${cardinality.uniqueCount} unike verdier, ` +
+          `Feltet "${fieldKeyUpper}" har mer enn ${HIGH_CARDINALITY_THRESHOLD} unike verdier, ` +
             `noe som kan gjøre filtreringen kompleks. Vil du fortsatt legge det til?`
         );
         if (!confirmed) return;
       }
 
-      // Compute initial values for this field
-      const fieldValues = computeFieldValues(sosiText, activeTab, fieldKeyUpper);
-
       // Start with all values selected
-      const allValueTokens = fieldValues.values.map((v) => v.value);
+      const allValueTokens = (computed?.values || []).map((v) => v.value);
 
       setSelection((prev) => {
         const currentFilters = prev.objectFiltersByCategory?.[activeTab] || [];
@@ -214,7 +161,7 @@ export function ObjectFilterStep({
       // Expand the new filter
       setExpandedFilters((prev) => ({ ...prev, [fieldKeyUpper]: true }));
     },
-    [sosiText, activeTab, fieldCardinalities, setSelection]
+    [activeTab, computeAndCacheFieldValues, setSelection, setExpandedFilters]
   );
 
   // Remove a filter
@@ -334,6 +281,7 @@ export function ObjectFilterStep({
   // Drag and drop handlers
   const handleDragStart = (e, index) => {
     setDraggedIndex(index);
+    setDraftFilters(activeFilters);
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -341,24 +289,28 @@ export function ObjectFilterStep({
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
 
-    setSelection((prev) => {
-      const currentFilters = [...(prev.objectFiltersByCategory?.[activeTab] || [])];
-      const [removed] = currentFilters.splice(draggedIndex, 1);
-      currentFilters.splice(index, 0, removed);
+    setDraftFilters((prevDraft) => {
+      const base = prevDraft || activeFilters;
+      const next = [...base];
+      const [removed] = next.splice(draggedIndex, 1);
+      next.splice(index, 0, removed);
       setDraggedIndex(index);
-
-      return {
-        ...prev,
-        objectFiltersByCategory: {
-          ...prev.objectFiltersByCategory,
-          [activeTab]: currentFilters,
-        },
-      };
+      return next;
     });
   };
 
   const handleDragEnd = () => {
+    if (draftFilters) {
+      setSelection((prev) => ({
+        ...prev,
+        objectFiltersByCategory: {
+          ...prev.objectFiltersByCategory,
+          [activeTab]: draftFilters,
+        },
+      }));
+    }
     setDraggedIndex(null);
+    setDraftFilters(null);
   };
 
   // Copy filters from other category
@@ -393,17 +345,37 @@ export function ObjectFilterStep({
     setExpandedFilters(newExpanded);
   }, [activeTab, selection.objectFiltersByCategory, setSelection]);
 
-  // Get values for a filter field (from preview or fresh computation)
-  const getFilterValues = (filter, filterIndex) => {
-    // First check if we have preview data (counts after previous filters)
-    const previewValues = filterPreview.countsByFilter?.[filter.fieldKeyUpper];
-    if (previewValues && previewValues.length > 0) {
-      return previewValues;
-    }
-    // Fallback to fresh computation (shouldn't happen often)
-    const computed = computeFieldValues(sosiText, activeTab, filter.fieldKeyUpper);
-    return computed.values;
-  };
+  const displayFilters = draftFilters || activeFilters;
+
+  // Lazy-compute field values for expanded filters after render to keep UI responsive.
+  useEffect(() => {
+    if (!sosiText || displayFilters.length === 0) return;
+
+    const expandedKeys = displayFilters
+      .filter((f) => (expandedFilters[f.fieldKeyUpper] ?? true) === true)
+      .map((f) => String(f.fieldKeyUpper).toUpperCase());
+
+    const nextMissing = expandedKeys.find((key) => {
+      const cacheKey = `${activeTab}:${key}`;
+      return fieldValuesCache[cacheKey] == null;
+    });
+
+    if (!nextMissing) return;
+
+    const handle = setTimeout(() => {
+      // compute one per tick; effect will rerun until all are cached
+      computeAndCacheFieldValues(nextMissing);
+    }, 0);
+
+    return () => clearTimeout(handle);
+  }, [
+    sosiText,
+    activeTab,
+    displayFilters,
+    expandedFilters,
+    fieldValuesCache,
+    computeAndCacheFieldValues,
+  ]);
 
   return (
     <section className="flex h-full flex-col">
@@ -444,27 +416,19 @@ export function ObjectFilterStep({
           </button>
         </div>
 
-        {/* Summary section */}
+        {/* Lightweight summary (no live preview counts to keep UI snappy) */}
         <div
-          className={`mt-4 flex flex-wrap gap-6 rounded-lg border p-4 ${theme.border} ${theme.surfaceMuted}`}
+          className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4 ${theme.border} ${theme.surfaceMuted}`}
         >
-          <div>
-            <div className={`text-xs font-medium ${theme.muted}`}>Totalt</div>
-            <div className="text-2xl font-bold tabular-nums">
-              {filterPreview.totalFeatures.toLocaleString('nb-NO')}
-            </div>
+          <div className={`text-sm ${theme.muted}`}>
+            Totalt i fil: <span className={`font-semibold ${theme.text}`}>{
+              (exploreData?.[activeTab]?.features || 0).toLocaleString('nb-NO')
+            }</span>
           </div>
-          <div>
-            <div className={`text-xs font-medium ${theme.muted}`}>Beholdes</div>
-            <div className="text-2xl font-bold tabular-nums text-emerald-600">
-              {filterPreview.keptFeatures.toLocaleString('nb-NO')}
-            </div>
-          </div>
-          <div>
-            <div className={`text-xs font-medium ${theme.muted}`}>Ekskluderes</div>
-            <div className="text-2xl font-bold tabular-nums text-red-600">
-              {filterPreview.excludedFeatures.toLocaleString('nb-NO')}
-            </div>
+          <div className={`text-sm ${theme.muted}`}>
+            Aktive filtre: <span className={`font-semibold ${theme.text}`}>{
+              displayFilters.length
+            }</span>
           </div>
         </div>
 
@@ -492,24 +456,14 @@ export function ObjectFilterStep({
             >
               <div className="flex flex-wrap gap-2">
                 {filteredAvailableFields.map(([key, count]) => {
-                  const cardinality = fieldCardinalities[key];
-                  const isHighCardinality = cardinality?.isHighCardinality;
-
                   return (
                     <button
                       key={key}
                       type="button"
                       className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${theme.border} ${theme.surface} hover:${theme.primarySoft}`}
                       onClick={() => addFilter(key)}
-                      title={
-                        isHighCardinality
-                          ? `${cardinality.uniqueCount} unike verdier – høy kardinalitet`
-                          : `${count.toLocaleString('nb-NO')} forekomster`
-                      }
+                      title={count ? `${count.toLocaleString('nb-NO')} forekomster` : undefined}
                     >
-                      {isHighCardinality && (
-                        <TriangleAlert className="h-3.5 w-3.5 text-amber-500" />
-                      )}
                       <span>{key}</span>
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -540,9 +494,11 @@ export function ObjectFilterStep({
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {activeFilters.map((filter, index) => {
+                  {displayFilters.map((filter, index) => {
                     const isExpanded = expandedFilters[filter.fieldKeyUpper] ?? true;
-                    const values = getFilterValues(filter, index);
+                    const cacheKey = `${activeTab}:${String(filter.fieldKeyUpper).toUpperCase()}`;
+                    const cached = fieldValuesCache[cacheKey];
+                    const values = cached?.values || [];
                     const selectedSet = new Set(filter.selectedValues || []);
                     const valueSearch = valueSearches[filter.fieldKeyUpper] || '';
                     const filteredValues = valueSearch
@@ -550,9 +506,6 @@ export function ObjectFilterStep({
                           v.value.toLowerCase().includes(valueSearch.toLowerCase())
                         )
                       : values;
-                    const keptAfter =
-                      filterPreview.keptAfterEachFilter?.[index] ??
-                      filterPreview.totalFeatures;
 
                     return (
                       <div
@@ -592,9 +545,6 @@ export function ObjectFilterStep({
                             </span>
                             <span className={`text-xs ${theme.muted}`}>
                               ({selectedSet.size}/{values.length} valgt)
-                            </span>
-                            <span className="text-xs text-emerald-600">
-                              → {keptAfter.toLocaleString('nb-NO')} igjen
                             </span>
                           </button>
                           <button
@@ -650,6 +600,11 @@ export function ObjectFilterStep({
                             </div>
 
                             <div className="max-h-48 overflow-auto">
+                              {!cached ? (
+                                <p className={`p-2 text-xs ${theme.muted}`}>
+                                  Laster verdier…
+                                </p>
+                              ) : null}
                               {filteredValues.map((item) => {
                                 const isSelected = selectedSet.has(item.value);
                                 const displayValue =
