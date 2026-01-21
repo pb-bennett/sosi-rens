@@ -1,12 +1,12 @@
 /**
  * @file filterPreview.js
  * Streaming computation of filter preview statistics.
- * 
+ *
  * Given a SOSI text and an ordered list of field filters, computes:
  * - Total features in category
  * - Features remaining after each successive filter
  * - Per-filter value counts (after previous filters applied)
- * 
+ *
  * Designed for in-browser use on files up to ~100MB without blocking.
  */
 
@@ -120,7 +120,7 @@ function normalizeValueToken(value) {
 
 /**
  * Compute filter preview statistics for a single category.
- * 
+ *
  * @param {string} sosiText - Full SOSI file text.
  * @param {'punkter' | 'ledninger'} category - Category to analyze.
  * @param {FilterSpec[]} filters - Ordered list of filters to apply.
@@ -128,35 +128,35 @@ function normalizeValueToken(value) {
  */
 export function computeFilterPreview(sosiText, category, filters) {
   const filterCount = filters.length;
-  
+
   // Track counts per filter field -> value -> count
   // Each filter's counts are computed AFTER previous filters have been applied
   const counters = filters.map(() => new Map());
-  
+
   // Track how many features pass through each successive filter stage
   const keptAfterEachFilter = new Array(filterCount).fill(0);
-  
+
   let totalFeatures = 0;
   let keptFeatures = 0;
-  
+
   // Build sets of selected values for quick lookup
   const selectedSets = filters.map(
-    (f) => new Set((f.selectedValues || []).map((v) => String(v)))
+    (f) => new Set((f.selectedValues || []).map((v) => String(v))),
   );
-  
+
   // We need to track which fields we're interested in
   const fieldKeysOfInterest = new Set(
-    filters.map((f) => String(f.fieldKeyUpper).toUpperCase())
+    filters.map((f) => String(f.fieldKeyUpper).toUpperCase()),
   );
-  
+
   // State for streaming
   let currentSection = null;
   let currentCategory = 'unknown';
   let inFeature = false;
-  
+
   // Per-feature extracted values: fieldKeyUpper -> value (or null if not found)
   let featureValues = new Map();
-  
+
   /**
    * Process a completed feature block.
    */
@@ -167,43 +167,45 @@ export function computeFilterPreview(sosiText, category, filters) {
       featureValues.clear();
       return;
     }
-    
+
     totalFeatures++;
-    
+
     // Apply filters in order, tracking counts at each stage
     let passedSoFar = true;
-    
+
     for (let i = 0; i < filterCount; i++) {
       if (!passedSoFar) break;
-      
+
       const filter = filters[i];
       const fieldKey = filter.fieldKeyUpper;
-      const rawValue = featureValues.has(fieldKey) ? featureValues.get(fieldKey) : null;
+      const rawValue = featureValues.has(fieldKey)
+        ? featureValues.get(fieldKey)
+        : null;
       const token = normalizeValueToken(rawValue);
-      
+
       // Increment counter for this filter (only if feature reached this stage)
       const counter = counters[i];
       counter.set(token, (counter.get(token) || 0) + 1);
-      
+
       // Check if feature passes this filter
       const selectedSet = selectedSets[i];
       if (selectedSet.size > 0 && !selectedSet.has(token)) {
         passedSoFar = false;
       }
-      
+
       if (passedSoFar) {
         keptAfterEachFilter[i]++;
       }
     }
-    
+
     if (passedSoFar) {
       keptFeatures++;
     }
-    
+
     inFeature = false;
     featureValues.clear();
   }
-  
+
   // Stream through the file
   forEachLine(sosiText, (line) => {
     if (isFeatureStartLine(line)) {
@@ -214,9 +216,9 @@ export function computeFilterPreview(sosiText, category, filters) {
       featureValues.clear();
       return;
     }
-    
+
     if (!inFeature || currentCategory !== category) return;
-    
+
     // Extract attribute if it's one we care about
     if (line.startsWith('..') || line.startsWith('...')) {
       const key = extractKeyFromAttributeLine(line);
@@ -229,10 +231,10 @@ export function computeFilterPreview(sosiText, category, filters) {
       }
     }
   });
-  
+
   // Finalize last feature
   finalizeFeature();
-  
+
   // Convert counters to sorted arrays
   const countsByFilter = {};
   for (let i = 0; i < filterCount; i++) {
@@ -247,7 +249,7 @@ export function computeFilterPreview(sosiText, category, filters) {
       });
     countsByFilter[fieldKey] = entries;
   }
-  
+
   return {
     totalFeatures,
     keptFeatures,
@@ -260,22 +262,26 @@ export function computeFilterPreview(sosiText, category, filters) {
 /**
  * Compute unique values and counts for a single field in a category.
  * Used for showing available values when a filter is first added.
- * 
+ *
  * @param {string} sosiText - Full SOSI file text.
  * @param {'punkter' | 'ledninger'} category - Category to analyze.
  * @param {string} fieldKeyUpper - Field to analyze.
  * @returns {{values: {value: string, count: number}[], isHighCardinality: boolean}}
  */
-export function computeFieldValues(sosiText, category, fieldKeyUpper) {
+export function computeFieldValues(
+  sosiText,
+  category,
+  fieldKeyUpper,
+) {
   const fieldKey = String(fieldKeyUpper).toUpperCase();
   const counter = new Map();
-  
+
   let currentSection = null;
   let currentCategory = 'unknown';
   let inFeature = false;
   let featureValue = null;
   let sawField = false;
-  
+
   function finalizeFeature() {
     if (!inFeature) return;
     if (currentCategory !== category) {
@@ -284,15 +290,15 @@ export function computeFieldValues(sosiText, category, fieldKeyUpper) {
       sawField = false;
       return;
     }
-    
+
     const token = normalizeValueToken(sawField ? featureValue : null);
     counter.set(token, (counter.get(token) || 0) + 1);
-    
+
     inFeature = false;
     featureValue = null;
     sawField = false;
   }
-  
+
   forEachLine(sosiText, (line) => {
     if (isFeatureStartLine(line)) {
       finalizeFeature();
@@ -303,9 +309,9 @@ export function computeFieldValues(sosiText, category, fieldKeyUpper) {
       sawField = false;
       return;
     }
-    
+
     if (!inFeature || currentCategory !== category) return;
-    
+
     if (line.startsWith('..') || line.startsWith('...')) {
       const key = extractKeyFromAttributeLine(line);
       if (key === fieldKey && !sawField) {
@@ -314,16 +320,16 @@ export function computeFieldValues(sosiText, category, fieldKeyUpper) {
       }
     }
   });
-  
+
   finalizeFeature();
-  
+
   const values = Array.from(counter.entries())
     .map(([value, count]) => ({ value, count }))
     .sort((a, b) => {
       if (b.count !== a.count) return b.count - a.count;
       return String(a.value).localeCompare(String(b.value));
     });
-  
+
   return {
     values,
     isHighCardinality: values.length > HIGH_CARDINALITY_THRESHOLD,
@@ -333,27 +339,31 @@ export function computeFieldValues(sosiText, category, fieldKeyUpper) {
 /**
  * Compute cardinality (unique value count) for all fields in a category.
  * Useful for showing warning icons on the available fields list.
- * 
+ *
  * @param {string} sosiText - Full SOSI file text.
  * @param {'punkter' | 'ledninger'} category - Category to analyze.
  * @param {string[]} fieldKeys - List of field keys to check.
  * @returns {Object.<string, {uniqueCount: number, isHighCardinality: boolean}>}
  */
-export function computeFieldCardinalities(sosiText, category, fieldKeys) {
+export function computeFieldCardinalities(
+  sosiText,
+  category,
+  fieldKeys,
+) {
   const keys = fieldKeys.map((k) => String(k).toUpperCase());
   const keySet = new Set(keys);
-  
+
   // Track unique values per field
   const uniqueSets = {};
   for (const key of keys) {
     uniqueSets[key] = new Set();
   }
-  
+
   let currentSection = null;
   let currentCategory = 'unknown';
   let inFeature = false;
   const featureValues = new Map(); // key -> value
-  
+
   function finalizeFeature() {
     if (!inFeature) return;
     if (currentCategory !== category) {
@@ -361,17 +371,19 @@ export function computeFieldCardinalities(sosiText, category, fieldKeys) {
       featureValues.clear();
       return;
     }
-    
+
     for (const key of keys) {
-      const rawValue = featureValues.has(key) ? featureValues.get(key) : null;
+      const rawValue = featureValues.has(key)
+        ? featureValues.get(key)
+        : null;
       const token = normalizeValueToken(rawValue);
       uniqueSets[key].add(token);
     }
-    
+
     inFeature = false;
     featureValues.clear();
   }
-  
+
   forEachLine(sosiText, (line) => {
     if (isFeatureStartLine(line)) {
       finalizeFeature();
@@ -381,9 +393,9 @@ export function computeFieldCardinalities(sosiText, category, fieldKeys) {
       featureValues.clear();
       return;
     }
-    
+
     if (!inFeature || currentCategory !== category) return;
-    
+
     if (line.startsWith('..') || line.startsWith('...')) {
       const key = extractKeyFromAttributeLine(line);
       if (key && keySet.has(key) && !featureValues.has(key)) {
@@ -391,9 +403,9 @@ export function computeFieldCardinalities(sosiText, category, fieldKeys) {
       }
     }
   });
-  
+
   finalizeFeature();
-  
+
   const result = {};
   for (const key of keys) {
     const uniqueCount = uniqueSets[key].size;
@@ -402,6 +414,6 @@ export function computeFieldCardinalities(sosiText, category, fieldKeys) {
       isHighCardinality: uniqueCount > HIGH_CARDINALITY_THRESHOLD,
     };
   }
-  
+
   return result;
 }

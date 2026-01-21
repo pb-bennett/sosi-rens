@@ -470,7 +470,10 @@ export function cleanSosiText(sosiText, selection, options) {
     if (category === 'punkter' || category === 'ledninger') {
       const objectFilters = objectFiltersByCategory[category] || [];
       for (const filter of objectFilters) {
-        if (!filter.fieldKeyUpper || !Array.isArray(filter.selectedValues)) {
+        if (
+          !filter.fieldKeyUpper ||
+          !Array.isArray(filter.selectedValues)
+        ) {
           continue;
         }
         if (filter.selectedValues.length === 0) {

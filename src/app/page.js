@@ -23,6 +23,7 @@ import {
   Upload,
   ListFilter,
   ClipboardList,
+  X,
 } from 'lucide-react';
 import { analyzeSosiText } from '../lib/sosi/analyze.js';
 import {
@@ -35,6 +36,7 @@ import {
 } from '../lib/sosi/browserEncoding.js';
 import { computePivot2D } from '../lib/sosi/pivot2d.js';
 import { ObjectFilterStep } from '../components/ObjectFilterStep.js';
+import { SettingsDropdown } from '../components/SettingsDropdown.js';
 
 /** localStorage key for persisting user selection (objTypes, fields). */
 const STORAGE_KEY = 'sosi-rens:v0';
@@ -797,14 +799,16 @@ export default function Home() {
     punkter: false,
     ledninger: false,
   });
-  const [objectFilterVisitedTabs, setObjectFilterVisitedTabs] = useState({
-    punkter: false,
-    ledninger: false,
-  });
-  const [fieldSelectVisitedTabs, setFieldSelectVisitedTabs] = useState({
-    punkter: false,
-    ledninger: false,
-  });
+  const [objectFilterVisitedTabs, setObjectFilterVisitedTabs] =
+    useState({
+      punkter: false,
+      ledninger: false,
+    });
+  const [fieldSelectVisitedTabs, setFieldSelectVisitedTabs] =
+    useState({
+      punkter: false,
+      ledninger: false,
+    });
   const [exclusionsVisited, setExclusionsVisited] = useState(false);
   const [downloadFieldMode, setDownloadFieldMode] = useState(null); // 'remove-fields' | 'clear-values'
 
@@ -1012,10 +1016,14 @@ export default function Home() {
             : prev.statusByCategory.ledninger,
         },
         objectFiltersByCategory: {
-          punkter: Array.isArray(parsed?.objectFiltersByCategory?.punkter)
+          punkter: Array.isArray(
+            parsed?.objectFiltersByCategory?.punkter,
+          )
             ? parsed.objectFiltersByCategory.punkter
             : prev.objectFiltersByCategory.punkter,
-          ledninger: Array.isArray(parsed?.objectFiltersByCategory?.ledninger)
+          ledninger: Array.isArray(
+            parsed?.objectFiltersByCategory?.ledninger,
+          )
             ? parsed.objectFiltersByCategory.ledninger
             : prev.objectFiltersByCategory.ledninger,
         },
@@ -1062,6 +1070,7 @@ export default function Home() {
         features: byCategory.punkter?.features || 0,
         objTypes: sortEntriesDesc(byCategory.punkter?.objTypes || {}),
         fields: sortEntriesDesc(byCategory.punkter?.fields || {}),
+        fieldStats: byCategory.punkter?.fieldStats || {},
         tema: sortEntriesDesc(byCategory.punkter?.pTema || {}),
       },
       ledninger: {
@@ -1070,6 +1079,7 @@ export default function Home() {
           byCategory.ledninger?.objTypes || {},
         ),
         fields: sortEntriesDesc(byCategory.ledninger?.fields || {}),
+        fieldStats: byCategory.ledninger?.fieldStats || {},
         tema: sortEntriesDesc(byCategory.ledninger?.lTema || {}),
       },
     };
@@ -1298,6 +1308,7 @@ export default function Home() {
         excludedByCategory: selection.excludedByCategory,
         eierByCategory: selection.eierByCategory,
         statusByCategory: selection.statusByCategory,
+        objectFiltersByCategory: selection.objectFiltersByCategory,
       },
       {
         fieldMode:
@@ -1498,6 +1509,7 @@ export default function Home() {
       fieldsByCategory: selection.fieldsByCategory,
       eierByCategory: selection.eierByCategory,
       statusByCategory: selection.statusByCategory,
+      objectFiltersByCategory: selection.objectFiltersByCategory,
       // Exclusions
       excludedByCategory: selection.excludedByCategory,
     };
@@ -1505,10 +1517,7 @@ export default function Home() {
       type: 'application/json',
     });
     const dateStr = new Date().toISOString().slice(0, 10);
-    const baseName = selection.lastFileName
-      ? selection.lastFileName.replace(/\.[^.]+$/, '')
-      : 'sosi-rens';
-    downloadBlob(blob, `${baseName}-innstillinger-${dateStr}.json`);
+    downloadBlob(blob, `sosi-rens-innstillinger-${dateStr}.json`);
   }
 
   function exportExclusionsOnly() {
@@ -1562,6 +1571,18 @@ export default function Home() {
             ? imported.statusByCategory.ledninger
             : prev.statusByCategory.ledninger,
         },
+        objectFiltersByCategory: {
+          punkter: Array.isArray(
+            imported?.objectFiltersByCategory?.punkter,
+          )
+            ? imported.objectFiltersByCategory.punkter
+            : prev.objectFiltersByCategory.punkter,
+          ledninger: Array.isArray(
+            imported?.objectFiltersByCategory?.ledninger,
+          )
+            ? imported.objectFiltersByCategory.ledninger
+            : prev.objectFiltersByCategory.ledninger,
+        },
         excludedByCategory: normalizeExcludedByCategory(
           imported.excludedByCategory ?? prev.excludedByCategory,
         ),
@@ -1599,6 +1620,7 @@ export default function Home() {
       excludedByCategory: { punkter: [], ledninger: [] },
       eierByCategory: { punkter: ['K'], ledninger: ['K'] },
       statusByCategory: { punkter: [], ledninger: [] },
+      objectFiltersByCategory: { punkter: [], ledninger: [] },
       lastFileName: null,
     });
     if (available) ensureDefaultsFromAnalysis();
@@ -1619,6 +1641,12 @@ export default function Home() {
 
   // Reset confirmation dialog state
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showClearSettingsConfirm, setShowClearSettingsConfirm] =
+    useState(false);
+
+  function requestClearSettings() {
+    setShowClearSettingsConfirm(true);
+  }
 
   /**
    * Reset filters (objTypes, fields, EIER) to file defaults.
@@ -1970,18 +1998,24 @@ export default function Home() {
 
   // Step gating: must visit both tabs in objectFilter before fieldSelect
   const canProceedToFieldSelect =
-    objectFilterVisitedTabs.punkter && objectFilterVisitedTabs.ledninger;
+    objectFilterVisitedTabs.punkter &&
+    objectFilterVisitedTabs.ledninger;
 
   // Step gating: must visit both tabs in fieldSelect before exclude
   const canProceedToExclude =
     canProceedToFieldSelect &&
-    fieldSelectVisitedTabs.punkter && fieldSelectVisitedTabs.ledninger;
+    fieldSelectVisitedTabs.punkter &&
+    fieldSelectVisitedTabs.ledninger;
 
   // Legacy for backwards compatibility
   const canProceedToExclusionsFromFilter = canProceedToExclude;
 
   const canProceedToDownloadFromExclusions =
     canProceedToExclusionsFromFilter && exclusionsVisited;
+
+  const excludedCount =
+    (selection?.excludedByCategory?.punkter?.length || 0) +
+    (selection?.excludedByCategory?.ledninger?.length || 0);
 
   const downloadGateReason = !analysis
     ? null
@@ -2304,7 +2338,9 @@ export default function Home() {
                 <StepButton
                   theme={theme}
                   active={step === 'fieldSelect'}
-                  disabled={busy || !analysis || !canProceedToFieldSelect}
+                  disabled={
+                    busy || !analysis || !canProceedToFieldSelect
+                  }
                   disabledReason={
                     canProceedToFieldSelect
                       ? null
@@ -2321,11 +2357,7 @@ export default function Home() {
                 <StepButton
                   theme={theme}
                   active={step === 'exclude'}
-                  disabled={
-                    busy ||
-                    !analysis ||
-                    !canProceedToExclude
-                  }
+                  disabled={busy || !analysis || !canProceedToExclude}
                   disabledReason={
                     canProceedToExclude
                       ? null
@@ -3221,30 +3253,9 @@ export default function Home() {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 visitedTabs={objectFilterVisitedTabs}
-                onExportSettings={() => {
-                  const blob = new Blob(
-                    [JSON.stringify(selection, null, 2)],
-                    { type: 'application/json' },
-                  );
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'sosi-rens-innstillinger.json';
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}
-                onImportSettings={(file) => {
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                    try {
-                      const parsed = JSON.parse(e.target.result);
-                      setSelection(parsed);
-                    } catch (err) {
-                      setError('Kunne ikke lese innstillinger fra fil.');
-                    }
-                  };
-                  reader.readAsText(file);
-                }}
+                onExportSettings={exportSettings}
+                onImportSettings={importSettingsFromFile}
+                onClearSettings={requestClearSettings}
               />
             ) : null}
 
@@ -3253,55 +3264,66 @@ export default function Home() {
                 <div
                   className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}
                 >
-                  <div>
-                    <h2 className="text-2xl font-semibold tracking-tight">
-                      Velg felt
-                    </h2>
-                    <div className={`mt-1 text-sm ${theme.muted}`}>
-                      Velg hvilke felter som skal være med i eksporten.
-                    </div>
-                    <div className={`mt-1 text-xs ${theme.muted}`}>
-                      Noen felter er låst (f.eks. OBJTYPE/EGS_*) fordi
-                      de er nødvendige for gyldig SOSI.
-                    </div>
-                    <div className="mt-4 flex items-center justify-between gap-4">
-                      <Tabs
-                        theme={theme}
-                        value={activeTab}
-                        onChange={setActiveTab}
-                        visitedTabs={fieldSelectVisitedTabs}
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface}`}
-                          onClick={() =>
-                            setAll(
-                              activeTab,
-                              'fields',
-                              uniq([
-                                ...available[activeTab].fields,
-                                ...Array.from(mandatoryFields),
-                              ]),
-                            )
-                          }
-                        >
-                          Velg alle
-                        </button>
-                        <button
-                          type="button"
-                          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface}`}
-                          onClick={() =>
-                            setAll(
-                              activeTab,
-                              'fields',
-                              Array.from(mandatoryFields),
-                            )
-                          }
-                        >
-                          Velg ingen
-                        </button>
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-semibold tracking-tight">
+                        Velg felt
+                      </h2>
+                      <div className={`mt-1 text-sm ${theme.muted}`}>
+                        Velg hvilke felter som skal være med i
+                        eksporten.
                       </div>
+                      <div className={`mt-1 text-xs ${theme.muted}`}>
+                        Noen felter er låst (f.eks. OBJTYPE/EGS_*) fordi
+                        de er nødvendige for gyldig SOSI.
+                      </div>
+                    </div>
+                    <SettingsDropdown
+                      theme={theme}
+                      onExport={exportSettings}
+                      onImport={importSettingsFromFile}
+                      onClear={requestClearSettings}
+                      clearLabel="Nullstill innstillinger (nettleser)"
+                    />
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between gap-4">
+                    <Tabs
+                      theme={theme}
+                      value={activeTab}
+                      onChange={setActiveTab}
+                      visitedTabs={fieldSelectVisitedTabs}
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface}`}
+                        onClick={() =>
+                          setAll(
+                            activeTab,
+                            'fields',
+                            uniq([
+                              ...available[activeTab].fields,
+                              ...Array.from(mandatoryFields),
+                            ]),
+                          )
+                        }
+                      >
+                        Velg alle
+                      </button>
+                      <button
+                        type="button"
+                        className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface}`}
+                        onClick={() =>
+                          setAll(
+                            activeTab,
+                            'fields',
+                            Array.from(mandatoryFields),
+                          )
+                        }
+                      >
+                        Velg ingen
+                      </button>
                     </div>
                   </div>
 
@@ -3314,7 +3336,8 @@ export default function Home() {
                         ...available[activeTab].fields,
                         ...Array.from(mandatoryFields),
                       ]).map((fieldKey) => {
-                        const keyUpper = String(fieldKey).toUpperCase();
+                        const keyUpper =
+                          String(fieldKey).toUpperCase();
                         const locked = mandatoryFields.has(keyUpper);
                         const checked =
                           locked ||
@@ -3344,7 +3367,9 @@ export default function Home() {
                                   fieldsByCategory: {
                                     ...prev.fieldsByCategory,
                                     [activeTab]: toggleInList(
-                                      prev.fieldsByCategory?.[activeTab] || [],
+                                      prev.fieldsByCategory?.[
+                                        activeTab
+                                      ] || [],
                                       keyUpper,
                                     ),
                                   },
@@ -3359,7 +3384,9 @@ export default function Home() {
                               {fieldKey}
                             </span>
                             {locked && (
-                              <span className={`ml-auto text-xs ${theme.muted}`}>
+                              <span
+                                className={`ml-auto text-xs ${theme.muted}`}
+                              >
                                 låst
                               </span>
                             )}
@@ -3387,7 +3414,9 @@ export default function Home() {
                             : 'cursor-not-allowed bg-gray-400'
                         }`}
                         disabled={!canProceedToExclude}
-                        onClick={() => canProceedToExclude && setStep('exclude')}
+                        onClick={() =>
+                          canProceedToExclude && setStep('exclude')
+                        }
                       >
                         <Trash2 className="h-4 w-4" />
                         Gå til ekskludering
@@ -4030,14 +4059,32 @@ export default function Home() {
                 <div
                   className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}
                 >
-                  <div>
-                    <h2 className="text-2xl font-semibold tracking-tight">
-                      Ekskluder objekter
-                    </h2>
-                    <div className={`mt-1 text-sm ${theme.muted}`}>
-                      Søk etter SID for å finne objekter. Objekter i
-                      ekskluderingslisten fjernes fra eksporten.
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-semibold tracking-tight">
+                        Ekskluder objekter
+                      </h2>
+                      <div className={`mt-1 text-sm ${theme.muted}`}>
+                        Søk etter SID for å finne objekter. Objekter i
+                        ekskluderingslisten fjernes fra eksporten.
+                      </div>
                     </div>
+                    <SettingsDropdown
+                      theme={theme}
+                      onExport={exportSettings}
+                      onImport={importSettingsFromFile}
+                      onClear={requestClearSettings}
+                      clearLabel="Nullstill innstillinger (nettleser)"
+                      extraActions={[
+                        {
+                          label: 'Last ned ekskluderte (SOSI)',
+                          onClick: downloadExcludedOnly,
+                          icon: Download,
+                          disabled:
+                            busy || !file || excludedCount === 0,
+                        },
+                      ]}
+                    />
                   </div>
 
                   {/* SID Search Section */}
@@ -4052,21 +4099,34 @@ export default function Home() {
                         <span className={`text-xs ${theme.muted}`}>
                           SID-nummer
                         </span>
-                        <input
-                          className={`mt-1 rounded-md border px-3 py-2 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
-                          inputMode="numeric"
-                          placeholder="f.eks. 1234"
-                          value={sidSearchInput}
-                          onChange={(e) =>
-                            setSidSearchInput(e.target.value)
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              performSidSearch();
+                        <div className="relative mt-1">
+                          <input
+                            className={`w-full rounded-md border px-3 py-2 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                            inputMode="numeric"
+                            placeholder="f.eks. 1234"
+                            value={sidSearchInput}
+                            onChange={(e) =>
+                              setSidSearchInput(e.target.value)
                             }
-                          }}
-                        />
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                performSidSearch();
+                              }
+                            }}
+                          />
+                          {sidSearchInput ? (
+                            <button
+                              type="button"
+                              className={`absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 ${theme.muted} hover:opacity-80`}
+                              onClick={() => setSidSearchInput('')}
+                              aria-label="Tøm SID-søk"
+                              title="Tøm"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          ) : null}
+                        </div>
                       </label>
                       <button
                         type="button"
@@ -4603,6 +4663,46 @@ export default function Home() {
                 onClick={resetFiltersToDefaults}
               >
                 Tilbakestill
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showClearSettingsConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
+          <div
+            className={`w-full max-w-sm rounded-xl border p-5 shadow-lg ${theme.border} ${theme.surface}`}
+            role="dialog"
+            aria-labelledby="clear-settings-dialog-title"
+          >
+            <h3
+              id="clear-settings-dialog-title"
+              className={`text-lg font-semibold ${theme.text}`}
+            >
+              Nullstill innstillinger?
+            </h3>
+            <p className={`mt-2 text-sm ${theme.muted}`}>
+              Dette sletter alle lagrede innstillinger i nettleseren,
+              inkludert filtre og ekskluderinger.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                onClick={() => setShowClearSettingsConfirm(false)}
+              >
+                Avbryt
+              </button>
+              <button
+                type="button"
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
+                onClick={() => {
+                  clearSavedSettings();
+                  setShowClearSettingsConfirm(false);
+                }}
+              >
+                Nullstill
               </button>
             </div>
           </div>

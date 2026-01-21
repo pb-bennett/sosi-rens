@@ -13,6 +13,7 @@ import { ChevronDown, Download, Upload, Trash2 } from 'lucide-react';
  * @param {() => void} props.onExport - Export settings callback.
  * @param {(file: File) => void} props.onImport - Import settings callback.
  * @param {() => void} [props.onClear] - Optional clear settings callback.
+ * @param {{label: string, onClick: () => void, icon?: React.ComponentType<any>, disabled?: boolean}[]} [props.extraActions] - Optional extra action buttons.
  * @param {string} [props.exportLabel] - Label for export button.
  * @param {string} [props.importLabel] - Label for import button.
  * @param {string} [props.clearLabel] - Label for clear button.
@@ -23,6 +24,7 @@ export function SettingsDropdown({
   onExport,
   onImport,
   onClear,
+  extraActions = [],
   exportLabel = 'Eksporter innstillinger',
   importLabel = 'Importer innstillinger',
   clearLabel = 'Nullstill innstillinger',
@@ -34,13 +36,17 @@ export function SettingsDropdown({
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
         setOpen(false);
       }
     }
     if (open) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [open]);
 
@@ -70,6 +76,12 @@ export function SettingsDropdown({
     setOpen(false);
   }
 
+  function handleExtraAction(action) {
+    if (action?.disabled) return;
+    action?.onClick?.();
+    setOpen(false);
+  }
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -78,7 +90,9 @@ export function SettingsDropdown({
         onClick={() => setOpen(!open)}
       >
         Innstillinger
-        <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {open && (
@@ -102,6 +116,26 @@ export function SettingsDropdown({
               <Upload className="h-4 w-4" />
               {importLabel}
             </button>
+            {extraActions.length > 0 && (
+              <>
+                <div className={`my-1 border-t ${theme.border}`} />
+                {extraActions.map((action, index) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={`${action.label}-${index}`}
+                      type="button"
+                      disabled={action.disabled}
+                      className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm ${theme.text} hover:${theme.surfaceMuted} disabled:opacity-50`}
+                      onClick={() => handleExtraAction(action)}
+                    >
+                      {Icon ? <Icon className="h-4 w-4" /> : null}
+                      {action.label}
+                    </button>
+                  );
+                })}
+              </>
+            )}
             {onClear && (
               <>
                 <div className={`my-1 border-t ${theme.border}`} />

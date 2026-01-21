@@ -13,9 +13,11 @@
  */
 export function StepInstruction({ theme, title, description }) {
   return (
-    <div className="mb-4">
-      <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-      <p className={`mt-1 text-sm ${theme.muted}`}>{description}</p>
+    <div className="mb-2">
+      <h2 className="text-lg font-semibold tracking-tight">
+        {title}
+      </h2>
+      <p className={`text-xs ${theme.muted}`}>{description}</p>
     </div>
   );
 }
