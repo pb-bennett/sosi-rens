@@ -43,14 +43,18 @@ function getSectionName(line) {
 }
 
 /**
- * Extract the attribute key from a SOSI attribute line.
- * Attribute lines start with two or more dots (e.g. `..OBJTYPE Kum`).
+ * Extract the attribute key and value from a SOSI attribute line.
+ * Attribute lines start with two or more dots.
  * @param {string} line - Raw SOSI line.
- * @returns {string | null} Uppercased attribute key, or null if not an attribute line.
+ * @returns {{ key: string, value: string } | null} Key/value pair or null.
  */
-function extractKeyFromAttributeLine(line) {
-  const match = line.match(/^\.{2,}(\S+)/);
-  return match ? String(match[1]).toUpperCase() : null;
+function extractKeyAndValueFromAttributeLine(line) {
+  const match = line.match(/^\.{2,}(\S+)(.*)/);
+  if (!match) return null;
+  return {
+    key: String(match[1]).toUpperCase(),
+    value: String(match[2] || '').trim(),
+  };
 }
 
 /**
@@ -84,12 +88,14 @@ export function analyzeSosiText(sosiText) {
         features: 0,
         objTypes: {},
         fields: {},
+        fieldStats: {}, // Stores unique counts per field
         pTema: {},
       },
       ledninger: {
         features: 0,
         objTypes: {},
         fields: {},
+        fieldStats: {}, // Stores unique counts per field
         lTema: {},
       },
     },
@@ -99,6 +105,13 @@ export function analyzeSosiText(sosiText) {
       fields: {},
     },
   };
+
+  // Temporary sets to track unique values (not returned)
+  const uniqueTracker = {
+    punkter: {}, // field -> Set
+    ledninger: {}, // field -> Set
+  };
+  const MAX_UNIQUES = 1000;
 
   let currentSection = null;
   let currentCategory = 'unknown';
@@ -149,12 +162,12 @@ export function analyzeSosiText(sosiText) {
       if (currentCategory === 'punkter')
         inc(
           result.byCategory.punkter.objTypes,
-          currentObjType || '(unknown)'
+          currentObjType || '(unknown)',
         );
       else if (currentCategory === 'ledninger')
         inc(
           result.byCategory.ledninger.objTypes,
-          currentObjType || '(unknown)'
+          currentObjType || '(unknown)',
         );
       else
         inc(result.unknown.objTypes, currentObjType || '(unknown)');
@@ -175,18 +188,47 @@ export function analyzeSosiText(sosiText) {
     }
 
     if (line.startsWith('..') || line.startsWith('...')) {
-      const key = extractKeyFromAttributeLine(line);
-      if (!key) continue;
+      const kv = extractKeyAndValueFromAttributeLine(line);
+      if (!kv) continue;
+      const { key, value } = kv;
 
-      if (currentCategory === 'punkter')
+      if (currentCategory === 'punkter') {
         inc(result.byCategory.punkter.fields, key);
-      else if (currentCategory === 'ledninger')
+        // Track unique value
+        if (!uniqueTracker.punkter[key])
+          uniqueTracker.punkter[key] = new Set();
+        if (uniqueTracker.punkter[key].size < MAX_UNIQUES) {
+          uniqueTracker.punkter[key].add(value);
+        }
+      } else if (currentCategory === 'ledninger') {
         inc(result.byCategory.ledninger.fields, key);
-      else inc(result.unknown.fields, key);
+        // Track unique value
+        if (!uniqueTracker.ledninger[key])
+          uniqueTracker.ledninger[key] = new Set();
+        if (uniqueTracker.ledninger[key].size < MAX_UNIQUES) {
+          uniqueTracker.ledninger[key].add(value);
+        }
+      } else {
+        inc(result.unknown.fields, key);
+      }
     }
   }
 
   finalizeFeatureIfMissingObjType();
+
+  // Convert unique sets to counts
+  for (const [key, set] of Object.entries(uniqueTracker.punkter)) {
+    result.byCategory.punkter.fieldStats[key] = {
+      uniqueCount:
+        set.size >= MAX_UNIQUES ? `${MAX_UNIQUES}+` : set.size,
+    };
+  }
+  for (const [key, set] of Object.entries(uniqueTracker.ledninger)) {
+    result.byCategory.ledninger.fieldStats[key] = {
+      uniqueCount:
+        set.size >= MAX_UNIQUES ? `${MAX_UNIQUES}+` : set.size,
+    };
+  }
 
   return result;
 }
