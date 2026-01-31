@@ -24,6 +24,9 @@ import {
   ListFilter,
   ClipboardList,
   X,
+  FileJson,
+  Check,
+  AlertTriangle,
 } from 'lucide-react';
 import { analyzeSosiText } from '../lib/sosi/analyze.js';
 import {
@@ -200,6 +203,83 @@ function forEachLine(text, onLine) {
 
 function escapeRegExp(str) {
   return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Parse a GeoJSON file and extract SID values and metadata.
+ * Expects a FeatureCollection with features having properties.SID.
+ * @param {string} jsonText - The GeoJSON file content as text.
+ * @returns {{ sids: { sid: string, meta: object }[], errors: string[], geometryTypes: string[] }}
+ */
+function parseGeoJsonExclusions(jsonText) {
+  const errors = [];
+  const sids = [];
+  const geometryTypes = new Set();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch (e) {
+    errors.push(`Kunne ikke parse JSON: ${e.message}`);
+    return { sids, errors, geometryTypes: [] };
+  }
+
+  if (!parsed || parsed.type !== 'FeatureCollection') {
+    errors.push('Filen er ikke en gyldig GeoJSON FeatureCollection.');
+    return { sids, errors, geometryTypes: [] };
+  }
+
+  if (!Array.isArray(parsed.features)) {
+    errors.push('Filen inneholder ingen features.');
+    return { sids, errors, geometryTypes: [] };
+  }
+
+  const seenSids = new Set();
+
+  for (let i = 0; i < parsed.features.length; i++) {
+    const feature = parsed.features[i];
+    if (!feature || !feature.properties) {
+      errors.push(`Feature ${i + 1}: Mangler properties.`);
+      continue;
+    }
+
+    const geomTypeRaw = feature?.geometry?.type;
+    if (geomTypeRaw) {
+      geometryTypes.add(String(geomTypeRaw));
+    }
+
+    const sidValue = feature.properties.SID;
+    if (sidValue === undefined || sidValue === null || sidValue === '') {
+      errors.push(`Feature ${i + 1}: Mangler SID-verdi.`);
+      continue;
+    }
+
+    const sid = String(sidValue).trim();
+    if (!/^[0-9]+$/.test(sid)) {
+      errors.push(`Feature ${i + 1}: SID "${sid}" er ikke et gyldig tall.`);
+      continue;
+    }
+
+    if (seenSids.has(sid)) {
+      // Skip duplicates silently
+      continue;
+    }
+    seenSids.add(sid);
+
+    // Extract useful metadata from the GeoJSON properties
+    const props = feature.properties;
+    const meta = {
+      objType: props.objekttypenavn || props.OBJTYPE || null,
+      tema: props.P_TEMA || props.L_TEMA || null,
+      material: props.MATERIAL || null,
+      dimensjon: props.DIMENSJON || null,
+      funksjon: props.FUNKSJON || props.BRUKER_FUNKSJON || null,
+    };
+
+    sids.push({ sid, meta });
+  }
+
+  return { sids, errors, geometryTypes: Array.from(geometryTypes) };
 }
 
 function normalizeExcludedByCategory(excludedByCategory) {
@@ -810,7 +890,7 @@ export default function Home() {
       ledninger: false,
     });
   const [exclusionsVisited, setExclusionsVisited] = useState(false);
-  const [downloadFieldMode, setDownloadFieldMode] = useState(null); // 'remove-fields' | 'clear-values'
+  const [downloadFieldMode, setDownloadFieldMode] = useState('clear-values'); // 'remove-fields' | 'clear-values'
 
   const [themeKey, setThemeKey] = useState('neutral');
   const theme = THEMES[themeKey] || THEMES.light;
@@ -852,7 +932,7 @@ export default function Home() {
     setObjectFilterVisitedTabs({ punkter: false, ledninger: false });
     setFieldSelectVisitedTabs({ punkter: false, ledninger: false });
     setExclusionsVisited(false);
-    setDownloadFieldMode(null);
+    setDownloadFieldMode('clear-values');
   }, [file]);
 
   useEffect(() => {
@@ -1638,6 +1718,16 @@ export default function Home() {
   const [sidSearchPerformed, setSidSearchPerformed] = useState(false);
   const [selectedSidMatch, setSelectedSidMatch] = useState(null);
   const [sidExcludeComment, setSidExcludeComment] = useState('');
+  const [excludedSearchByCategory, setExcludedSearchByCategory] =
+    useState({ punkter: '', ledninger: '' });
+  const [showClearExcludedConfirm, setShowClearExcludedConfirm] =
+    useState(false);
+  const [fieldSelectSearch, setFieldSelectSearch] = useState('');
+
+  // GeoJSON import state
+  const geojsonInputRef = useRef(null);
+  const [geojsonImportPreview, setGeojsonImportPreview] = useState(null);
+  // Shape: { category: 'punkter'|'ledninger', items: { sid, meta, existsInSosi, alreadyExcluded }[], parseErrors: [], geometryTypes: string[] }
 
   // Reset confirmation dialog state
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -1765,6 +1855,141 @@ export default function Home() {
     setSidSearchPerformed(false);
     setSelectedSidMatch(null);
     setSidExcludeComment('');
+  }
+
+  /**
+   * Handle GeoJSON file selection for exclusion import.
+   * Parses the file, auto-detects category, validates SIDs against the SOSI file, and shows a preview.
+   * @param {File} file - The selected GeoJSON file.
+   */
+  async function handleGeojsonImport(file) {
+    if (!file) return;
+    if (!sosiText) {
+      setError('Last inn en SOSI-fil før du importerer ekskluderinger.');
+      return;
+    }
+
+    setError(null);
+    setBusy(true);
+    setBusyLabel('Leser GeoJSON-fil…');
+
+    try {
+      const text = await file.text();
+      const { sids, errors, geometryTypes } = parseGeoJsonExclusions(text);
+
+      if (sids.length === 0 && errors.length > 0) {
+        setError(`Kunne ikke lese GeoJSON: ${errors[0]}`);
+        setBusy(false);
+        setBusyLabel('');
+        return;
+      }
+
+      const normalizedTypes = geometryTypes.map((t) => String(t).toLowerCase());
+      const hasPoint = normalizedTypes.some((t) => t.includes('point'));
+      const hasLine = normalizedTypes.some((t) => t.includes('linestring'));
+
+      let category = null;
+      if (hasPoint && !hasLine) {
+        category = 'punkter';
+      } else if (hasLine && !hasPoint) {
+        category = 'ledninger';
+      } else if (hasPoint && hasLine) {
+        setError('GeoJSON inneholder både punkt- og linjegeometri. Del filen i to før import.');
+        setBusy(false);
+        setBusyLabel('');
+        return;
+      } else {
+        setError('Fant ingen punkt- eller linjegeometri i GeoJSON-filen.');
+        setBusy(false);
+        setBusyLabel('');
+        return;
+      }
+
+      // Validate each SID against the SOSI file
+      const existingExcluded = selection?.excludedByCategory?.[category] || [];
+      const existingKeys = new Set(existingExcluded.map((e) => buildExcludedKey(e)));
+
+      const items = sids.map(({ sid, meta }) => {
+        // Check if this SID exists in the SOSI file for the given category
+        let sosiMeta = null;
+        try {
+          sosiMeta = lookupExclusionMeta(sosiText, category, 'SID', sid);
+        } catch (resolved) {
+          sosiMeta = resolved;
+        }
+
+        if (sosiMeta instanceof Error) {
+          sosiMeta = null;
+        }
+
+        const existsInSosi = sosiMeta !== null;
+
+        // Check if already in exclusion list
+        const key = `SID:${sid}`;
+        const alreadyExcluded = existingKeys.has(key);
+
+        return {
+          sid,
+          meta: existsInSosi ? sosiMeta : meta, // Use SOSI meta if found, otherwise GeoJSON meta
+          geojsonMeta: meta,
+          existsInSosi,
+          alreadyExcluded,
+        };
+      });
+
+      setGeojsonImportPreview({
+        category,
+        fileName: file.name,
+        items,
+        parseErrors: errors,
+        geometryTypes,
+      });
+    } catch (e) {
+      setError(`Feil ved lesing av fil: ${e.message}`);
+    } finally {
+      setBusy(false);
+      setBusyLabel('');
+    }
+  }
+
+  /**
+   * Confirm and add items from GeoJSON import preview to exclusion list.
+   */
+  function confirmGeojsonImport() {
+    if (!geojsonImportPreview) return;
+
+    const { category, items } = geojsonImportPreview;
+
+    // Only add items that exist in SOSI and are not already excluded
+    const toAdd = items.filter((item) => item.existsInSosi && !item.alreadyExcluded);
+
+    if (toAdd.length === 0) {
+      setError('Ingen nye objekter å legge til.');
+      setGeojsonImportPreview(null);
+      return;
+    }
+
+    setSelection((prev) => {
+      const nextExcluded = normalizeExcludedByCategory(prev.excludedByCategory);
+      const newEntries = toAdd.map((item) => ({
+        idType: 'SID',
+        id: item.sid,
+        comment: 'Importert fra GeoJSON',
+        meta: item.meta,
+      }));
+      nextExcluded[category] = [...nextExcluded[category], ...newEntries];
+      return { ...prev, excludedByCategory: nextExcluded };
+    });
+
+    setGeojsonImportPreview(null);
+    setError(null);
+  }
+
+  /**
+   * Cancel GeoJSON import preview.
+   */
+  function cancelGeojsonImport() {
+    setGeojsonImportPreview(null);
   }
 
   async function addExcludedEntry(category) {
@@ -3262,9 +3487,9 @@ export default function Home() {
             {step === 'fieldSelect' && exploreData && available ? (
               <section className="flex h-full flex-col">
                 <div
-                  className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}
+                  className={`flex h-full flex-col rounded-xl border p-4 ${theme.border} ${theme.surface}`}
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h2 className="text-2xl font-semibold tracking-tight">
                         Velg felt
@@ -3287,14 +3512,23 @@ export default function Home() {
                     />
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-4">
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                     <Tabs
                       theme={theme}
                       value={activeTab}
                       onChange={setActiveTab}
                       visitedTabs={fieldSelectVisitedTabs}
                     />
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        value={fieldSelectSearch}
+                        onChange={(e) =>
+                          setFieldSelectSearch(e.target.value)
+                        }
+                        placeholder="Søk felt"
+                        className={`rounded-md border px-2 py-1.5 text-xs ${theme.border} ${theme.surface} ${theme.text}`}
+                      />
                       <button
                         type="button"
                         className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface}`}
@@ -3335,7 +3569,17 @@ export default function Home() {
                       {uniq([
                         ...available[activeTab].fields,
                         ...Array.from(mandatoryFields),
-                      ]).map((fieldKey) => {
+                      ])
+                        .filter((fieldKey) => {
+                          const term = String(fieldSelectSearch || '')
+                            .trim()
+                            .toLowerCase();
+                          if (!term) return true;
+                          return String(fieldKey)
+                            .toLowerCase()
+                            .includes(term);
+                        })
+                        .map((fieldKey) => {
                         const keyUpper =
                           String(fieldKey).toUpperCase();
                         const locked = mandatoryFields.has(keyUpper);
@@ -4059,37 +4303,65 @@ export default function Home() {
                 <div
                   className={`flex h-full flex-col rounded-xl border p-6 ${theme.border} ${theme.surface}`}
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <h2 className="text-2xl font-semibold tracking-tight">
+                      <h2 className="text-xl font-semibold tracking-tight">
                         Ekskluder objekter
                       </h2>
-                      <div className={`mt-1 text-sm ${theme.muted}`}>
+                      <div className={`mt-0.5 text-xs ${theme.muted}`}>
                         Søk etter SID for å finne objekter. Objekter i
                         ekskluderingslisten fjernes fra eksporten.
                       </div>
                     </div>
-                    <SettingsDropdown
-                      theme={theme}
-                      onExport={exportSettings}
-                      onImport={importSettingsFromFile}
-                      onClear={requestClearSettings}
-                      clearLabel="Nullstill innstillinger (nettleser)"
-                      extraActions={[
-                        {
-                          label: 'Last ned ekskluderte (SOSI)',
-                          onClick: downloadExcludedOnly,
-                          icon: Download,
-                          disabled:
-                            busy || !file || excludedCount === 0,
-                        },
-                      ]}
+                    <div className="flex items-center gap-2">
+                      <SettingsDropdown
+                        theme={theme}
+                        onExport={exportSettings}
+                        onImport={importSettingsFromFile}
+                        onClear={requestClearSettings}
+                        clearLabel="Nullstill innstillinger (nettleser)"
+                        extraActions={[
+                          {
+                            label: 'Importer fra GeoJSON (auto)',
+                            onClick: () =>
+                              geojsonInputRef.current?.click(),
+                            icon: FileJson,
+                            disabled: busy || !file,
+                          },
+                          {
+                            label: 'Last ned ekskluderte (SOSI)',
+                            onClick: downloadExcludedOnly,
+                            icon: Download,
+                            disabled:
+                              busy || !file || excludedCount === 0,
+                          },
+                        ]}
+                      />
+                      <button
+                        type="button"
+                        className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.dangerBorder} ${theme.dangerText} ${theme.surface}`}
+                        onClick={() => setShowClearExcludedConfirm(true)}
+                      >
+                        Tøm ekskluderinger
+                      </button>
+                    </div>
+                    {/* Hidden file input for GeoJSON import */}
+                    <input
+                      ref={geojsonInputRef}
+                      type="file"
+                      accept=".geojson,.json,application/geo+json,application/json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleGeojsonImport(f);
+                        e.target.value = '';
+                      }}
                     />
                   </div>
 
                   {/* SID Search Section */}
                   <div
-                    className={`mt-4 rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}
+                    className={`mt-2 rounded-xl border p-2.5 ${theme.border} ${theme.surfaceMuted}`}
                   >
                     <div className="text-sm font-semibold">
                       Søk etter SID
@@ -4101,7 +4373,7 @@ export default function Home() {
                         </span>
                         <div className="relative mt-1">
                           <input
-                            className={`w-full rounded-md border px-3 py-2 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
+                            className={`w-full rounded-md border px-3 py-1.5 text-sm outline-none ${theme.surface} ${theme.text} ${theme.border}`}
                             inputMode="numeric"
                             placeholder="f.eks. 1234"
                             value={sidSearchInput}
@@ -4130,7 +4402,7 @@ export default function Home() {
                       </label>
                       <button
                         type="button"
-                        className={`rounded-md border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                        className={`rounded-md border px-3 py-1.5 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
                         onClick={performSidSearch}
                       >
                         Søk
@@ -4138,7 +4410,7 @@ export default function Home() {
                       {sidSearchPerformed && (
                         <button
                           type="button"
-                          className={`rounded-md border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                          className={`rounded-md border px-3 py-1.5 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
                           onClick={clearSidSearch}
                         >
                           Tøm
@@ -4202,7 +4474,7 @@ export default function Home() {
                                 return (
                                   <div
                                     key={`${match.category}:${idx}`}
-                                    className={`border-t px-3 py-2 first:border-t-0 ${
+                                    className={`border-t px-3 py-1.5 first:border-t-0 ${
                                       theme.border
                                     } ${
                                       isSelected
@@ -4212,13 +4484,13 @@ export default function Home() {
                                   >
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                       <div className="min-w-0">
-                                        <div className="text-sm font-semibold">
-                                          SID {match.sid}
-                                        </div>
-                                        <div
-                                          className={`mt-0.5 text-xs ${theme.muted}`}
-                                        >
-                                          {metaParts.join(' · ')}
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <div className="text-sm font-semibold">
+                                            SID {match.sid}
+                                          </div>
+                                          <div className={`text-xs ${theme.muted}`}>
+                                            {metaParts.join(' · ')}
+                                          </div>
                                         </div>
                                       </div>
                                       {alreadyExcluded ? (
@@ -4230,7 +4502,7 @@ export default function Home() {
                                       ) : (
                                         <button
                                           type="button"
-                                          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${
+                                          className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
                                             theme.border
                                           } ${theme.surface} ${
                                             theme.primaryRing
@@ -4280,7 +4552,7 @@ export default function Home() {
                         </label>
                         <button
                           type="button"
-                          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
+                          className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
                           onClick={addSelectedSidMatch}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -4290,40 +4562,231 @@ export default function Home() {
                     )}
                   </div>
 
+                  {/* GeoJSON Import Preview */}
+                  {geojsonImportPreview && (
+                    <div
+                      className={`mt-3 rounded-xl border p-3 ${theme.border} ${theme.accentSoft}`}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <FileJson className="h-5 w-5" />
+                            <span className="text-sm font-semibold">
+                              Importer fra GeoJSON
+                            </span>
+                          </div>
+                          <div className={`mt-1 text-xs ${theme.muted}`}>
+                            {geojsonImportPreview.fileName} → {getCategoryLabel(geojsonImportPreview.category)}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className={`rounded-md p-1 ${theme.muted} hover:opacity-80`}
+                          onClick={cancelGeojsonImport}
+                          aria-label="Lukk"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      {/* Parse errors */}
+                      {geojsonImportPreview.parseErrors.length > 0 && (
+                        <div className={`mt-2 rounded-lg border p-2 ${theme.warningBorder} ${theme.warningBg}`}>
+                          <div className={`text-xs font-semibold ${theme.warningText}`}>
+                            Advarsler ved parsing ({geojsonImportPreview.parseErrors.length})
+                          </div>
+                          <ul className={`mt-1 list-inside list-disc text-xs ${theme.warningText}`}>
+                            {geojsonImportPreview.parseErrors.slice(0, 5).map((err, i) => (
+                              <li key={i}>{err}</li>
+                            ))}
+                            {geojsonImportPreview.parseErrors.length > 5 && (
+                              <li>…og {geojsonImportPreview.parseErrors.length - 5} til</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Summary stats */}
+                      {(() => {
+                        const items = geojsonImportPreview.items;
+                        const total = items.length;
+                        const existsInSosi = items.filter((i) => i.existsInSosi).length;
+                        const notInSosi = items.filter((i) => !i.existsInSosi).length;
+                        const alreadyExcluded = items.filter((i) => i.alreadyExcluded).length;
+                        const toAdd = items.filter((i) => i.existsInSosi && !i.alreadyExcluded).length;
+
+                        return (
+                          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            <div className={`rounded-lg border p-2 text-center ${theme.border} ${theme.surface}`}>
+                              <div className="text-lg font-bold">{total}</div>
+                              <div className={`text-xs ${theme.muted}`}>Totalt i fil</div>
+                            </div>
+                            <div className={`rounded-lg border p-2 text-center ${theme.border} ${theme.surface}`}>
+                              <div className="flex items-center justify-center gap-1 text-lg font-bold text-emerald-600">
+                                <Check className="h-4 w-4" />
+                                {existsInSosi}
+                              </div>
+                              <div className={`text-xs ${theme.muted}`}>Funnet i SOSI</div>
+                            </div>
+                            <div className={`rounded-lg border p-2 text-center ${theme.border} ${theme.surface}`}>
+                              <div className="flex items-center justify-center gap-1 text-lg font-bold text-amber-600">
+                                <AlertTriangle className="h-4 w-4" />
+                                {notInSosi}
+                              </div>
+                              <div className={`text-xs ${theme.muted}`}>Ikke i SOSI</div>
+                            </div>
+                            <div className={`rounded-lg border p-2 text-center ${theme.border} ${theme.surface}`}>
+                              <div className="text-lg font-bold text-blue-600">{toAdd}</div>
+                              <div className={`text-xs ${theme.muted}`}>Nye å legge til</div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Item list (collapsible) */}
+                      <details className="mt-2">
+                        <summary className={`cursor-pointer text-xs font-semibold ${theme.muted}`}>
+                          Vis detaljer ({geojsonImportPreview.items.length} objekter)
+                        </summary>
+                        <div className={`mt-2 max-h-48 overflow-auto rounded-lg border ${theme.border}`}>
+                          {geojsonImportPreview.items.map((item, idx) => {
+                            const metaParts = [];
+                            if (item.meta?.objType) metaParts.push(item.meta.objType);
+                            if (item.meta?.tema) metaParts.push(item.meta.tema);
+                            if (item.geojsonMeta?.funksjon) metaParts.push(item.geojsonMeta.funksjon);
+                            if (item.meta?.dimensjon) metaParts.push(`Ø ${item.meta.dimensjon}`);
+                            if (item.meta?.material) metaParts.push(item.meta.material);
+
+                            let status = null;
+                            let statusColor = '';
+                            if (item.alreadyExcluded) {
+                              status = 'Allerede ekskludert';
+                              statusColor = theme.muted;
+                            } else if (!item.existsInSosi) {
+                              status = 'Ikke funnet i SOSI';
+                              statusColor = 'text-amber-600';
+                            } else {
+                              status = 'Vil bli lagt til';
+                              statusColor = 'text-emerald-600';
+                            }
+
+                            return (
+                              <div
+                                key={`${item.sid}-${idx}`}
+                                className={`border-t px-3 py-1.5 first:border-t-0 ${theme.border} ${
+                                  item.alreadyExcluded || !item.existsInSosi ? 'opacity-50' : ''
+                                }`}
+                              >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <div className="text-sm font-semibold">SID {item.sid}</div>
+                                      {metaParts.length > 0 && (
+                                        <div className={`text-xs ${theme.muted}`}>
+                                          {metaParts.join(' · ')}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className={`text-xs font-medium ${statusColor}`}>
+                                    {status}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </details>
+
+                      {/* Action buttons */}
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={geojsonImportPreview.items.filter((i) => i.existsInSosi && !i.alreadyExcluded).length === 0}
+                          className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing} disabled:opacity-50`}
+                          onClick={confirmGeojsonImport}
+                        >
+                          <Check className="h-4 w-4" />
+                          Legg til {geojsonImportPreview.items.filter((i) => i.existsInSosi && !i.alreadyExcluded).length} objekter
+                        </button>
+                        <button
+                          type="button"
+                          className={`rounded-lg border px-3 py-1.5 text-sm font-semibold ${theme.border} ${theme.surface}`}
+                          onClick={cancelGeojsonImport}
+                        >
+                          Avbryt
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Exclusion Lists */}
-                  <div className="mt-5 min-h-0 flex-1 overflow-hidden">
-                    <div className="grid h-full grid-cols-1 gap-6 overflow-hidden lg:grid-cols-2">
+                  <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+                    <div className="grid h-full grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2">
                       {['punkter', 'ledninger'].map((cat) => {
                         const list =
                           selection?.excludedByCategory?.[cat] || [];
+                        const searchTerm = String(
+                          excludedSearchByCategory?.[cat] || '',
+                        )
+                          .trim()
+                          .toLowerCase();
+                        const filteredList = searchTerm
+                          ? list.filter((entry) =>
+                              String(entry?.id || '')
+                                .toLowerCase()
+                                .includes(searchTerm),
+                            )
+                          : list;
                         return (
                           <div
                             key={cat}
-                            className={`flex min-h-0 flex-col rounded-xl border p-4 ${theme.border} ${theme.surfaceMuted}`}
+                            className={`flex min-h-0 flex-col rounded-xl border p-3 ${theme.border} ${theme.surfaceMuted}`}
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div className="text-sm font-semibold">
                                 {getCategoryLabel(cat)}
                               </div>
-                              <div
-                                className={`text-xs ${theme.muted}`}
-                              >
-                                {list.length} ekskludert
-                              </div>
-                            </div>
-
-                            <div className="mt-3 min-h-0 flex-1 overflow-auto">
-                              {list.length === 0 ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={
+                                    excludedSearchByCategory?.[cat] ||
+                                    ''
+                                  }
+                                  onChange={(e) =>
+                                    setExcludedSearchByCategory(
+                                      (prev) => ({
+                                        ...prev,
+                                        [cat]: e.target.value,
+                                      }),
+                                    )
+                                  }
+                                  placeholder="Søk SID"
+                                  className={`w-28 rounded-md border px-2 py-1 text-xs ${theme.border} ${theme.surface} ${theme.text}`}
+                                />
                                 <div
                                   className={`text-xs ${theme.muted}`}
                                 >
-                                  Ingen ekskluderte objekter.
+                                  {filteredList.length}/{list.length}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 min-h-0 flex-1 overflow-auto">
+                              {filteredList.length === 0 ? (
+                                <div
+                                  className={`text-xs ${theme.muted}`}
+                                >
+                                  {list.length === 0
+                                    ? 'Ingen ekskluderte objekter.'
+                                    : 'Ingen treff på SID.'}
                                 </div>
                               ) : (
                                 <div
                                   className={`overflow-hidden rounded-lg border ${theme.border}`}
                                 >
-                                  {list.map((entry, idx) => {
+                                  {filteredList.map((entry, idx) => {
                                     const meta = entry?.meta || null;
                                     const metaParts = [];
                                     if (meta?.objType)
@@ -4344,21 +4807,19 @@ export default function Home() {
                                     return (
                                       <div
                                         key={`${cat}:${idx}:${entry.id}`}
-                                        className={`border-t px-3 py-2 first:border-t-0 ${theme.border}`}
+                                        className={`border-t px-3 py-1.5 first:border-t-0 ${theme.border}`}
                                       >
                                         <div className="flex flex-wrap items-start justify-between gap-2">
                                           <div className="min-w-0">
-                                            <div className="text-sm font-semibold">
-                                              SID {entry.id}
-                                            </div>
-                                            <div
-                                              className={`mt-0.5 text-xs ${theme.muted}`}
-                                            >
-                                              {metaParts.length > 0
-                                                ? metaParts.join(
-                                                    ' · ',
-                                                  )
-                                                : 'Ikke funnet i filen'}
+                                            <div className="flex flex-wrap items-center gap-2">
+                                              <div className="text-sm font-semibold">
+                                                SID {entry.id}
+                                              </div>
+                                              <div className={`text-xs ${theme.muted}`}>
+                                                {metaParts.length > 0
+                                                  ? metaParts.join(' · ')
+                                                  : 'Ikke funnet i filen'}
+                                              </div>
                                             </div>
                                             {entry.comment ? (
                                               <div
@@ -4370,7 +4831,7 @@ export default function Home() {
                                           </div>
                                           <button
                                             type="button"
-                                            className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                                            className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
                                             onClick={() =>
                                               removeExcludedEntry(
                                                 cat,
@@ -4395,11 +4856,11 @@ export default function Home() {
                   </div>
 
                   {/* Footer Actions */}
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
-                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
+                        className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
                         onClick={() => setStep('download')}
                       >
                         <Download className="h-4 w-4" />
@@ -4407,125 +4868,13 @@ export default function Home() {
                       </button>
                       <button
                         type="button"
-                        className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                        className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
                         onClick={() => setStep('filter')}
                       >
                         <ArrowLeft className="h-4 w-4" />
                         Tilbake til filtrering
                       </button>
                     </div>
-                    <details className="relative">
-                      <summary
-                        className={`inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
-                      >
-                        <Filter className="h-4 w-4" />
-                        Avanserte valg
-                        <ChevronDown className="h-4 w-4" />
-                      </summary>
-                      <div
-                        className={`absolute right-0 bottom-full z-20 mb-2 w-80 overflow-hidden rounded-xl border shadow-lg ${theme.border} ${theme.surface}`}
-                      >
-                        <button
-                          type="button"
-                          disabled={
-                            busy ||
-                            !file ||
-                            (selection?.excludedByCategory?.punkter
-                              ?.length || 0) +
-                              (selection?.excludedByCategory
-                                ?.ledninger?.length || 0) ===
-                              0
-                          }
-                          className={`flex w-full items-start gap-3 px-4 py-3 text-left ${theme.hoverAccentSoft} disabled:opacity-50`}
-                          onClick={downloadExcludedOnly}
-                        >
-                          <Download className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Last ned ekskluderte (SOSI)
-                            </div>
-                            <div className={`text-xs ${theme.muted}`}>
-                              Generer en fil som kun inneholder de
-                              ekskluderte objektene.
-                            </div>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
-                          onClick={() => setShowResetConfirm(true)}
-                        >
-                          <RotateCcw className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Tilbakestill til standard (fra fil)
-                            </div>
-                            <div className={`text-xs ${theme.muted}`}>
-                              Nullstiller objekttyper, felter og eier.
-                              Ekskluderingslisten beholdes.
-                            </div>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
-                          onClick={exportSettings}
-                        >
-                          <Download className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Eksporter utvalg (JSON)
-                            </div>
-                            <div className={`text-xs ${theme.muted}`}>
-                              Lagre filtervalgene for deling/backup.
-                            </div>
-                          </div>
-                        </button>
-
-                        <label
-                          className={`flex w-full cursor-pointer items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
-                        >
-                          <FileUp className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Importer utvalg (JSON)
-                            </div>
-                            <div className={`text-xs ${theme.muted}`}>
-                              Last inn tidligere lagrede filtervalg.
-                            </div>
-                          </div>
-                          <input
-                            type="file"
-                            accept="application/json,.json"
-                            className="hidden"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) importSettingsFromFile(f);
-                              e.target.value = '';
-                            }}
-                          />
-                        </label>
-
-                        <button
-                          type="button"
-                          className={`flex w-full items-start gap-3 border-t px-4 py-3 text-left ${theme.hoverAccentSoft}`}
-                          onClick={clearSavedSettings}
-                        >
-                          <Trash2 className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Slett lagrede innstillinger
-                            </div>
-                            <div className={`text-xs ${theme.muted}`}>
-                              Fjerner lagrede valg fra denne
-                              nettleseren.
-                            </div>
-                          </div>
-                        </button>
-                      </div>
-                    </details>
                   </div>
                 </div>
               </section>
@@ -4560,31 +4909,6 @@ export default function Home() {
                           type="radio"
                           name="downloadFieldMode"
                           checked={
-                            downloadFieldMode === 'remove-fields'
-                          }
-                          onChange={() =>
-                            setDownloadFieldMode('remove-fields')
-                          }
-                        />
-                        <div>
-                          <div className="text-sm font-semibold">
-                            Fjern felter helt
-                          </div>
-                          <div
-                            className={`mt-0.5 text-xs ${theme.muted}`}
-                          >
-                            Uønskede felter fjernes fra objektene.
-                          </div>
-                        </div>
-                      </label>
-
-                      <label
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${theme.border} ${theme.surfaceMuted} ${theme.hoverAccentSoft}`}
-                      >
-                        <input
-                          type="radio"
-                          name="downloadFieldMode"
-                          checked={
                             downloadFieldMode === 'clear-values'
                           }
                           onChange={() =>
@@ -4599,6 +4923,31 @@ export default function Home() {
                             className={`mt-0.5 text-xs ${theme.muted}`}
                           >
                             Feltlinjene beholdes, men verdier slettes.
+                          </div>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${theme.border} ${theme.surfaceMuted} ${theme.hoverAccentSoft}`}
+                      >
+                        <input
+                          type="radio"
+                          name="downloadFieldMode"
+                          checked={
+                            downloadFieldMode === 'remove-fields'
+                          }
+                          onChange={() =>
+                            setDownloadFieldMode('remove-fields')
+                          }
+                        />
+                        <div>
+                          <div className="text-sm font-semibold">
+                            Fjern felter helt
+                          </div>
+                          <div
+                            className={`mt-0.5 text-xs ${theme.muted}`}
+                          >
+                            Uønskede felter fjernes fra objektene.
                           </div>
                         </div>
                       </label>
@@ -4703,6 +5052,52 @@ export default function Home() {
                 }}
               >
                 Nullstill
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showClearExcludedConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
+          <div
+            className={`w-full max-w-sm rounded-xl border p-5 shadow-lg ${theme.border} ${theme.surface}`}
+            role="dialog"
+            aria-labelledby="clear-excluded-dialog-title"
+          >
+            <h3
+              id="clear-excluded-dialog-title"
+              className={`text-lg font-semibold ${theme.text}`}
+            >
+              Tømme alle ekskluderinger?
+            </h3>
+            <p className={`mt-2 text-sm ${theme.muted}`}>
+              Dette fjerner alle ekskluderte objekter for både
+              punkter og ledninger. Handlingen kan ikke angres.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold ${theme.border} ${theme.surface} ${theme.primaryRing}`}
+                onClick={() => setShowClearExcludedConfirm(false)}
+              >
+                Avbryt
+              </button>
+              <button
+                type="button"
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${theme.primary} ${theme.primaryRing}`}
+                onClick={() => {
+                  setSelection((prev) => ({
+                    ...prev,
+                    excludedByCategory: {
+                      punkter: [],
+                      ledninger: [],
+                    },
+                  }));
+                  setShowClearExcludedConfirm(false);
+                }}
+              >
+                Tøm alt
               </button>
             </div>
           </div>
